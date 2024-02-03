@@ -2,274 +2,223 @@
 #include <gtest/gtest.h>
 #include <rvv/type.h>
 
-TEST(IsAnyTest, first) { EXPECT_TRUE((rvv::is_any<int, int, float, double>)); }
+template <typename Config>
+class IsAnyTest : public ::testing::Test {};
 
-TEST(IsAnyTest, middle) {
-  EXPECT_TRUE((rvv::is_any<float, int, float, double>));
+template <bool kExpected_, typename E, typename... Es>
+class IsAnyConfig {
+ public:
+  static constexpr bool kActual = rvv::is_any<E, Es...>;
+  static constexpr bool kExpected = kExpected_;
+};
+
+using IsAnyTestTypes =
+    ::testing::Types<IsAnyConfig<true, int, int, float, double>,
+                     IsAnyConfig<true, float, int, float, double>,
+                     IsAnyConfig<true, double, int, float, double>,
+                     IsAnyConfig<false, char, int, float, double>>;
+
+TYPED_TEST_SUITE(IsAnyTest, IsAnyTestTypes);
+
+TYPED_TEST(IsAnyTest, is_any) {
+  EXPECT_EQ(TypeParam::kActual, TypeParam::kExpected);
 }
-TEST(IsAnyTest, last) {
-  EXPECT_TRUE((rvv::is_any<double, int, float, double>));
-}
 
-TEST(IsAnyTest, non_exist) {
-  EXPECT_FALSE((rvv::is_any<char, int, float, double>));
-}
+enum ElemTypeTraits {
+  kIsFloat16 = 1,
+  kIsFloat32 = 2,
+  kIsFloat64 = 4,
+  kIsRvvFloatingPoint = 8,
+  kIsRvvUnsigned = 16,
+  kIsRvvSigned = 32,
+  kIsRvvIntegral = 64,
+  kReliesUnsupportedZvfhmin = 128,
+  kReliesUnsupportedZvfh = 256,
+  kReliesUnsupportedZve32f = 512,
+  kReliesUnsupportedZve64d = 1024,
+  kReliesUnsupportedZve64x = 2048,
+  kIsSupportedRvvElemType = 4096,
+  kIsSupportedRvvElemTypeNeedZvfh = 8192,
+};
 
-#if HAVE_FLOAT16
+template <typename Config>
+class ElemTypeTraitsTest : public ::testing::Test {};
 
-TEST(IsFloat16Test, float16) { EXPECT_TRUE((rvv::is_float16<rvv::float16_t>)); }
+template <typename E, ElemTypeTraits kTrait_>
+class ElemTypeTraitsConfig {
+ public:
+  using ElemType = E;
+  static constexpr ElemTypeTraits kTrait = kTrait_;
+};
 
-TEST(IsFloat16Test, float32) { EXPECT_FALSE((rvv::is_float16<float>)); }
-
+using ElemTypeTraitsTestConfigs = ::testing::Types<
+#if HAS_FLOAT16
+    ElemTypeTraitsConfig<rvv::float16_t,
+                         static_cast<ElemTypeTraits>(
+                             kIsFloat16 | kIsRvvFloatingPoint |
+                             (HAS_ZVFH ? kIsSupportedRvvElemTypeNeedZvfh
+                                       : kReliesUnsupportedZvfh) |
+                             (HAS_ZVFHMIN ? kIsSupportedRvvElemType
+                                          : kReliesUnsupportedZvfhmin))>,
 #endif
+    ElemTypeTraitsConfig<float,
+                         static_cast<ElemTypeTraits>(
+                             kIsFloat32 | kIsRvvFloatingPoint |
+                             (HAS_ZVE32F ? kIsSupportedRvvElemType |
+                                               kIsSupportedRvvElemTypeNeedZvfh
+                                         : kReliesUnsupportedZve32f))>,
+    ElemTypeTraitsConfig<double,
+                         static_cast<ElemTypeTraits>(
+                             kIsFloat64 | kIsRvvFloatingPoint |
+                             (HAS_ZVE64D ? kIsSupportedRvvElemType |
+                                               kIsSupportedRvvElemTypeNeedZvfh
+                                         : kReliesUnsupportedZve64d))>,
+    ElemTypeTraitsConfig<uint8_t, static_cast<ElemTypeTraits>(
+                                      kIsRvvUnsigned | kIsRvvIntegral |
+                                      kIsSupportedRvvElemType |
+                                      kIsSupportedRvvElemTypeNeedZvfh)>,
+    ElemTypeTraitsConfig<uint16_t, static_cast<ElemTypeTraits>(
+                                       kIsRvvUnsigned | kIsRvvIntegral |
+                                       kIsSupportedRvvElemType |
+                                       kIsSupportedRvvElemTypeNeedZvfh)>,
+    ElemTypeTraitsConfig<uint32_t, static_cast<ElemTypeTraits>(
+                                       kIsRvvUnsigned | kIsRvvIntegral |
+                                       kIsSupportedRvvElemType |
+                                       kIsSupportedRvvElemTypeNeedZvfh)>,
+    ElemTypeTraitsConfig<uint64_t,
+                         static_cast<ElemTypeTraits>(
+                             kIsRvvUnsigned | kIsRvvIntegral |
+                             (HAS_ZVE64X ? kIsSupportedRvvElemType |
+                                               kIsSupportedRvvElemTypeNeedZvfh
+                                         : kReliesUnsupportedZve64x))>,
+    ElemTypeTraitsConfig<int8_t, static_cast<ElemTypeTraits>(
+                                     kIsRvvSigned | kIsRvvIntegral |
+                                     kIsSupportedRvvElemType |
+                                     kIsSupportedRvvElemTypeNeedZvfh)>,
+    ElemTypeTraitsConfig<int16_t, static_cast<ElemTypeTraits>(
+                                      kIsRvvSigned | kIsRvvIntegral |
+                                      kIsSupportedRvvElemType |
+                                      kIsSupportedRvvElemTypeNeedZvfh)>,
+    ElemTypeTraitsConfig<int32_t, static_cast<ElemTypeTraits>(
+                                      kIsRvvSigned | kIsRvvIntegral |
+                                      kIsSupportedRvvElemType |
+                                      kIsSupportedRvvElemTypeNeedZvfh)>,
+    ElemTypeTraitsConfig<int64_t,
+                         static_cast<ElemTypeTraits>(
+                             kIsRvvSigned | kIsRvvIntegral |
+                             (HAS_ZVE64X ? kIsSupportedRvvElemType |
+                                               kIsSupportedRvvElemTypeNeedZvfh
+                                         : kReliesUnsupportedZve64x))>
 
-TEST(IsFloat32Test, float32) { EXPECT_TRUE((rvv::is_float32<float>)); }
+    >;
 
-TEST(IsFloat32Test, float64) { EXPECT_FALSE((rvv::is_float32<double>)); }
+TYPED_TEST_SUITE(ElemTypeTraitsTest, ElemTypeTraitsTestConfigs);
 
-TEST(IsFloat64Test, float64) { EXPECT_TRUE((rvv::is_float64<double>)); }
-
-TEST(IsFloat64Test, float32) { EXPECT_FALSE((rvv::is_float64<float>)); }
-
-#if HAVE_FLOAT16
-TEST(IsRvvFloatingPointTest, float16) {
-  EXPECT_TRUE((rvv::is_rvv_floating_point<rvv::float16_t>));
-}
-#endif
-
-TEST(IsRvvFloatingPointTest, float32) {
-  EXPECT_TRUE((rvv::is_rvv_floating_point<float>));
-}
-
-TEST(IsRvvFloatingPointTest, float64) {
-  EXPECT_TRUE((rvv::is_rvv_floating_point<double>));
-}
-
-TEST(IsRvvFloatingPointTest, int) {
-  EXPECT_FALSE((rvv::is_rvv_floating_point<int>));
-}
-
-TEST(IsRvvUnsignedTest, uint8) { EXPECT_TRUE((rvv::is_rvv_unsigned<uint8_t>)); }
-
-TEST(IsRvvUnsignedTest, uint16) {
-  EXPECT_TRUE((rvv::is_rvv_unsigned<uint16_t>));
-}
-
-TEST(IsRvvUnsignedTest, uint32) {
-  EXPECT_TRUE((rvv::is_rvv_unsigned<uint32_t>));
-}
-
-TEST(IsRvvUnsignedTest, uint64) {
-  EXPECT_TRUE((rvv::is_rvv_unsigned<uint64_t>));
-}
-
-TEST(IsRvvUnsignedTest, int32) {
-  EXPECT_FALSE((rvv::is_rvv_unsigned<int32_t>));
-}
-
-TEST(IsRvvUnsignedTest, float) { EXPECT_FALSE((rvv::is_rvv_signed<float>)); }
-
-TEST(IsRvvSignedTest, int8) { EXPECT_TRUE((rvv::is_rvv_signed<int8_t>)); }
-
-TEST(IsRvvSignedTest, int16) { EXPECT_TRUE((rvv::is_rvv_signed<int16_t>)); }
-
-TEST(IsRvvSignedTest, int32) { EXPECT_TRUE((rvv::is_rvv_signed<int32_t>)); }
-
-TEST(IsRvvSignedTest, int64) { EXPECT_TRUE((rvv::is_rvv_signed<int64_t>)); }
-
-TEST(IsRvvSignedTest, uint8) { EXPECT_FALSE((rvv::is_rvv_signed<uint8_t>)); }
-
-TEST(IsRvvSignedTest, float) { EXPECT_FALSE((rvv::is_rvv_signed<float>)); }
-
-TEST(IsRvvIntegralTest, int32) { EXPECT_TRUE((rvv::is_rvv_integral<int32_t>)); }
-
-TEST(IsRvvIntegralTest, uint8) { EXPECT_TRUE((rvv::is_rvv_integral<uint8_t>)); }
-
-#if defined(__riscv_zvfh)
-TEST(ReliesUnsupportedZvfhTest, float16) {
-  EXPECT_FALSE((rvv::relies_on_unsupported_zvfh<rvv::float16_t, false>));
-  EXPECT_FALSE((rvv::relies_on_unsupported_zvfh<rvv::float16_t, true>));
-}
-#elif defined(__riscv_zvfhmin)
-TEST(ReliesUnsupportedZvfhTest, float16) {
-  EXPECT_FALSE((rvv::relies_on_unsupported_zvfh<rvv::float16_t, false>));
-  EXPECT_TRUE((rvv::relies_on_unsupported_zvfh<rvv::float16_t, true>));
-}
-#elif HAVE_FLOAT16
-TEST(ReliesUnsupportedZvfhTest, float16) {
-  EXPECT_TRUE((rvv::relies_on_unsupported_zvfh<rvv::float16_t, false>));
-  EXPECT_TRUE((rvv::relies_on_unsupported_zvfh<rvv::float16_t, true>));
-}
-#endif
-
-TEST(ReliesUnsupportedZvfhTest, float32) {
-  EXPECT_FALSE((rvv::relies_on_unsupported_zvfh<float, false>));
-  EXPECT_FALSE((rvv::relies_on_unsupported_zvfh<float, true>));
+TYPED_TEST(ElemTypeTraitsTest, is_float16) {
+  EXPECT_EQ((rvv::is_float16<typename TypeParam::ElemType>),
+            !!(TypeParam::kTrait & ElemTypeTraits::kIsFloat16));
 }
 
-#if defined(__riscv_zve32f)
-TEST(ReliesUnsupportedZve32fTest, float32) {
-  EXPECT_FALSE((rvv::relies_on_unsupported_zve32f<float>));
-}
-#else
-TEST(ReliesUnsupportedZve32fTest, float32) {
-  EXPECT_TRUE((rvv::relies_on_unsupported_zve32f<float>));
-}
-#endif
-
-#if defined(__riscv_zve64d)
-TEST(ReliesUnsupportedZve64dTest, float64) {
-  EXPECT_FALSE((rvv::relies_on_unsupported_zve64d<double>));
-}
-#else
-TEST(ReliesUnsupportedZve64dTest, float64) {
-  EXPECT_TRUE((rvv::relies_on_unsupported_zve64d<double>));
-}
-#endif
-
-#if defined(__riscv_zve64x)
-TEST(ReliesUnsupportedZve64xTest, int64) {
-  EXPECT_FALSE((rvv::relies_on_unsupported_zve64x<int64_t>));
-}
-TEST(ReliesUnsupportedZve64xTest, uint64) {
-  EXPECT_FALSE((rvv::relies_on_unsupported_zve64x<uint64_t>));
-}
-#else
-TEST(ReliesUnsupportedZve64xTest, int64) {
-  EXPECT_TRUE((rvv::relies_on_unsupported_zve64x<int64_t>));
-}
-TEST(ReliesUnsupportedZve64xTest, uint64) {
-  EXPECT_TRUE((rvv::relies_on_unsupported_zve64x<uint64_t>));
-}
-#endif
-
-#if HAVE_FLOAT16
-#if defined(__riscv_zvfh)
-TEST(IsSupportedRvvElemTypeTest, float16) {
-  EXPECT_TRUE((rvv::is_supported_rvv_elem_type<rvv::float16_t, true>));
-  EXPECT_TRUE((rvv::is_supported_rvv_elem_type<rvv::float16_t, false>));
-}
-#elif defined(__riscv_zvfhmin)
-TEST(IsSupportedRvvElemTypeTest, float16) {
-  EXPECT_FALSE((rvv::is_supported_rvv_elem_type<rvv::float16_t, true>));
-  EXPECT_TRUE((rvv::is_supported_rvv_elem_type<rvv::float16_t, false>));
-}
-#else
-TEST(IsSupportedRvvElemTypeTest, float16) {
-  EXPECT_FALSE((rvv::is_supported_rvv_elem_type<rvv::float16_t, true>));
-  EXPECT_FALSE((rvv::is_supported_rvv_elem_type<rvv::float16_t, false>));
-}
-#endif
-#endif
-
-#if defined(__riscv_zve32f)
-TEST(IsSupportedRvvElemTypeTest, float32) {
-  EXPECT_TRUE((rvv::is_supported_rvv_elem_type<float, true>));
-  EXPECT_TRUE((rvv::is_supported_rvv_elem_type<float, false>));
-}
-#else
-TEST(IsSupportedRvvElemTypeTest, float32) {
-  EXPECT_FALSE((rvv::is_supported_rvv_elem_type<float, true>));
-  EXPECT_FALSE((rvv::is_supported_rvv_elem_type<float, false>));
-}
-#endif
-
-#if defined(__riscv_zve64d)
-TEST(IsSupportedRvvElemTypeTest, float64) {
-  EXPECT_TRUE((rvv::is_supported_rvv_elem_type<double, true>));
-  EXPECT_TRUE((rvv::is_supported_rvv_elem_type<double, false>));
-}
-#else
-TEST(IsSupportedRvvElemTypeTest, float64) {
-  EXPECT_FALSE((rvv::is_supported_rvv_elem_type<double, true>));
-  EXPECT_FALSE((rvv::is_supported_rvv_elem_type<double, false>));
-}
-#endif
-
-TEST(IsSupportedRvvElemTypeTest, uint8_t) {
-  EXPECT_TRUE((rvv::is_supported_rvv_elem_type<uint8_t, true>));
-  EXPECT_TRUE((rvv::is_supported_rvv_elem_type<uint8_t, false>));
+TYPED_TEST(ElemTypeTraitsTest, is_float32) {
+  EXPECT_EQ((rvv::is_float32<typename TypeParam::ElemType>),
+            !!(TypeParam::kTrait & ElemTypeTraits::kIsFloat32));
 }
 
-TEST(IsSupportedRvvElemTypeTest, uint16_t) {
-  EXPECT_TRUE((rvv::is_supported_rvv_elem_type<uint16_t, true>));
-  EXPECT_TRUE((rvv::is_supported_rvv_elem_type<uint16_t, false>));
+TYPED_TEST(ElemTypeTraitsTest, is_float64) {
+  EXPECT_EQ((rvv::is_float64<typename TypeParam::ElemType>),
+            !!(TypeParam::kTrait & ElemTypeTraits::kIsFloat64));
 }
 
-TEST(IsSupportedRvvElemTypeTest, uint32_t) {
-  EXPECT_TRUE((rvv::is_supported_rvv_elem_type<uint32_t, true>));
-  EXPECT_TRUE((rvv::is_supported_rvv_elem_type<uint32_t, false>));
+TYPED_TEST(ElemTypeTraitsTest, is_rvv_floating_point) {
+  EXPECT_EQ((rvv::is_rvv_floating_point<typename TypeParam::ElemType>),
+            !!(TypeParam::kTrait & ElemTypeTraits::kIsRvvFloatingPoint));
 }
 
-#if defined(__riscv_zve64x)
-TEST(IsSupportedRvvElemTypeTest, uint64_t) {
-  EXPECT_TRUE((rvv::is_supported_rvv_elem_type<uint64_t, true>));
-  EXPECT_TRUE((rvv::is_supported_rvv_elem_type<uint64_t, false>));
-}
-#else
-TEST(IsSupportedRvvElemTypeTest, uint64_t) {
-  EXPECT_FALSE((rvv::is_supported_rvv_elem_type<uint64_t, true>));
-  EXPECT_FALSE((rvv::is_supported_rvv_elem_type<uint64_t, false>));
-}
-#endif
-
-TEST(IsSupportedRvvElemTypeTest, int8_t) {
-  EXPECT_TRUE((rvv::is_supported_rvv_elem_type<int8_t, true>));
-  EXPECT_TRUE((rvv::is_supported_rvv_elem_type<int8_t, false>));
+TYPED_TEST(ElemTypeTraitsTest, is_rvv_unsigned) {
+  EXPECT_EQ((rvv::is_rvv_unsigned<typename TypeParam::ElemType>),
+            !!(TypeParam::kTrait & ElemTypeTraits::kIsRvvUnsigned));
 }
 
-TEST(IsSupportedRvvElemTypeTest, int16_t) {
-  EXPECT_TRUE((rvv::is_supported_rvv_elem_type<int16_t, true>));
-  EXPECT_TRUE((rvv::is_supported_rvv_elem_type<int16_t, false>));
+TYPED_TEST(ElemTypeTraitsTest, is_rvv_signed) {
+  EXPECT_EQ((rvv::is_rvv_signed<typename TypeParam::ElemType>),
+            !!(TypeParam::kTrait & ElemTypeTraits::kIsRvvSigned));
 }
 
-TEST(IsSupportedRvvElemTypeTest, int32_t) {
-  EXPECT_TRUE((rvv::is_supported_rvv_elem_type<int32_t, true>));
-  EXPECT_TRUE((rvv::is_supported_rvv_elem_type<int32_t, false>));
+TYPED_TEST(ElemTypeTraitsTest, is_rvv_integral) {
+  EXPECT_EQ((rvv::is_rvv_integral<typename TypeParam::ElemType>),
+            !!(TypeParam::kTrait & ElemTypeTraits::kIsRvvIntegral));
 }
 
-#if defined(__riscv_zve64x)
-TEST(IsSupportedRvvElemTypeTest, int64_t) {
-  EXPECT_TRUE((rvv::is_supported_rvv_elem_type<int64_t, true>));
-  EXPECT_TRUE((rvv::is_supported_rvv_elem_type<int64_t, false>));
+TYPED_TEST(ElemTypeTraitsTest, relies_on_unsupported_zvfh) {
+  EXPECT_EQ(
+      (rvv::relies_on_unsupported_zvfh<typename TypeParam::ElemType, true>),
+      !!(TypeParam::kTrait & ElemTypeTraits::kReliesUnsupportedZvfh));
+  EXPECT_EQ(
+      (rvv::relies_on_unsupported_zvfh<typename TypeParam::ElemType, false>),
+      !!(TypeParam::kTrait & ElemTypeTraits::kReliesUnsupportedZvfhmin));
 }
-#else
-TEST(IsSupportedRvvElemTypeTest, int64_t) {
-  EXPECT_FALSE((rvv::is_supported_rvv_elem_type<int64_t, true>));
-  EXPECT_FALSE((rvv::is_supported_rvv_elem_type<int64_t, false>));
-}
-#endif
 
-#if __riscv_v_elen == 64
-TEST(ReliesUnsupportedElenTest, 64) {
-  EXPECT_FALSE((rvv::relies_on_unsupported_elen<64>));
-  EXPECT_FALSE((rvv::relies_on_unsupported_elen<32>));
+TYPED_TEST(ElemTypeTraitsTest, relies_on_unsupported_zve32f) {
+  EXPECT_EQ((rvv::relies_on_unsupported_zve32f<typename TypeParam::ElemType>),
+            !!(TypeParam::kTrait & ElemTypeTraits::kReliesUnsupportedZve32f));
 }
-#elif __riscv_v_elen == 32
-TEST(ReliesUnsupportedElenTest, 32) {
-  EXPECT_TRUE((rvv::relies_on_unsupported_elen<64>));
-  EXPECT_FALSE((rvv::relies_on_unsupported_elen<32>));
-}
-#endif
 
-#if __riscv_v_elen == 64
-TEST(IsSupportedRatioTest, all) {
-  EXPECT_TRUE((rvv::is_supported_ratio<1>));
-  EXPECT_TRUE((rvv::is_supported_ratio<2>));
-  EXPECT_TRUE((rvv::is_supported_ratio<4>));
-  EXPECT_TRUE((rvv::is_supported_ratio<8>));
-  EXPECT_TRUE((rvv::is_supported_ratio<16>));
-  EXPECT_TRUE((rvv::is_supported_ratio<32>));
-  EXPECT_TRUE((rvv::is_supported_ratio<64>));
+TYPED_TEST(ElemTypeTraitsTest, relies_on_unsupported_zve64d) {
+  EXPECT_EQ((rvv::relies_on_unsupported_zve64d<typename TypeParam::ElemType>),
+            !!(TypeParam::kTrait & ElemTypeTraits::kReliesUnsupportedZve64d));
 }
-#elif __riscv_v_elen == 32
-TEST(IsSupportedRatioTest, all) {
-  EXPECT_TRUE((rvv::is_supported_ratio<1>));
-  EXPECT_TRUE((rvv::is_supported_ratio<2>));
-  EXPECT_TRUE((rvv::is_supported_ratio<4>));
-  EXPECT_TRUE((rvv::is_supported_ratio<8>));
-  EXPECT_TRUE((rvv::is_supported_ratio<16>));
-  EXPECT_TRUE((rvv::is_supported_ratio<32>));
-  EXPECT_FALSE((rvv::is_supported_ratio<64>));
+
+TYPED_TEST(ElemTypeTraitsTest, relies_on_unsupported_zve64x) {
+  EXPECT_EQ((rvv::relies_on_unsupported_zve64x<typename TypeParam::ElemType>),
+            !!(TypeParam::kTrait & ElemTypeTraits::kReliesUnsupportedZve64x));
 }
-#endif
+
+TYPED_TEST(ElemTypeTraitsTest, is_supported_rvv_elem_type) {
+  EXPECT_EQ(
+      (rvv::is_supported_rvv_elem_type<typename TypeParam::ElemType, true>),
+      !!(TypeParam::kTrait & ElemTypeTraits::kIsSupportedRvvElemTypeNeedZvfh));
+  EXPECT_EQ(
+      (rvv::is_supported_rvv_elem_type<typename TypeParam::ElemType, false>),
+      !!(TypeParam::kTrait & ElemTypeTraits::kIsSupportedRvvElemType));
+}
+
+enum RatioTypeTraits {
+  kIsSupportedRatio = 1,
+  kReliesUnsupportedElen = 2,
+};
+
+template <typename Config>
+class RatioTypeTraitsTest : public ::testing::Test {};
+
+template <size_t kRatio, RatioTypeTraits kTrait_>
+class RatioTypeTraitsConfig {
+ public:
+  static constexpr size_t kRatio_ = kRatio;
+  static constexpr RatioTypeTraits kTrait = kTrait_;
+};
+
+using RatioTypeTraitsTestConfigs = ::testing::Types<
+    RatioTypeTraitsConfig<1, static_cast<RatioTypeTraits>(kIsSupportedRatio)>,
+    RatioTypeTraitsConfig<2, static_cast<RatioTypeTraits>(kIsSupportedRatio)>,
+    RatioTypeTraitsConfig<4, static_cast<RatioTypeTraits>(kIsSupportedRatio)>,
+    RatioTypeTraitsConfig<8, static_cast<RatioTypeTraits>(kIsSupportedRatio)>,
+    RatioTypeTraitsConfig<16, static_cast<RatioTypeTraits>(kIsSupportedRatio)>,
+    RatioTypeTraitsConfig<32, static_cast<RatioTypeTraits>(kIsSupportedRatio)>,
+    RatioTypeTraitsConfig<33, static_cast<RatioTypeTraits>(0)>,
+    RatioTypeTraitsConfig<64, static_cast<RatioTypeTraits>(
+                                  RVV_ELEN >= 64 ? kIsSupportedRatio
+                                                 : kReliesUnsupportedElen)>,
+    RatioTypeTraitsConfig<128, static_cast<RatioTypeTraits>(
+                                   kReliesUnsupportedElen)>>;
+
+TYPED_TEST_SUITE(RatioTypeTraitsTest, RatioTypeTraitsTestConfigs);
+
+TYPED_TEST(RatioTypeTraitsTest, is_supported_ratio) {
+  EXPECT_EQ((rvv::is_supported_ratio<TypeParam::kRatio_>),
+            !!(TypeParam::kTrait & RatioTypeTraits::kIsSupportedRatio));
+}
+
+TYPED_TEST(RatioTypeTraitsTest, relies_on_unsupported_elen) {
+  EXPECT_EQ((rvv::relies_on_unsupported_elen<TypeParam::kRatio_>),
+            !!(TypeParam::kTrait & RatioTypeTraits::kReliesUnsupportedElen));
+}
