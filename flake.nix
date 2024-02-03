@@ -22,12 +22,16 @@
             then cross.buildPackages.llvmPackages_17
             else pkgs.llvmPackages_17;
 
+          python3WithPackages = pkgs.python311.withPackages (ps: with ps; [
+            pytest
+          ]);
+
           buildDependencies = [
             riscv_gcc
             riscv_gtest
             pkgs.cmake
             pkgs.ninja
-            pkgs.python311
+            python3WithPackages
             pkgs.cmake-format
           ];
         in

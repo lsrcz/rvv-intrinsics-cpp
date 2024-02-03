@@ -4,8 +4,18 @@ project(rvv-intrinsics-cpp)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+find_package(
+  Python3
+  COMPONENTS Interpreter
+  REQUIRED)
+
+execute_process(
+  COMMAND ${Python3_EXECUTABLE} -c "import pytest"
+  RESULT_VARIABLE PYTEST_EXIT_CODE
+  OUTPUT_QUIET)
+
 find_package(GTest)
-if(GTest_FOUND)
+if(GTest_FOUND AND (NOT "${PYTEST_EXIT_CODE}"))
   enable_testing()
 endif()
 
@@ -45,5 +55,9 @@ macro(rvv_add_test exe)
   add_test(NAME ${exe} COMMAND $<TARGET_FILE:${exe}>)
 endmacro()
 
+add_test(
+  NAME python_tests
+  COMMAND ${Python3_EXECUTABLE} -m pytest ${CMAKE_CURRENT_SOURCE_DIR}
+  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/generator)
 rvv_add_test(type_test test/type_test.cpp)
 rvv_add_test(type_traits_test test/type_traits_test.cpp)

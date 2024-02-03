@@ -17,6 +17,10 @@ using float16_t = decltype(__FLT16_MAX__);
 #define HAVE_FLOAT16 0
 using float16_t = void;
 #endif
+
+using float32_t = float;
+
+using float64_t = double;
 };  // namespace rvv
 
 #endif  // RVV_CONFIG_H_
