@@ -12,7 +12,7 @@ namespace rvv {
 template <typename E, typename... Es>
 concept is_any = (... || std::is_same_v<E, Es>);
 
-#if HAVE_FLOAT16
+#if HAS_FLOAT16
 template <typename E>
 concept is_float16 = std::is_same_v<E, float16_t>;
 #endif
@@ -25,7 +25,7 @@ concept is_float64 = std::is_same_v<E, double>;
 
 template <typename E>
 concept is_rvv_floating_point =
-#if HAVE_FLOAT16
+#if HAS_FLOAT16
     is_float16<E> ||
 #endif
     is_float32<E> || is_float64<E>;
@@ -41,11 +41,11 @@ concept is_rvv_integral = is_rvv_signed<E> || is_rvv_unsigned<E>;
 
 template <typename E, bool kNeedZvfh>
 concept relies_on_unsupported_zvfh =
-#if defined(__riscv_zvfh)
+#if HAS_ZVFH
     false;
-#elif defined(__riscv_zvfhmin)
+#elif HAS_ZVFHMIN
     kNeedZvfh;
-#elif HAVE_FLOAT16
+#elif HAS_FLOAT16
     std::is_same_v<E, _Float16>;
 #else
     false;
@@ -53,7 +53,7 @@ concept relies_on_unsupported_zvfh =
 
 template <typename E>
 concept relies_on_unsupported_zve32f =
-#if defined(__riscv_zve32f)
+#if HAS_ZVE32F
     false;
 #else
     std::is_same_v<E, float>;
@@ -61,7 +61,7 @@ concept relies_on_unsupported_zve32f =
 
 template <typename E>
 concept relies_on_unsupported_zve64d =
-#if defined(__riscv_zve64d)
+#if HAS_ZVE64D
     false;
 #else
     std::is_same_v<E, double>;
@@ -69,7 +69,7 @@ concept relies_on_unsupported_zve64d =
 
 template <typename E>
 concept relies_on_unsupported_zve64x =
-#if defined(__riscv_zve64x)
+#if HAS_ZVE64X
     false;
 #else
     is_any<E, int64_t, uint64_t>;
@@ -90,8 +90,6 @@ concept is_supported_ratio =
     (kRatio == 1 || kRatio == 2 || kRatio == 4 || kRatio == 8 || kRatio == 16 ||
      kRatio == 32 || kRatio == 64) &&
     !relies_on_unsupported_elen<kRatio>;
-
-constexpr bool x = is_supported_ratio<64>;
 
 }  // namespace rvv
 

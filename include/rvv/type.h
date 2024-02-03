@@ -18,6 +18,29 @@ enum class LMul {
   kMF8 = -3,
 };
 
+namespace internal {
+constexpr int log2(int i) {
+  int r = 0;
+  while (i > 1) {
+    i /= 2;
+    r++;
+  }
+  return r;
+}
+
+}  // namespace internal
+
+template <typename E, size_t kRatio>
+  requires is_supported_rvv_elem_type<E, false> && is_supported_ratio<kRatio>
+constexpr LMul lmul =
+    static_cast<LMul>(internal::log2(static_cast<int>(sizeof(E))) -
+                      internal::log2(static_cast<int>(kRatio)) + 3);
+
+template <typename E, size_t kRatio>
+concept is_compatible_elem_ratio =
+    is_supported_rvv_elem_type<E, false> && is_supported_ratio<kRatio> &&
+    lmul<E, kRatio> >= LMul::kMF8 && lmul<E, kRatio> <= LMul::kM8;
+
 template <size_t kRatio_>
   requires is_supported_ratio<kRatio_>
 struct vl_t {
@@ -27,7 +50,7 @@ struct vl_t {
 
 namespace internal {
 template <typename E, size_t kRatio>
-  requires is_supported_rvv_elem_type<E, false> && is_supported_ratio<kRatio>
+  requires is_compatible_elem_ratio<E, kRatio>
 struct VReg {};
 
 template <size_t kRatio>
@@ -42,7 +65,7 @@ struct GetRatio {};
 }  // namespace internal
 
 template <typename E, size_t kRatio>
-  requires is_supported_rvv_elem_type<E, false> && is_supported_ratio<kRatio>
+  requires is_compatible_elem_ratio<E, kRatio>
 using vreg_t = internal::VReg<E, kRatio>::type;
 
 template <size_t kRatio>
