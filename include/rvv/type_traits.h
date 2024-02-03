@@ -83,13 +83,13 @@ concept is_supported_rvv_elem_type =
     (is_rvv_integral<E> || is_rvv_floating_point<E>);
 
 template <size_t kRatio>
-concept relies_on_unsupported_elen = kRatio > __riscv_v_elen;
+concept relies_on_unsupported_elen64 = kRatio == 64 && !HAS_ELEN64;
 
 template <size_t kRatio>
 concept is_supported_ratio =
     (kRatio == 1 || kRatio == 2 || kRatio == 4 || kRatio == 8 || kRatio == 16 ||
      kRatio == 32 || kRatio == 64) &&
-    !relies_on_unsupported_elen<kRatio>;
+    !relies_on_unsupported_elen64<kRatio>;
 
 }  // namespace rvv
 

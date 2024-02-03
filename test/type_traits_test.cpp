@@ -184,7 +184,7 @@ TYPED_TEST(ElemTypeTraitsTest, is_supported_rvv_elem_type) {
 
 enum RatioTypeTraits {
   kIsSupportedRatio = 1,
-  kReliesUnsupportedElen = 2,
+  kReliesUnsupportedElen64 = 2,
 };
 
 template <typename Config>
@@ -206,10 +206,9 @@ using RatioTypeTraitsTestConfigs = ::testing::Types<
     RatioTypeTraitsConfig<32, static_cast<RatioTypeTraits>(kIsSupportedRatio)>,
     RatioTypeTraitsConfig<33, static_cast<RatioTypeTraits>(0)>,
     RatioTypeTraitsConfig<64, static_cast<RatioTypeTraits>(
-                                  RVV_ELEN >= 64 ? kIsSupportedRatio
-                                                 : kReliesUnsupportedElen)>,
-    RatioTypeTraitsConfig<128, static_cast<RatioTypeTraits>(
-                                   kReliesUnsupportedElen)>>;
+                                  HAS_ELEN64 ? kIsSupportedRatio
+                                             : kReliesUnsupportedElen64)>,
+    RatioTypeTraitsConfig<128, static_cast<RatioTypeTraits>(0)>>;
 
 TYPED_TEST_SUITE(RatioTypeTraitsTest, RatioTypeTraitsTestConfigs);
 
@@ -219,6 +218,6 @@ TYPED_TEST(RatioTypeTraitsTest, is_supported_ratio) {
 }
 
 TYPED_TEST(RatioTypeTraitsTest, relies_on_unsupported_elen) {
-  EXPECT_EQ((rvv::relies_on_unsupported_elen<TypeParam::kRatio_>),
-            !!(TypeParam::kTrait & RatioTypeTraits::kReliesUnsupportedElen));
+  EXPECT_EQ((rvv::relies_on_unsupported_elen64<TypeParam::kRatio_>),
+            !!(TypeParam::kTrait & RatioTypeTraits::kReliesUnsupportedElen64));
 }

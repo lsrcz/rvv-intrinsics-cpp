@@ -54,6 +54,14 @@ using float64_t = double;
 #define HAS_ZVE64X 0
 #endif
 
+#if RVV_ELEN == 64
+#define HAS_ELEN64 1
+#elif RVV_ELEN == 32
+#define HAS_ELEN64 0
+#else
+#error Unsupported ELEN, currently only 32 and 64 are supported.
+#endif
+
 };  // namespace rvv
 
 #endif  // RVV_CONFIG_H_
