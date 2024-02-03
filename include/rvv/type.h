@@ -30,6 +30,9 @@ constexpr int log2(int i) {
 
 }  // namespace internal
 
+template <LMul kLMul>
+concept is_supported_lmul = kLMul >= LMul::kMF8 && kLMul <= LMul::kM8;
+
 template <typename E, size_t kRatio>
   requires is_supported_rvv_elem_type<E, false> && is_supported_ratio<kRatio>
 constexpr LMul lmul =
@@ -39,7 +42,16 @@ constexpr LMul lmul =
 template <typename E, size_t kRatio>
 concept is_compatible_elem_ratio =
     is_supported_rvv_elem_type<E, false> && is_supported_ratio<kRatio> &&
-    lmul<E, kRatio> >= LMul::kMF8 && lmul<E, kRatio> <= LMul::kM8;
+    is_supported_lmul<lmul<E, kRatio>>;
+
+template <typename E, LMul kLMul>
+  requires is_supported_rvv_elem_type<E, false> && is_supported_lmul<kLMul>
+constexpr size_t ratio = sizeof(E) * (1 << (3 - static_cast<int>(kLMul)));
+
+template <typename E, LMul kLMul>
+concept is_compatible_elem_lmul =
+    is_supported_rvv_elem_type<E, false> && is_supported_lmul<kLMul> &&
+    is_supported_ratio<ratio<E, kLMul>>;
 
 template <size_t kRatio_>
   requires is_supported_ratio<kRatio_>
