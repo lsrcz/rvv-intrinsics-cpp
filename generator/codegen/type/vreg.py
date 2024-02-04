@@ -2,7 +2,6 @@ from . import type
 from . import misc
 from . import elem
 from . import kind as k
-from .. import ident
 from dataclasses import dataclass
 
 
@@ -18,9 +17,7 @@ class ConcreteVRegType(VRegType):
 
     @property
     def cpp_repr(self) -> str:
-        return (
-            f"{ident.vreg_t}<{self.elem_type.cpp_repr}, {self.ratio.cpp_repr}>"
-        )
+        return f"vreg_t<{self.elem_type.cpp_repr}, {self.ratio.cpp_repr}>"
 
 
 @dataclass(frozen=True, kw_only=True)

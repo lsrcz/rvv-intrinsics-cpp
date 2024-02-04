@@ -46,6 +46,17 @@ class LitSizeTValue(SizeTValue):
         return str(self.value)
 
 
+ALL_RATIO: list[LitSizeTValue] = [
+    LitSizeTValue(value=1),
+    LitSizeTValue(value=2),
+    LitSizeTValue(value=4),
+    LitSizeTValue(value=8),
+    LitSizeTValue(value=16),
+    LitSizeTValue(value=32),
+    LitSizeTValue(value=64),
+]
+
+
 @dataclass(frozen=True, kw_only=True)
 class ParamSizeTValue(SizeTValue, type.TypeParam):
     @property

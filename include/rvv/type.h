@@ -4,8 +4,7 @@
 
 #include <riscv_vector.h>
 #include <rvv/config.h>
-
-#include "rvv/type_traits.h"
+#include <rvv/type_traits.h>
 
 namespace rvv {
 enum class LMul {
@@ -35,23 +34,24 @@ concept is_supported_lmul = kLMul >= LMul::kMF8 && kLMul <= LMul::kM8;
 
 template <typename E, size_t kRatio>
   requires is_supported_rvv_elem_type<E, false> && is_supported_ratio<kRatio>
-constexpr LMul lmul =
+constexpr LMul elem_ratio_to_lmul =
     static_cast<LMul>(internal::log2(static_cast<int>(sizeof(E))) -
                       internal::log2(static_cast<int>(kRatio)) + 3);
 
 template <typename E, size_t kRatio>
 concept is_compatible_elem_ratio =
     is_supported_rvv_elem_type<E, false> && is_supported_ratio<kRatio> &&
-    is_supported_lmul<lmul<E, kRatio>>;
+    is_supported_lmul<elem_ratio_to_lmul<E, kRatio>>;
 
 template <typename E, LMul kLMul>
   requires is_supported_rvv_elem_type<E, false> && is_supported_lmul<kLMul>
-constexpr size_t ratio = sizeof(E) * (1 << (3 - static_cast<int>(kLMul)));
+constexpr size_t elem_lmul_to_ratio =
+    sizeof(E) * (1 << (3 - static_cast<int>(kLMul)));
 
 template <typename E, LMul kLMul>
 concept is_compatible_elem_lmul =
     is_supported_rvv_elem_type<E, false> && is_supported_lmul<kLMul> &&
-    is_supported_ratio<ratio<E, kLMul>>;
+    is_supported_ratio<elem_lmul_to_ratio<E, kLMul>>;
 
 template <size_t kRatio_>
   requires is_supported_ratio<kRatio_>
@@ -61,35 +61,47 @@ struct vl_t {
 };
 
 namespace internal {
+// Specialization generated.
 template <typename E, size_t kRatio>
   requires is_compatible_elem_ratio<E, kRatio>
 struct VReg {};
 
+// Specialization generated.
 template <size_t kRatio>
   requires is_supported_ratio<kRatio>
 struct VMask {};
 
+// Specialization generated.
 template <typename T>
 struct GetElemType {};
 
+// Specialization generated.
 template <typename T>
 struct GetRatio {};
 }  // namespace internal
 
 template <typename E, size_t kRatio>
   requires is_compatible_elem_ratio<E, kRatio>
-using vreg_t = internal::VReg<E, kRatio>::type;
+using vreg_t = internal::VReg<E, kRatio>::RegType;
 
 template <size_t kRatio>
   requires is_supported_ratio<kRatio>
-using vmask_t = internal::VMask<kRatio>::type;
+using vmask_t = internal::VMask<kRatio>::MaskType;
 
 template <typename T>
 using elem_t = internal::GetElemType<T>::ElemType;
 
 template <typename T>
-constexpr size_t ratio_v = internal::GetRatio<T>::kRatio;
+constexpr size_t ratio = internal::GetRatio<T>::kRatio;
+
+template <size_t kRatio>
+constexpr size_t ratio<vl_t<kRatio>> = kRatio;
+
+template <typename T>
+constexpr LMul lmul = elem_ratio_to_lmul<elem_t<T>, ratio<T>>;
 
 }  // namespace rvv
+
+#include <rvv/type.inc>
 
 #endif  // RVV_TYPE_H_

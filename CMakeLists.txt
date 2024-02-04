@@ -3,6 +3,7 @@ project(rvv-intrinsics-cpp)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
 find_package(
   Python3
@@ -19,6 +20,8 @@ if(GTest_FOUND AND (NOT "${PYTEST_EXIT_CODE}"))
   enable_testing()
 endif()
 
+find_package(ClangFormat)
+
 set(RVV_FLAGS
     -Wno-builtin-macro-redefined
     -D__DATE__="redacted"
@@ -33,19 +36,69 @@ set(RVV_FLAGS
     -Wnon-virtual-dtor)
 
 if(NOT DEFINED RISCV_ARCH)
-  set(RISCV_ARCH rv64gc_v1p0)
+  set(RISCV_ARCH rv64gc_v1p0_zvfh)
 endif()
 list(APPEND RVV_FLAGS -march=${RISCV_ARCH})
 if(${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
   list(APPEND RVV_FLAGS -menable-experimental-extensions)
 endif()
 
-install(DIRECTORY include/rvv TYPE INCLUDE)
+set(GENERATED_INCLUDE_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated)
+set_directory_properties(PROPERTY ADDITIONAL_CLEAN_FILES
+                         ${GENERATED_INCLUDE_DIR})
+
+set(GENERATOR_DIR ${PROJECT_SOURCE_DIR}/generator)
+file(GLOB_RECURSE GENERATOR_LIB_SOURCES ${GENERATOR_DIR}/codegen/*.py)
+
+macro(generate_rvv filename generator)
+  set(_policy_variant ${ARGN})
+  set(_cmd_arg)
+  list(APPEND _cmd_arg "${GENERATED_INCLUDE_DIR}")
+  set(_all_generated)
+  macro(add_generated_file variant file_path)
+    if("${variant}" STREQUAL "")
+      list(APPEND _cmd_arg --base)
+    else()
+      list(APPEND _cmd_arg --${variant})
+    endif()
+    list(APPEND _cmd_arg ${file_path})
+    set(_full_path ${GENERATED_INCLUDE_DIR}/${file_path})
+    list(APPEND _all_generated ${_full_path})
+    get_filename_component(EXTENSION ${_full_path} LAST_EXT)
+    if(EXTENSION EQUAL ".h")
+      list(APPEND GENERATED_HEADER_FILES ${_full_path})
+    else()
+      list(APPEND GENERATED_INC_FILES ${_full_path})
+    endif()
+  endmacro()
+
+  set(_generator_file_name ${GENERATOR_DIR}/${generator})
+  add_generated_file("" rvv/${filename})
+
+  foreach(v ${_policy_variant})
+    add_generated_file(${v} rvv/policy/${v}/${filename})
+  endforeach()
+
+  add_custom_command(
+    OUTPUT ${_all_generated}
+    COMMAND Python3::Interpreter ${_generator_file_name} ${_cmd_arg}
+    COMMAND $<IF:$<BOOL:${CLANG_FORMAT_FOUND}>,${CLANG_FORMAT_EXECUTABLE},true>
+            -i ${_all_generated}
+    DEPENDS ${_generator_file_name} ${GENERATOR_LIB_SOURCES}
+    VERBATIM)
+endmacro()
+
+generate_rvv("type.inc" "gen_type_inc.py")
+
+add_custom_target(generated_files ALL DEPENDS ${GENERATED_HEADER_FILES}
+                                              ${GENERATED_INC_FILES})
+
+install(DIRECTORY ${GENERATED_INCLUDE_DIR}/rvv include/rvv TYPE INCLUDE)
 
 macro(rvv_add_executable exe)
   add_executable(${exe} ${ARGN})
   target_compile_options(${exe} PRIVATE ${RVV_FLAGS})
-  target_include_directories(${exe} PRIVATE include)
+  target_include_directories(${exe} PRIVATE ${GENERATED_INCLUDE_DIR} include)
 endmacro()
 
 macro(rvv_add_test exe)

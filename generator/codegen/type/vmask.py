@@ -1,5 +1,4 @@
 from . import type
-from .. import ident
 from dataclasses import dataclass
 
 
@@ -9,4 +8,4 @@ class VMaskType(type.Type):
 
     @property
     def cpp_repr(self) -> str:
-        return f"{ident.vmask_t}<{self.ratio}>"
+        return f"vmask_t<{self.ratio}>"

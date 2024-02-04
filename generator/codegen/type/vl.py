@@ -1,5 +1,4 @@
 from . import type
-from .. import ident
 from dataclasses import dataclass
 
 
@@ -9,4 +8,4 @@ class VLType(type.Type):
 
     @property
     def cpp_repr(self) -> str:
-        return f"{ident.vl_t}<{self.ratio}>"
+        return f"vl_t<{self.ratio}>"

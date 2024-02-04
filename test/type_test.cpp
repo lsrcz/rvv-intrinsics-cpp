@@ -60,12 +60,14 @@ using LMulRatioTestConfigs = ::testing::Types<
 TYPED_TEST_SUITE(LMulRatioTest, LMulRatioTestConfigs);
 
 TYPED_TEST(LMulRatioTest, lmul) {
-  EXPECT_EQ((rvv::lmul<typename TypeParam::ElemType, TypeParam::kRatio>),
+  EXPECT_EQ((rvv::elem_ratio_to_lmul<typename TypeParam::ElemType,
+                                     TypeParam::kRatio>),
             TypeParam::kLMul);
 }
 TYPED_TEST(LMulRatioTest, ratio) {
-  EXPECT_EQ((rvv::ratio<typename TypeParam::ElemType, TypeParam::kLMul>),
-            TypeParam::kRatio);
+  EXPECT_EQ(
+      (rvv::elem_lmul_to_ratio<typename TypeParam::ElemType, TypeParam::kLMul>),
+      TypeParam::kRatio);
 }
 
 template <typename E, size_t kRatio_, bool kExpected_>
@@ -152,4 +154,192 @@ TYPED_TEST(IsCompatibleElemLMulTest, is_compatible_elem_lmul) {
   EXPECT_EQ((rvv::is_compatible_elem_lmul<typename TypeParam::ElemType,
                                           TypeParam::kLMul>),
             TypeParam::kExpected);
+}
+
+template <typename Config>
+class VRegTypeTest : public ::testing::Test {};
+
+template <typename E, size_t kRatio_, typename R>
+class VRegTypeConfig {
+ public:
+  using ElemType = E;
+  static constexpr size_t kRatio = kRatio_;
+  using RegType = R;
+};
+
+using VRegTypeTestConfigs = ::testing::Types<
+#if HAS_ELEN64
+    VRegTypeConfig<uint8_t, 64, vuint8mf8_t>,
+    VRegTypeConfig<int16_t, 64, vint16mf4_t>,
+    VRegTypeConfig<int32_t, 64, vint32mf2_t>,
+#if HAS_ZVE64X
+    VRegTypeConfig<uint64_t, 8, vuint64m8_t>,
+    VRegTypeConfig<uint64_t, 64, vuint64m1_t>,
+#endif
+#endif
+#if HAS_ZVFHMIN
+    VRegTypeConfig<_Float16, 2, vfloat16m8_t>,
+#endif
+#if HAS_ZVE32F
+    VRegTypeConfig<float, 4, vfloat32m8_t>,
+#endif
+#if HAS_ZVE64D
+    VRegTypeConfig<double, 8, vfloat64m8_t>,
+#endif
+    VRegTypeConfig<uint8_t, 1, vuint8m8_t>,
+    VRegTypeConfig<uint8_t, 32, vuint8mf4_t>,
+    VRegTypeConfig<int16_t, 2, vint16m8_t>,
+    VRegTypeConfig<int16_t, 32, vint16mf2_t>,
+    VRegTypeConfig<int32_t, 4, vint32m8_t>,
+    VRegTypeConfig<int32_t, 32, vint32m1_t>>;
+
+TYPED_TEST_SUITE(VRegTypeTest, VRegTypeTestConfigs);
+
+TYPED_TEST(VRegTypeTest, vreg) {
+  using Actual = rvv::vreg_t<typename TypeParam::ElemType, TypeParam::kRatio>;
+  EXPECT_TRUE((std::is_same_v<Actual, typename TypeParam::RegType>));
+}
+
+template <typename Config>
+class ElemTypeTest : public ::testing::Test {};
+
+template <typename T, typename E>
+class ElemTypeConfig {
+ public:
+  using Type = T;
+  using ElemType = E;
+};
+
+using ElemTTestConfigs = ::testing::Types<
+#if HAS_ELEN64
+    ElemTypeConfig<vuint8mf8_t, uint8_t>, ElemTypeConfig<vint16mf4_t, int16_t>,
+    ElemTypeConfig<vint32mf2_t, int32_t>,
+#if HAS_ZVE64X
+    ElemTypeConfig<vuint64m8_t, uint64_t>,
+    ElemTypeConfig<vuint64m1_t, uint64_t>,
+#endif
+#endif
+#if HAS_ZVFHMIN
+    ElemTypeConfig<vfloat16m8_t, _Float16>,
+#endif
+#if HAS_ZVE32F
+    ElemTypeConfig<vfloat32m8_t, float>,
+#endif
+#if HAS_ZVE64D
+    ElemTypeConfig<vfloat64m8_t, double>,
+#endif
+    ElemTypeConfig<vuint8m8_t, uint8_t>, ElemTypeConfig<vuint8mf4_t, uint8_t>,
+    ElemTypeConfig<vint16m8_t, int16_t>, ElemTypeConfig<vint16mf2_t, int16_t>,
+    ElemTypeConfig<vint32m8_t, int32_t>, ElemTypeConfig<vint32m1_t, int32_t>>;
+
+TYPED_TEST_SUITE(ElemTypeTest, ElemTTestConfigs);
+
+TYPED_TEST(ElemTypeTest, elem_type) {
+  using Actual = rvv::elem_t<typename TypeParam::Type>;
+  EXPECT_TRUE((std::is_same_v<Actual, typename TypeParam::ElemType>));
+}
+
+template <typename Config>
+class RatioTest : public ::testing::Test {};
+
+template <typename T, size_t kRatio_>
+class RatioConfig {
+ public:
+  using Type = T;
+  static constexpr size_t kRatio = kRatio_;
+};
+
+using RatioTestConfigs = ::testing::Types<
+#if HAS_ELEN64
+    RatioConfig<vuint8mf8_t, 64>, RatioConfig<vint16mf4_t, 64>,
+    RatioConfig<vint32mf2_t, 64>,
+#if HAS_ZVE64X
+    RatioConfig<vuint64m8_t, 8>, RatioConfig<vuint64m1_t, 64>,
+#endif
+#endif
+#if HAS_ZVFHMIN
+    RatioConfig<vfloat16m8_t, 2>,
+#endif
+#if HAS_ZVE32F
+    RatioConfig<vfloat32m8_t, 4>,
+#endif
+#if HAS_ZVE64D
+    RatioConfig<vfloat64m8_t, 8>,
+#endif
+    RatioConfig<vuint8m8_t, 1>, RatioConfig<vuint8mf4_t, 32>,
+    RatioConfig<vint16m8_t, 2>, RatioConfig<vint16mf2_t, 32>,
+    RatioConfig<vint32m8_t, 4>, RatioConfig<vint32m1_t, 32>,
+    RatioConfig<rvv::vl_t<8>, 8>, RatioConfig<rvv::vmask_t<8>, 8>>;
+
+TYPED_TEST_SUITE(RatioTest, RatioTestConfigs);
+
+TYPED_TEST(RatioTest, ratio) {
+  EXPECT_EQ((rvv::ratio<typename TypeParam::Type>), TypeParam::kRatio);
+}
+
+template <typename Config>
+class VMaskTypeTest : public ::testing::Test {};
+
+template <size_t kRatio_, typename M>
+class VMaskTypeConfig {
+ public:
+  static constexpr size_t kRatio = kRatio_;
+  using MaskType = M;
+};
+
+using VMaskTypeTestConfigs = ::testing::Types<
+#if HAS_ELEN64
+    VMaskTypeConfig<64, vbool64_t>,
+#endif
+    VMaskTypeConfig<32, vbool32_t>, VMaskTypeConfig<16, vbool16_t>,
+    VMaskTypeConfig<8, vbool8_t>, VMaskTypeConfig<4, vbool4_t>,
+    VMaskTypeConfig<2, vbool2_t>, VMaskTypeConfig<1, vbool1_t>>;
+
+TYPED_TEST_SUITE(VMaskTypeTest, VMaskTypeTestConfigs);
+
+TYPED_TEST(VMaskTypeTest, vmask) {
+  using Actual = rvv::vmask_t<TypeParam::kRatio>;
+  EXPECT_TRUE((std::is_same_v<Actual, typename TypeParam::MaskType>));
+}
+
+template <typename Config>
+class LMulTest : public ::testing::Test {};
+
+template <typename T, rvv::LMul kLMul_>
+class LMulConfig {
+ public:
+  using Type = T;
+  static constexpr rvv::LMul kLMul = kLMul_;
+};
+
+using LMulTestConfigs = ::testing::Types<
+#if HAS_ELEN64
+    LMulConfig<vuint8mf8_t, rvv::LMul::kMF8>,
+    LMulConfig<vint16mf4_t, rvv::LMul::kMF4>,
+    LMulConfig<vint32mf2_t, rvv::LMul::kMF2>,
+#if HAS_ZVE64X
+    LMulConfig<vuint64m8_t, rvv::LMul::kM8>,
+    LMulConfig<vuint64m1_t, rvv::LMul::kM1>,
+#endif
+#endif
+#if HAS_ZVFHMIN
+    LMulConfig<vfloat16m8_t, rvv::LMul::kM8>,
+#endif
+#if HAS_ZVE32F
+    LMulConfig<vfloat32m8_t, rvv::LMul::kM8>,
+#endif
+#if HAS_ZVE64D
+    LMulConfig<vfloat64m8_t, rvv::LMul::kM8>,
+#endif
+    LMulConfig<vuint8m8_t, rvv::LMul::kM8>,
+    LMulConfig<vuint8mf4_t, rvv::LMul::kMF4>,
+    LMulConfig<vint16m8_t, rvv::LMul::kM8>,
+    LMulConfig<vint16mf2_t, rvv::LMul::kMF2>,
+    LMulConfig<vint32m8_t, rvv::LMul::kM8>,
+    LMulConfig<vint32m1_t, rvv::LMul::kM1>>;
+
+TYPED_TEST_SUITE(LMulTest, LMulTestConfigs);
+
+TYPED_TEST(LMulTest, lmul) {
+  EXPECT_EQ((rvv::lmul<typename TypeParam::Type>), TypeParam::kLMul);
 }
