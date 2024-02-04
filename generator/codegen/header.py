@@ -78,6 +78,51 @@ class Namespace(HeaderPart):
 }}  // namespace {self.name}"""
 
 
+class VariantNamespace(HeaderPart):
+    def __init__(
+        self,
+        content: Sequence[HeaderPartLike],
+        allowed_variants: set[str] = ALL_VARIANTS,
+    ) -> None:
+        super().__init__(allowed_variants=allowed_variants)
+        self.content: Sequence[HeaderPartLike] = content
+
+    def _render(self, variants: Sequence[str]) -> str:
+        namespaces: dict[str, list[str]] = dict()
+
+        def add(namespace_name: str, variant: str) -> None:
+            if namespace_name not in namespaces:
+                namespaces[namespace_name] = []
+            namespaces[namespace_name].append(variant)
+
+        for variant in variants:
+            if variant == "" or variant == "m":
+                add("", variant)
+            elif variant == "tu" or variant == "tum":
+                add("tu", variant)
+            elif variant == "mu" or variant == "tumu":
+                add(variant, variant)
+            else:
+                raise ValueError(f"Unexpected variant: {variant}")
+        ret: list[str] = []
+        for namespace_name, namespace_variants in namespaces.items():
+            rendered = [
+                render(part, namespace_variants) for part in self.content
+            ]
+            if len(rendered) == 0 or all([r == "" for r in rendered]):
+                continue
+            joined = "\n".join(rendered)
+            if namespace_name == "":
+                ret.append(joined)
+            else:
+                ret.append(
+                    f"""namespace {namespace_name} {{
+{joined}
+}}  // namespace {namespace_name}"""
+                )
+        return "\n\n".join(ret)
+
+
 def join_all_generated(all_generated: Iterable[Optional[str]]) -> str:
     all: list[str] = []
     for generated in all_generated:

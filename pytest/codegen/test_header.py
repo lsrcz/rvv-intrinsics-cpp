@@ -29,6 +29,28 @@ def test_namespace() -> None:
     )
 
 
+def test_variant_namespace() -> None:
+    assert (
+        header.VariantNamespace(
+            [
+                header.WithVariants(
+                    lambda v: f"_{v}", allowed_variants={"", "m", "tu", "tumu"}
+                )
+            ]
+        ).render(["", "m", "tu", "tum", "mu", "tumu"])
+        == f"""_
+_m
+
+namespace tu {{
+_tu
+}}  // namespace tu
+
+namespace tumu {{
+_tumu
+}}  // namespace tumu"""
+    )
+
+
 def test_with_variants() -> None:
     assert (
         header.WithVariants(
