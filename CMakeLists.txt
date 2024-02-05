@@ -89,6 +89,7 @@ macro(generate_rvv filename generator)
 endmacro()
 
 generate_rvv("type.inc" "gen_type_inc.py")
+generate_rvv("misc.h" "gen_misc_h.py")
 
 add_custom_target(generated_files ALL DEPENDS ${GENERATED_HEADER_FILES}
                                               ${GENERATED_INC_FILES})
@@ -112,5 +113,10 @@ add_test(
   NAME python_tests
   COMMAND ${Python3_EXECUTABLE} -m pytest ${CMAKE_CURRENT_SOURCE_DIR}
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/generator)
-rvv_add_test(type_test test/type_test.cpp)
-rvv_add_test(type_traits_test test/type_traits_test.cpp)
+
+file(GLOB_RECURSE CPP_TESTS test/*.cpp)
+
+foreach(test_file ${CPP_TESTS})
+  get_filename_component(test_name ${test_file} NAME_WE)
+  rvv_add_test(${test_name} ${test_file})
+endforeach()
