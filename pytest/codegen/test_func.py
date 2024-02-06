@@ -1,6 +1,8 @@
+from typing import Optional
 from codegen.param_list import function, template
 from codegen import func, guarded
-from codegen.type import misc, elem
+from codegen.type import misc, elem, vmask, vreg
+import pytest
 
 
 def test_apply_function_typed_param_list() -> None:
@@ -185,3 +187,216 @@ int32_t func(E param1, float16_t param2) {
   return 0;
 }"""
     )
+
+
+elem_type = elem.ParamElemType(typename="E")
+ratio = misc.ParamSizeTValue(typename="kRatio")
+
+base_param_list = function.FunctionTypedParamList(
+    function.TypedParam(type=elem.ParamElemType(typename="E"), name="param1"),
+    function.TypedParam(
+        type=misc.ParamSizeTValue(typename="kRatio"), name="param2"
+    ),
+)
+
+mask_extra = function.FunctionTypedParamList(
+    function.TypedParam(type=vmask.VMaskType(ratio=ratio), name="vm")
+)
+
+dest_extra = function.FunctionTypedParamList(
+    function.TypedParam(
+        type=vreg.ConcreteVRegType(elem_type=elem_type, ratio=ratio), name="vd"
+    )
+)
+
+
+@pytest.mark.parametrize(
+    "variant,undisturbed_need_dest_arg,extra_list",
+    [
+        ("", False, function.FunctionTypedParamList()),
+        ("", True, function.FunctionTypedParamList()),
+        (
+            "m",
+            False,
+            mask_extra,
+        ),
+        (
+            "m",
+            True,
+            mask_extra,
+        ),
+        (
+            "tu",
+            False,
+            function.FunctionTypedParamList(),
+        ),
+        (
+            "tu",
+            True,
+            dest_extra,
+        ),
+        (
+            "tu",
+            None,
+            dest_extra,
+        ),
+        (
+            "tum",
+            False,
+            mask_extra,
+        ),
+        (
+            "tum",
+            True,
+            mask_extra + dest_extra,
+        ),
+        (
+            "mu",
+            False,
+            mask_extra,
+        ),
+        (
+            "mu",
+            True,
+            mask_extra + dest_extra,
+        ),
+        (
+            "tumu",
+            False,
+            mask_extra,
+        ),
+        (
+            "tumu",
+            True,
+            mask_extra + dest_extra,
+        ),
+    ],
+)
+def test_elem_ratio_extend_param_list(
+    variant: str,
+    undisturbed_need_dest_arg: Optional[bool],
+    extra_list: function.FunctionTypedParamList,
+) -> None:
+    if undisturbed_need_dest_arg is None:
+        assert (
+            func.elem_ratio_extend_param_list(
+                elem_type=elem_type,
+                ratio=ratio,
+                variant=variant,
+                param_list=base_param_list,
+            )
+            == extra_list + base_param_list
+        )
+    else:
+        assert (
+            func.elem_ratio_extend_param_list(
+                elem_type=elem_type,
+                ratio=ratio,
+                variant=variant,
+                param_list=base_param_list,
+                undisturbed_need_dest_arg=undisturbed_need_dest_arg,
+            )
+            == extra_list + base_param_list
+        )
+
+
+vreg_type = vreg.ParamVRegType(typename="V")
+
+vreg_base_param_list = function.FunctionTypedParamList(
+    function.TypedParam(type=vreg_type, name="param1"),
+    function.TypedParam(type=ratio, name="param2"),
+)
+
+vreg_dest_extra = function.FunctionTypedParamList(
+    function.TypedParam(type=vreg_type, name="vd")
+)
+
+
+@pytest.mark.parametrize(
+    "variant,undisturbed_need_dest_arg,extra_list",
+    [
+        ("", False, function.FunctionTypedParamList()),
+        ("", True, function.FunctionTypedParamList()),
+        (
+            "m",
+            False,
+            mask_extra,
+        ),
+        (
+            "m",
+            True,
+            mask_extra,
+        ),
+        (
+            "tu",
+            False,
+            function.FunctionTypedParamList(),
+        ),
+        (
+            "tu",
+            True,
+            vreg_dest_extra,
+        ),
+        (
+            "tu",
+            None,
+            vreg_dest_extra,
+        ),
+        (
+            "tum",
+            False,
+            mask_extra,
+        ),
+        (
+            "tum",
+            True,
+            mask_extra + vreg_dest_extra,
+        ),
+        (
+            "mu",
+            False,
+            mask_extra,
+        ),
+        (
+            "mu",
+            True,
+            mask_extra + vreg_dest_extra,
+        ),
+        (
+            "tumu",
+            False,
+            mask_extra,
+        ),
+        (
+            "tumu",
+            True,
+            mask_extra + vreg_dest_extra,
+        ),
+    ],
+)
+def test_vreg_ratio_extend_param_list(
+    variant: str,
+    undisturbed_need_dest_arg: Optional[bool],
+    extra_list: function.FunctionTypedParamList,
+) -> None:
+    if undisturbed_need_dest_arg is None:
+        assert (
+            func.vreg_ratio_extend_param_list(
+                vreg_type=vreg_type,
+                ratio=ratio,
+                variant=variant,
+                param_list=base_param_list,
+            )
+            == extra_list + base_param_list
+        )
+    else:
+        assert (
+            func.vreg_ratio_extend_param_list(
+                vreg_type=vreg_type,
+                ratio=ratio,
+                variant=variant,
+                param_list=base_param_list,
+                undisturbed_need_dest_arg=undisturbed_need_dest_arg,
+            )
+            == extra_list + base_param_list
+        )

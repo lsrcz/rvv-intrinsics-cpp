@@ -343,3 +343,167 @@ TYPED_TEST_SUITE(LMulTest, LMulTestConfigs);
 TYPED_TEST(LMulTest, lmul) {
   EXPECT_EQ((rvv::lmul<typename TypeParam::Type>), TypeParam::kLMul);
 }
+
+enum SupportedVReg {
+  kIsVReg = 1,
+  kIsSupportedIntegralVReg = 2,
+  kIsSupportedFloatingPointVReg = 4,
+  kIsSupportedFloatingPointVRegWithZvfh = 8,
+  kIsSupportedSignedVReg = 16,
+  kIsSupportedUnsignedVReg = 32,
+};
+
+template <typename Config>
+class IsVRegTest : public ::testing::Test {};
+
+template <typename T_, SupportedVReg kSpec_>
+class IsVRegConfig {
+ public:
+  using T = T_;
+  static constexpr SupportedVReg kSpec = kSpec_;
+};
+
+using IsVRegConfigs = ::testing::Types<
+#if HAS_ELEN64
+    IsVRegConfig<vuint8mf8_t,
+                 static_cast<SupportedVReg>(kIsVReg | kIsSupportedIntegralVReg |
+                                            kIsSupportedUnsignedVReg)>,
+    IsVRegConfig<vint16mf4_t,
+                 static_cast<SupportedVReg>(kIsVReg | kIsSupportedIntegralVReg |
+                                            kIsSupportedSignedVReg)>,
+    IsVRegConfig<vint32mf2_t,
+                 static_cast<SupportedVReg>(kIsVReg | kIsSupportedIntegralVReg |
+                                            kIsSupportedSignedVReg)>,
+#if HAS_ZVE64X
+    IsVRegConfig<vuint64m8_t,
+                 static_cast<SupportedVReg>(kIsVReg | kIsSupportedIntegralVReg |
+                                            kIsSupportedUnsignedVReg)>,
+    IsVRegConfig<vuint64m1_t,
+                 static_cast<SupportedVReg>(kIsVReg | kIsSupportedIntegralVReg |
+                                            kIsSupportedUnsignedVReg)>,
+#endif
+#endif
+#if HAS_ZVFH
+    IsVRegConfig<vfloat16m8_t, static_cast<SupportedVReg>(
+                                   kIsVReg | kIsSupportedFloatingPointVReg |
+                                   kIsSupportedFloatingPointVRegWithZvfh)>,
+#elif HAS_ZVFHMIN
+    IsVRegConfig<vfloat16m8_t, static_cast<SupportedVReg>(
+                                   kIsVReg | kIsSupportedFloatingPointVReg)>,
+#endif
+
+#if HAS_ZVE32F
+    IsVRegConfig<vfloat32m8_t, static_cast<SupportedVReg>(
+                                   kIsVReg | kIsSupportedFloatingPointVReg |
+                                   kIsSupportedFloatingPointVRegWithZvfh)>,
+#endif
+#if HAS_ZVE64D
+    IsVRegConfig<vfloat64m8_t, static_cast<SupportedVReg>(
+                                   kIsVReg | kIsSupportedFloatingPointVReg |
+                                   kIsSupportedFloatingPointVRegWithZvfh)>,
+#endif
+    IsVRegConfig<vuint8m8_t,
+                 static_cast<SupportedVReg>(kIsVReg | kIsSupportedIntegralVReg |
+                                            kIsSupportedUnsignedVReg)>,
+    IsVRegConfig<vuint8mf4_t,
+                 static_cast<SupportedVReg>(kIsVReg | kIsSupportedIntegralVReg |
+                                            kIsSupportedUnsignedVReg)>,
+    IsVRegConfig<vint16m8_t,
+                 static_cast<SupportedVReg>(kIsVReg | kIsSupportedIntegralVReg |
+                                            kIsSupportedSignedVReg)>,
+    IsVRegConfig<vint16mf2_t,
+                 static_cast<SupportedVReg>(kIsVReg | kIsSupportedIntegralVReg |
+                                            kIsSupportedSignedVReg)>,
+    IsVRegConfig<vint32m8_t,
+                 static_cast<SupportedVReg>(kIsVReg | kIsSupportedIntegralVReg |
+                                            kIsSupportedSignedVReg)>,
+    IsVRegConfig<vint32m1_t,
+                 static_cast<SupportedVReg>(kIsVReg | kIsSupportedIntegralVReg |
+                                            kIsSupportedSignedVReg)>,
+    IsVRegConfig<rvv::vl_t<8>, static_cast<SupportedVReg>(0)>,
+    IsVRegConfig<rvv::vmask_t<8>, static_cast<SupportedVReg>(0)>,
+    IsVRegConfig<int8_t, static_cast<SupportedVReg>(0)>>;
+
+TYPED_TEST_SUITE(IsVRegTest, IsVRegConfigs);
+
+TYPED_TEST(IsVRegTest, is_vreg) {
+  EXPECT_EQ((rvv::is_vreg<typename TypeParam::T>),
+            !!(TypeParam::kSpec & SupportedVReg::kIsVReg));
+}
+
+TYPED_TEST(IsVRegTest, is_supported_integral_vreg) {
+  EXPECT_EQ((rvv::is_supported_integral_vreg<typename TypeParam::T>),
+            !!(TypeParam::kSpec & SupportedVReg::kIsSupportedIntegralVReg));
+}
+
+TYPED_TEST(IsVRegTest, is_supported_floating_point_vreg) {
+  EXPECT_EQ(
+      (rvv::is_supported_floating_point_vreg<typename TypeParam::T, false>),
+      !!(TypeParam::kSpec & SupportedVReg::kIsSupportedFloatingPointVReg));
+}
+
+TYPED_TEST(IsVRegTest, is_supported_floating_point_vreg_with_zvfh) {
+  EXPECT_EQ(
+      (rvv::is_supported_floating_point_vreg<typename TypeParam::T, true>),
+      !!(TypeParam::kSpec &
+         SupportedVReg::kIsSupportedFloatingPointVRegWithZvfh));
+}
+
+TYPED_TEST(IsVRegTest, is_supported_signed_vreg) {
+  EXPECT_EQ((rvv::is_supported_signed_vreg<typename TypeParam::T>),
+            !!(TypeParam::kSpec & SupportedVReg::kIsSupportedSignedVReg));
+}
+
+TYPED_TEST(IsVRegTest, is_supported_unsigned_vreg) {
+  EXPECT_EQ((rvv::is_supported_unsigned_vreg<typename TypeParam::T>),
+            !!(TypeParam::kSpec & SupportedVReg::kIsSupportedUnsignedVReg));
+}
+
+template <typename Config>
+class IsCompatibleVRegRatioTest : public ::testing::Test {};
+
+template <typename T_, size_t kRatio_, bool kExpected_>
+class IsCompatibleVRegRatioConfig {
+ public:
+  using T = T_;
+  static constexpr size_t kRatio = kRatio_;
+  static constexpr bool kExpected = kExpected_;
+};
+
+using IsCompatibleVRegRatioConfigs = ::testing::Types<
+#if HAS_ELEN64
+    IsCompatibleVRegRatioConfig<vuint8mf8_t, 64, true>,
+    IsCompatibleVRegRatioConfig<vint16mf4_t, 64, true>,
+    IsCompatibleVRegRatioConfig<vint32mf2_t, 64, true>,
+#if HAS_ZVE64X
+    IsCompatibleVRegRatioConfig<vuint64m8_t, 8, true>,
+    IsCompatibleVRegRatioConfig<vuint64m1_t, 64, true>,
+#endif
+#endif
+#if HAS_ZVFHMIN
+    IsCompatibleVRegRatioConfig<vfloat16m8_t, 2, true>,
+#endif
+#if HAS_ZVE32F
+    IsCompatibleVRegRatioConfig<vfloat32m8_t, 4, true>,
+#endif
+#if HAS_ZVE64D
+    IsCompatibleVRegRatioConfig<vfloat64m8_t, 8, true>,
+#endif
+    IsCompatibleVRegRatioConfig<vuint8m8_t, 1, true>,
+    IsCompatibleVRegRatioConfig<vuint8mf4_t, 32, true>,
+    IsCompatibleVRegRatioConfig<vint16m8_t, 2, true>,
+    IsCompatibleVRegRatioConfig<vint16mf2_t, 32, true>,
+    IsCompatibleVRegRatioConfig<vint32m8_t, 4, true>,
+    IsCompatibleVRegRatioConfig<vint32m1_t, 32, true>,
+    IsCompatibleVRegRatioConfig<vint32m1_t, 8, false>,
+    IsCompatibleVRegRatioConfig<rvv::vl_t<8>, 8, false>,
+    IsCompatibleVRegRatioConfig<rvv::vmask_t<8>, 8, false>,
+    IsCompatibleVRegRatioConfig<int8_t, 8, false>>;
+
+TYPED_TEST_SUITE(IsCompatibleVRegRatioTest, IsCompatibleVRegRatioConfigs);
+
+TYPED_TEST(IsCompatibleVRegRatioTest, is_compatible_vreg_ratio) {
+  EXPECT_EQ(
+      (rvv::is_compatible_vreg_ratio<typename TypeParam::T, TypeParam::kRatio>),
+      TypeParam::kExpected);
+}

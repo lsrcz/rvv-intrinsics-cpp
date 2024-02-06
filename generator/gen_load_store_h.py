@@ -138,7 +138,6 @@ def non_indexed_load_variant_def_template(
             ratio,
             variant,
             non_indexed_load_arguments(inst, elem_type, ratio),
-            undisturbed_need_dest_arg=True,
         ),
         lambda variant, _, __, width, param_list: non_indexed_variant_load_function_body(
             variant, inst, width, param_list
@@ -196,6 +195,7 @@ def non_indexed_store_def_template(
             ratio,
             variant,
             non_indexed_store_arguments(inst, elem_type, ratio),
+            undisturbed_need_dest_arg=False,
         ),
         lambda variant, _, __, width, param_list: non_indexed_store_function_body(
             variant, inst, width, param_list
@@ -290,6 +290,7 @@ def vsxei_defs(inst: str) -> Callable[[str, int], Optional[func.Function]]:
                 ),
                 function.TypedParam(type=vl.VLType(ratio=ratio), name="vl"),
             ),
+            undisturbed_need_dest_arg=False,
         ),
         lambda variant, elem_type, ratio, width, param_list: (
             func.apply_function(

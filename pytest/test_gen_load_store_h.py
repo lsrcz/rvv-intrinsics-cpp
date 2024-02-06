@@ -224,8 +224,8 @@ def test_vluxei_tum_64() -> None:
         == """template <typename E, size_t kRatio>
   requires is_compatible_elem_ratio<E, kRatio>
 RVV_ALWAYS_INLINE
-vreg_t<E, kRatio> vluxei(vmask_t<kRatio> vm, const E * rs1, vreg_t<uint8_t, kRatio> rs2, vl_t<kRatio> vl) {
-  return __riscv_vluxei8_tum(vm, rs1, rs2, vl);
+vreg_t<E, kRatio> vluxei(vmask_t<kRatio> vm, vreg_t<E, kRatio> vd, const E * rs1, vreg_t<uint8_t, kRatio> rs2, vl_t<kRatio> vl) {
+  return __riscv_vluxei8_tum(vm, vd, rs1, rs2, vl);
 }"""
     )
 

@@ -79,6 +79,14 @@ template <typename E>
 concept is_supported_rvv_integral =
     !relies_on_unsupported_zve64x<E> && is_rvv_integral<E>;
 
+template <typename E>
+concept is_supported_rvv_signed =
+    is_supported_rvv_integral<E> && is_rvv_signed<E>;
+
+template <typename E>
+concept is_supported_rvv_unsigned =
+    is_supported_rvv_integral<E> && is_rvv_unsigned<E>;
+
 template <typename E, bool kNeedZvfh>
 concept is_supported_rvv_floating_point =
     !relies_on_unsupported_zvfh<E, kNeedZvfh> &&

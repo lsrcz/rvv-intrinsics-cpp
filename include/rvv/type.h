@@ -100,6 +100,32 @@ constexpr size_t ratio<vl_t<kRatio>> = kRatio;
 template <typename T>
 constexpr LMul lmul = elem_ratio_to_lmul<elem_t<T>, ratio<T>>;
 
+template <typename T>
+concept is_vreg = requires {
+  typename internal::GetElemType<T>::ElemType;
+  internal::GetRatio<T>::kRatio;
+};
+
+template <typename T, size_t kRatio>
+concept is_compatible_vreg_ratio = is_vreg<T> && ratio<T> == kRatio &&
+                                   is_compatible_elem_ratio<elem_t<T>, kRatio>;
+
+template <typename T>
+concept is_supported_integral_vreg =
+    is_vreg<T> && is_supported_rvv_integral<elem_t<T>>;
+
+template <typename T>
+concept is_supported_signed_vreg =
+    is_vreg<T> && is_supported_rvv_signed<elem_t<T>>;
+
+template <typename T>
+concept is_supported_unsigned_vreg =
+    is_vreg<T> && is_supported_rvv_unsigned<elem_t<T>>;
+
+template <typename T, bool kNeedZvfh>
+concept is_supported_floating_point_vreg =
+    is_vreg<T> && is_supported_rvv_floating_point<elem_t<T>, kNeedZvfh>;
+
 }  // namespace rvv
 
 #include <rvv/type.inc>

@@ -91,6 +91,7 @@ endmacro()
 generate_rvv("type.inc" "gen_type_inc.py")
 generate_rvv("misc.h" "gen_misc_h.py")
 generate_rvv("load_store.h" "gen_load_store_h.py" "tu" "mu" "tumu")
+generate_rvv("int.h" "gen_int_h.py" "tu" "mu" "tumu")
 
 add_custom_target(generated_files ALL DEPENDS ${GENERATED_HEADER_FILES}
                                               ${GENERATED_INC_FILES})

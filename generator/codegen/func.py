@@ -197,7 +197,7 @@ def elem_ratio_extend_param_list(
     ratio: misc.SizeTValue,
     variant: str,
     param_list: function.FunctionTypedParamList,
-    undisturbed_need_dest_arg: bool = False,
+    undisturbed_need_dest_arg: bool = True,
 ) -> function.FunctionTypedParamList:
     return (
         function.FunctionTypedParamList(
@@ -274,6 +274,139 @@ def template_elem_ratio_for_all_size(
             template_param_list=template_param_list(elem_type, ratio),
             require_clauses=require_clauses(elem_type, ratio, width),
             feature_guards=feature_guards(elem_type, ratio),
+        )
+
+    return inner
+
+
+def template_elem_ratio(
+    ret_type: Callable[[elem.ParamElemType, misc.ParamSizeTValue], type.Type],
+    cpp_intrinsics_base_name: str,
+    function_param_list: Callable[
+        [str, elem.ParamElemType, misc.ParamSizeTValue],
+        function.FunctionTypedParamList,
+    ],
+    function_body: Callable[
+        [
+            str,
+            elem.ParamElemType,
+            misc.ParamSizeTValue,
+            function.FunctionTypedParamList,
+        ],
+        Optional[str],
+    ],
+    *,
+    template_param_list: Callable[
+        [elem.ParamElemType, misc.ParamSizeTValue],
+        Optional[template.TemplateTypeParamList],
+    ] = lambda elem_type, ratio: template.TemplateTypeParamList(
+        elem_type, ratio
+    ),
+    require_clauses: Callable[
+        [elem.ParamElemType, misc.ParamSizeTValue], Sequence[str]
+    ] = lambda elem_type, ratio: [
+        constraints.is_compatible_elem_ratio(elem_type, ratio),
+    ],
+    feature_guards: Callable[
+        [elem.ParamElemType, misc.ParamSizeTValue], Sequence[guarded.Guard]
+    ] = lambda _, __: tuple(),
+) -> Callable[[str], Function]:
+    elem_type = elem.ParamElemType(typename="E")
+    ratio = misc.ParamSizeTValue(typename="kRatio")
+
+    def inner(variant: str) -> Function:
+        param_list = function_param_list(variant, elem_type, ratio)
+        return Function(
+            ret_type(elem_type, ratio),
+            f"{cpp_intrinsics_base_name}",
+            param_list,
+            function_body(variant, elem_type, ratio, param_list),
+            template_param_list=template_param_list(elem_type, ratio),
+            require_clauses=require_clauses(elem_type, ratio),
+            feature_guards=feature_guards(elem_type, ratio),
+        )
+
+    return inner
+
+
+def vreg_ratio_extend_param_list(
+    vreg_type: vreg.VRegType,
+    ratio: misc.SizeTValue,
+    variant: str,
+    param_list: function.FunctionTypedParamList,
+    undisturbed_need_dest_arg: bool = True,
+) -> function.FunctionTypedParamList:
+    return (
+        function.FunctionTypedParamList(
+            *(
+                [
+                    function.TypedParam(
+                        type=vmask.VMaskType(ratio=ratio), name="vm"
+                    )
+                ]
+                if "m" in variant
+                else []
+            )
+            + (
+                [
+                    function.TypedParam(
+                        type=vreg_type,
+                        name="vd",
+                    )
+                ]
+                if variant not in ["", "m"] and undisturbed_need_dest_arg
+                else []
+            )
+        )
+        + param_list
+    )
+
+
+def template_vreg_ratio(
+    ret_type: Callable[[vreg.ParamVRegType, misc.ParamSizeTValue], type.Type],
+    cpp_intrinsics_base_name: str,
+    function_param_list: Callable[
+        [str, vreg.ParamVRegType, misc.ParamSizeTValue],
+        function.FunctionTypedParamList,
+    ],
+    function_body: Callable[
+        [
+            str,
+            vreg.ParamVRegType,
+            misc.ParamSizeTValue,
+            function.FunctionTypedParamList,
+        ],
+        Optional[str],
+    ],
+    *,
+    template_param_list: Callable[
+        [vreg.ParamVRegType, misc.ParamSizeTValue],
+        Optional[template.TemplateTypeParamList],
+    ] = lambda vreg_type, ratio: template.TemplateTypeParamList(
+        vreg_type, ratio
+    ),
+    require_clauses: Callable[
+        [vreg.ParamVRegType, misc.ParamSizeTValue], Sequence[str]
+    ] = lambda vreg_type, ratio: [
+        constraints.is_compatible_vreg_ratio(vreg_type, ratio),
+    ],
+    feature_guards: Callable[
+        [vreg.ParamVRegType, misc.ParamSizeTValue], Sequence[guarded.Guard]
+    ] = lambda _, __: tuple(),
+) -> Callable[[str], Function]:
+    vreg_type = vreg.ParamVRegType(typename="V")
+    ratio = misc.ParamSizeTValue(typename="kRatio")
+
+    def inner(variant: str) -> Function:
+        param_list = function_param_list(variant, vreg_type, ratio)
+        return Function(
+            ret_type(vreg_type, ratio),
+            f"{cpp_intrinsics_base_name}",
+            param_list,
+            function_body(variant, vreg_type, ratio, param_list),
+            template_param_list=template_param_list(vreg_type, ratio),
+            require_clauses=require_clauses(vreg_type, ratio),
+            feature_guards=feature_guards(vreg_type, ratio),
         )
 
     return inner

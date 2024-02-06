@@ -214,6 +214,18 @@ TYPED_TEST(ElemTypeTraitsTest, is_supported_rvv_floating_point) {
       !!(TypeParam::kTrait & ElemTypeTraits::kIsSupportedRvvFloatingPoint));
 }
 
+TYPED_TEST(ElemTypeTraitsTest, is_supported_rvv_signed) {
+  EXPECT_EQ((rvv::is_supported_rvv_signed<typename TypeParam::ElemType>),
+            !!(TypeParam::kTrait & ElemTypeTraits::kIsRvvIntegral) &&
+                !!(TypeParam::kTrait & ElemTypeTraits::kIsRvvSigned));
+}
+
+TYPED_TEST(ElemTypeTraitsTest, is_supported_rvv_unsigned) {
+  EXPECT_EQ((rvv::is_supported_rvv_unsigned<typename TypeParam::ElemType>),
+            !!(TypeParam::kTrait & ElemTypeTraits::kIsRvvIntegral) &&
+                !!(TypeParam::kTrait & ElemTypeTraits::kIsRvvUnsigned));
+}
+
 enum RatioTypeTraits {
   kIsSupportedRatio = 1,
   kReliesUnsupportedElen64 = 2,
