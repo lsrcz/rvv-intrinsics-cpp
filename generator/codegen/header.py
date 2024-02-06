@@ -217,6 +217,24 @@ class ForAllElemRatio(HeaderPart):
         )
 
 
+class ForAllElemSize(HeaderPart):
+    def __init__(
+        self,
+        gen: Callable[[str, int], Optional[cpp_repr.HasCppRepr]],
+        allowed_variants: set[str] = ALL_VARIANTS,
+    ) -> None:
+        super().__init__(allowed_variants=allowed_variants)
+        self.gen: Callable[[str, int], Optional[cpp_repr.HasCppRepr]] = gen
+
+    def _render(self, variants: Sequence[str]) -> str:
+        return join_all_generated(
+            [
+                macro.for_all_elem_size(lambda size: self.gen(variant, size))
+                for variant in variants
+            ]
+        )
+
+
 class Header:
     def __init__(
         self, parts: Sequence[HeaderPartLike], need_include_guard: bool = True

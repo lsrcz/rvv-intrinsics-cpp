@@ -1,7 +1,7 @@
 from typing import Callable, Optional, Sequence
 from codegen.param_list import function, template
-from codegen import guarded, constraints
-from codegen.type import type, misc
+from codegen import guarded, constraints, validate
+from codegen.type import type, misc, elem, vmask, vreg
 
 
 def apply_function(
@@ -11,16 +11,6 @@ def apply_function(
     if isinstance(param_list, function.FunctionTypedParamList):
         return apply_function(func, param_list.forward)
     return f"{func}{param_list.cpp_repr}"
-
-
-def cpp_postfix(variant: str) -> str:
-    match variant:
-        case "" | "m":
-            return ""
-        case "tu" | "tum":
-            return "_tu"
-        case _:
-            return f"_{variant}"
 
 
 def rv_postfix(variant: str, overloaded: bool = False) -> str:
@@ -107,7 +97,7 @@ def template_ratio(
         param_list = function_param_list(variant, ratio)
         return Function(
             ret_type(ratio),
-            f"{cpp_intrinsics_base_name}{cpp_postfix(variant)}",
+            f"{cpp_intrinsics_base_name}",
             param_list,
             function_body(variant, ratio, param_list),
             template_param_list=template_param_list(ratio),
@@ -145,6 +135,145 @@ def for_all_ratio(
             template_param_list=template_param_list,
             require_clauses=require_clauses,
             feature_guards=feature_guards(ratio),
+        )
+
+    return inner
+
+
+def for_all_elem_ratio(
+    ret_type: Callable[[elem.RawElemType, misc.LitSizeTValue], type.Type],
+    cpp_intrinsics_base_name: str,
+    function_param_list: Callable[
+        [str, elem.RawElemType, misc.LitSizeTValue],
+        function.FunctionTypedParamList,
+    ],
+    function_body: Callable[
+        [
+            str,
+            elem.RawElemType,
+            misc.LitSizeTValue,
+            function.FunctionTypedParamList,
+        ],
+        Optional[str],
+    ],
+    *,
+    need_zvfh: bool = True,
+    template_param_list: Optional[template.TemplateTypeParamList] = None,
+    require_clauses: Sequence[str] = tuple(),
+    feature_guards: Optional[
+        Callable[
+            [elem.RawElemType, misc.LitSizeTValue], Sequence[guarded.Guard]
+        ]
+    ] = None,
+) -> Callable[[str, elem.RawElemType, misc.LitSizeTValue], Optional[Function]]:
+    if feature_guards is None:
+        feature_guards = lambda elem_type, ratio: guarded.elem_ratio_guard(
+            elem_type, ratio, need_zvfh
+        )
+
+    def inner(
+        variant: str, elem_type: elem.RawElemType, ratio: misc.LitSizeTValue
+    ) -> Optional[Function]:
+        if not validate.is_compatible_elem_ratio_may_under_guards(
+            elem_type, ratio
+        ):
+            return None
+        param_list = function_param_list(variant, elem_type, ratio)
+        return Function(
+            ret_type(elem_type, ratio),
+            f"{cpp_intrinsics_base_name}{rv_postfix(variant)}",
+            param_list,
+            function_body(variant, elem_type, ratio, param_list),
+            template_param_list=template_param_list,
+            require_clauses=require_clauses,
+            feature_guards=feature_guards(elem_type, ratio),
+        )
+
+    return inner
+
+
+def elem_ratio_extend_param_list(
+    elem_type: elem.ElemType,
+    ratio: misc.SizeTValue,
+    variant: str,
+    param_list: function.FunctionTypedParamList,
+    undisturbed_need_dest_arg: bool = False,
+) -> function.FunctionTypedParamList:
+    return (
+        function.FunctionTypedParamList(
+            *(
+                [
+                    function.TypedParam(
+                        type=vmask.VMaskType(ratio=ratio), name="vm"
+                    )
+                ]
+                if "m" in variant
+                else []
+            )
+            + (
+                [
+                    function.TypedParam(
+                        type=vreg.ConcreteVRegType(
+                            elem_type=elem_type, ratio=ratio
+                        ),
+                        name="vd",
+                    )
+                ]
+                if variant not in ["", "m"] and undisturbed_need_dest_arg
+                else []
+            )
+        )
+        + param_list
+    )
+
+
+def template_elem_ratio_for_all_size(
+    ret_type: Callable[[elem.ParamElemType, misc.ParamSizeTValue], type.Type],
+    cpp_intrinsics_base_name: str,
+    function_param_list: Callable[
+        [str, elem.ParamElemType, misc.ParamSizeTValue, int],
+        function.FunctionTypedParamList,
+    ],
+    function_body: Callable[
+        [
+            str,
+            elem.ParamElemType,
+            misc.ParamSizeTValue,
+            int,
+            function.FunctionTypedParamList,
+        ],
+        Optional[str],
+    ],
+    *,
+    template_param_list: Callable[
+        [elem.ParamElemType, misc.ParamSizeTValue],
+        Optional[template.TemplateTypeParamList],
+    ] = lambda elem_type, ratio: template.TemplateTypeParamList(
+        elem_type, ratio
+    ),
+    require_clauses: Callable[
+        [elem.ParamElemType, misc.ParamSizeTValue, int], Sequence[str]
+    ] = lambda elem_type, ratio, width: [
+        constraints.has_width(elem_type, width),
+        constraints.is_compatible_elem_ratio(elem_type, ratio),
+    ],
+    feature_guards: Callable[
+        [elem.ParamElemType, misc.ParamSizeTValue], Sequence[guarded.Guard]
+    ] = lambda elem_type, ratio: tuple(),
+) -> Callable[[str, int], Optional[Function]]:
+    elem_type = elem.ParamElemType(typename="E")
+    ratio = misc.ParamSizeTValue(typename="kRatio")
+
+    def inner(variant: str, width: int) -> Optional[Function]:
+        param_list = function_param_list(variant, elem_type, ratio, width)
+        return Function(
+            ret_type(elem_type, ratio),
+            f"{cpp_intrinsics_base_name}",
+            param_list,
+            function_body(variant, elem_type, ratio, width, param_list),
+            template_param_list=template_param_list(elem_type, ratio),
+            require_clauses=require_clauses(elem_type, ratio, width),
+            feature_guards=feature_guards(elem_type, ratio),
         )
 
     return inner

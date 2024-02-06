@@ -61,3 +61,9 @@ def for_all_elem_ratio(
         return for_all_ratio(lambda r: gen(e, r))
 
     return for_all_elem(inner)
+
+
+def for_all_elem_size(
+    gen: Callable[[int], Optional[cpp_repr.HasCppRepr]]
+) -> Optional[str]:
+    return for_all([8, 16, 32, 64], gen)

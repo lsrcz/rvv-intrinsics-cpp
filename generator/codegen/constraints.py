@@ -17,3 +17,7 @@ def is_compatible_elem_lmul(
     elem_type: elem.ElemType, lmul: lmul.LMulValue
 ) -> str:
     return f"is_compatible_elem_lmul<{elem_type.cpp_repr}, {lmul.cpp_repr}>"
+
+
+def has_width(elem_type: elem.ElemType, width: int) -> str:
+    return f"(sizeof({elem_type.cpp_repr}) == {width // 8})"

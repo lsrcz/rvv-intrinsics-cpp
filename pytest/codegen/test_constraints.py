@@ -27,3 +27,10 @@ def test_is_compatible_elem_lmul() -> None:
         )
         == "is_compatible_elem_lmul<E, kLMul>"
     )
+
+
+def test_has_width() -> None:
+    assert (
+        constraints.has_width(elem.ParamElemType(typename="E"), 32)
+        == "(sizeof(E) == 4)"
+    )

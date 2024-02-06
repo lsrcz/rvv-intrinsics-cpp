@@ -28,15 +28,6 @@ def test_apply_function_argument_list() -> None:
     )
 
 
-def test_cpp_postfix() -> None:
-    assert func.cpp_postfix("") == ""
-    assert func.cpp_postfix("m") == ""
-    assert func.cpp_postfix("tu") == "_tu"
-    assert func.cpp_postfix("tum") == "_tu"
-    assert func.cpp_postfix("mu") == "_mu"
-    assert func.cpp_postfix("tumu") == "_tumu"
-
-
 def test_rv_postfix() -> None:
     assert func.rv_postfix("") == ""
     assert func.rv_postfix("m") == "_m"

@@ -27,4 +27,4 @@ def main(h: header.Header) -> None:
     if args.mu:
         h.write(["mu"], args.base_dir, f"{args.mu}")
     if args.tumu:
-        h.write(["mu"], args.base_dir, f"{args.tumu}")
+        h.write(["tumu"], args.base_dir, f"{args.tumu}")

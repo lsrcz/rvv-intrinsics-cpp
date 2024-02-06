@@ -125,6 +125,23 @@ def test_for_all_elem_ratio() -> None:
     ).render(["", "tu", "tum", "mu", "tumu"]) == "\n".join(expected)
 
 
+def test_for_all_elem_size() -> None:
+    def gen(variant: str, width: int) -> Optional[str]:
+        if width <= 32:
+            return f"{variant}, {width}"
+        return None
+
+    expected: list[str] = []
+    for v in ["tu", "tum"]:
+        for i in [8, 16, 32, 64]:
+            generated = gen(v, i)
+            if generated is not None:
+                expected.append(cpp_repr.to_cpp_repr(generated))
+    assert header.ForAllElemSize(
+        gen, allowed_variants={"m", "tu", "tum"}
+    ).render(["", "tu", "tum", "mu", "tumu"]) == "\n".join(expected)
+
+
 header_body = header.Namespace(
     "rvv::internal",
     [

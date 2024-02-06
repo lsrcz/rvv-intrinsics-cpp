@@ -49,3 +49,13 @@ def test_for_all_ratio() -> None:
 32
 64"""
     )
+
+
+def test_for_all_elem_size() -> None:
+    assert (
+        macro.for_all_elem_size(lambda x: str(x))
+        == """8
+16
+32
+64"""
+    )
