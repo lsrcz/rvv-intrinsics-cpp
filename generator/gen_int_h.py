@@ -1,4 +1,14 @@
-from codegen import header, ops, main
+from codegen import header, ops, main, func
+from typing import Callable
+
+
+def widening_part(
+    op: str,
+    signed: bool,
+    f: Callable[[str, bool], Callable[[str], func.Function]],
+) -> header.HeaderPart:
+    return header.WithVariants(f(op, signed))
+
 
 rvv_int_header = header.Header(
     [
@@ -17,53 +27,16 @@ rvv_int_header = header.Header(
                         header.WithVariants(ops.vx_op("vrsub", "int")),
                         header.WithVariants(ops.v_op("vneg", "int")),
                         "// 3.2. Vector Widening Integer Add/Subtract Intrinsics",
-                        header.WithVariants(
-                            ops.widening_vv_op("vwadd", signed=True)
-                        ),
-                        header.WithVariants(
-                            ops.widening_vx_op("vwadd", signed=True)
-                        ),
-                        header.WithVariants(
-                            ops.widening_wv_op("vwadd", signed=True)
-                        ),
-                        header.WithVariants(
-                            ops.widening_wx_op("vwadd", signed=True)
-                        ),
-                        header.WithVariants(
-                            ops.widening_vv_op("vwadd", signed=False)
-                        ),
-                        header.WithVariants(
-                            ops.widening_vx_op("vwadd", signed=False)
-                        ),
-                        header.WithVariants(
-                            ops.widening_wv_op("vwadd", signed=False)
-                        ),
-                        header.WithVariants(
-                            ops.widening_wx_op("vwadd", signed=False)
-                        ),
-                        header.WithVariants(
-                            ops.widening_vv_op("vwsub", signed=True)
-                        ),
-                        header.WithVariants(
-                            ops.widening_vx_op("vwsub", signed=True)
-                        ),
-                        header.WithVariants(
-                            ops.widening_wv_op("vwsub", signed=True)
-                        ),
-                        header.WithVariants(
-                            ops.widening_wx_op("vwsub", signed=True)
-                        ),
-                        header.WithVariants(
-                            ops.widening_vv_op("vwsub", signed=False)
-                        ),
-                        header.WithVariants(
-                            ops.widening_vx_op("vwsub", signed=False)
-                        ),
-                        header.WithVariants(
-                            ops.widening_wv_op("vwsub", signed=False)
-                        ),
-                        header.WithVariants(
-                            ops.widening_wx_op("vwsub", signed=False)
+                        header.CrossProduct(
+                            widening_part,
+                            ["vwadd", "vwsub"],
+                            [True, False],
+                            [
+                                ops.widening_vv_op,
+                                ops.widening_vx_op,
+                                ops.widening_wv_op,
+                                ops.widening_wx_op,
+                            ],
                         ),
                     ]
                 )

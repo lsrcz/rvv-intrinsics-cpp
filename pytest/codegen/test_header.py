@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Callable, Optional
 from codegen import header, cpp_repr
 from codegen.type import elem, lmul, misc
 import tempfile
@@ -140,6 +140,23 @@ def test_for_all_elem_size() -> None:
     assert header.ForAllElemSize(
         gen, allowed_variants={"m", "tu", "tum"}
     ).render(["", "tu", "tum", "mu", "tumu"]) == "\n".join(expected)
+
+
+def test_cross_product() -> None:
+    def gen(arg1: str, arg2: str) -> header.HeaderPart:
+        return header.WithVariants(lambda v: f"{v}, {arg1}, {arg2}")
+
+    assert (
+        header.CrossProduct(gen, ["a", "b"], ["c", "d"]).render(["", "m"])
+        == """, a, c
+m, a, c
+, a, d
+m, a, d
+, b, c
+m, b, c
+, b, d
+m, b, d"""
+    )
 
 
 header_body = header.Namespace(

@@ -1,6 +1,7 @@
 import abc
+import itertools
 import os
-from typing import Callable, Iterable, Optional, Sequence, Union
+from typing import Any, Callable, Iterable, Optional, Sequence, Union
 from . import cpp_repr, macro
 from .type import elem, lmul, misc
 
@@ -252,6 +253,24 @@ class ForAllElemType(HeaderPart):
                 for variant in variants
             ]
         )
+
+
+class CrossProduct(HeaderPart):
+    def __init__(
+        self,
+        gen: Callable[..., HeaderPartLike],
+        *args: Sequence[Any],
+        allowed_variants: frozenset[str] = ALL_VARIANTS,
+    ):
+        super().__init__(allowed_variants=allowed_variants)
+        self.gen: Callable[..., HeaderPartLike] = gen
+        self.args: Sequence[Sequence[Any]] = args
+
+    def _render(self, variants: Sequence[str]) -> str:
+        ret: list[str] = []
+        for next_args in itertools.product(*self.args):
+            ret.append(render(self.gen(*next_args), variants))
+        return "\n".join(ret)
 
 
 class Header:
