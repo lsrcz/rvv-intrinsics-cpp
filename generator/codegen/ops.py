@@ -54,7 +54,7 @@ def vreg_require_clauses(
     return ret
 
 
-def vi_op(
+def vx_op(
     inst: str, allowed_type_category: str
 ) -> Callable[[str], func.Function]:
     return func.template_elem_ratio(

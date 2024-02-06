@@ -2,7 +2,7 @@ import codegen.ops as ops
 
 
 def test_vadd_vi() -> None:
-    f = ops.vi_op("vadd", "int")
+    f = ops.vx_op("vadd", "int")
     assert (
         f("").cpp_repr
         == """template <typename E, size_t kRatio>
@@ -15,7 +15,7 @@ vreg_t<E, kRatio> vadd(vreg_t<E, kRatio> vs2, E rs1, vl_t<kRatio> vl) {
 
 
 def test_vadd_vi_tum() -> None:
-    f = ops.vi_op("vadd", "int")
+    f = ops.vx_op("vadd", "int")
     assert (
         f("tum").cpp_repr
         == """template <typename E, size_t kRatio>
