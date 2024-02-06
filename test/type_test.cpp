@@ -507,3 +507,95 @@ TYPED_TEST(IsCompatibleVRegRatioTest, is_compatible_vreg_ratio) {
       (rvv::is_compatible_vreg_ratio<typename TypeParam::T, TypeParam::kRatio>),
       TypeParam::kExpected);
 }
+
+template <typename Config>
+class WideningTest : public ::testing::Test {};
+
+template <typename Narrow_, typename Wide_, bool kWidenable_>
+class WideningConfig {
+ public:
+  using Narrow = Narrow_;
+  using Wide = Wide_;
+  static constexpr bool kWidenable = kWidenable_;
+};
+
+using WideningConfigs =
+    ::testing::Types<WideningConfig<int8_t, int16_t, true>,
+                     WideningConfig<int16_t, int32_t, true>,
+                     WideningConfig<uint8_t, uint16_t, true>,
+                     WideningConfig<uint16_t, uint32_t, true>,
+#if HAS_ZVE64X
+                     WideningConfig<int32_t, int64_t, true>,
+                     WideningConfig<uint32_t, uint64_t, true>,
+                     WideningConfig<int64_t, void, false>,
+                     WideningConfig<uint64_t, void, false>,
+#else
+                     WideningConfig<int32_t, void, false>,
+                     WideningConfig<uint32_t, void, false>,
+#endif
+                     WideningConfig<float, void, false>,
+                     WideningConfig<vint8m1_t, vint16m2_t, true>,
+#if HAS_ZVE64X
+                     WideningConfig<vuint32m2_t, vuint64m4_t, true>,
+                     WideningConfig<vuint64m4_t, void, false>,
+#else
+                     WideningConfig<vuint32m2_t, void, false>,
+#endif
+#if HAS_ZVE32F
+                     WideningConfig<vfloat32m1_t, void, false>,
+#endif
+                     WideningConfig<vint8m8_t, void, false>>;
+
+TYPED_TEST_SUITE(WideningTest, WideningConfigs);
+
+TYPED_TEST(WideningTest, widening) {
+  EXPECT_TRUE(
+      (rvv::widenable<typename TypeParam::Narrow> == TypeParam::kWidenable));
+  if constexpr (rvv::widenable<typename TypeParam::Narrow>) {
+    EXPECT_TRUE((std::is_same_v<rvv::widen_t<typename TypeParam::Narrow>,
+                                typename TypeParam::Wide>));
+  }
+}
+
+template <typename Config>
+class NarrowingTest : public ::testing::Test {};
+
+template <typename Narrow_, typename Wide_, bool kNarrowable_>
+class NarrowingConfig {
+ public:
+  using Narrow = Narrow_;
+  using Wide = Wide_;
+  static constexpr bool kNarrowable = kNarrowable_;
+};
+
+using NarrowingConfigs =
+    ::testing::Types<NarrowingConfig<int8_t, int16_t, true>,
+                     NarrowingConfig<int16_t, int32_t, true>,
+                     NarrowingConfig<uint8_t, uint16_t, true>,
+                     NarrowingConfig<uint16_t, uint32_t, true>,
+#if HAS_ZVE64X
+                     NarrowingConfig<int32_t, int64_t, true>,
+                     NarrowingConfig<uint32_t, uint64_t, true>,
+#endif
+                     NarrowingConfig<void, int8_t, false>,
+                     NarrowingConfig<void, uint8_t, false>,
+                     NarrowingConfig<void, float, false>,
+                     NarrowingConfig<vint8m1_t, vint16m2_t, true>,
+#if HAS_ZVE64X
+                     NarrowingConfig<vuint32m2_t, vuint64m4_t, true>,
+#endif
+#if HAS_ZVE32F
+                     NarrowingConfig<void, vfloat32m1_t, false>,
+#endif
+                     NarrowingConfig<void, vint8m8_t, false>>;
+
+TYPED_TEST_SUITE(NarrowingTest, NarrowingConfigs);
+
+TYPED_TEST(NarrowingTest, narrowing) {
+  EXPECT_TRUE(
+      (rvv::narrowable<typename TypeParam::Wide> == TypeParam::kNarrowable));
+  if constexpr (rvv::narrowable<typename TypeParam::Wide>) {
+    EXPECT_TRUE((std::is_same_v<rvv::narrow_t<typename TypeParam::Wide>,
+                                typename TypeParam::Narrow>));
+  }
+}

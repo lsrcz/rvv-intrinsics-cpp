@@ -126,6 +126,24 @@ template <typename T, bool kNeedZvfh>
 concept is_supported_floating_point_vreg =
     is_vreg<T> && is_supported_rvv_floating_point<elem_t<T>, kNeedZvfh>;
 
+namespace internal {
+template <typename E>
+struct WidenedType {};
+template <typename E>
+struct NarrowedType {};
+}  // namespace internal
+
+template <typename T>
+using widen_t = typename internal::WidenedType<T>::Type;
+template <typename T>
+using narrow_t = typename internal::NarrowedType<T>::Type;
+
+template <typename T>
+concept widenable = requires { typename internal::WidenedType<T>::Type; };
+
+template <typename T>
+concept narrowable = requires { typename internal::NarrowedType<T>::Type; };
+
 }  // namespace rvv
 
 #include <rvv/type.inc>

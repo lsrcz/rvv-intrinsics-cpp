@@ -48,6 +48,100 @@ struct GetRatio<{raw_type}> {{
     )
 
 
+def widened_narrowed_scalar_type_specialization_def(
+    elem_type: elem.RawElemType,
+) -> str:
+    ret: list[str] = []
+    if isinstance(elem_type, elem.IntType) and elem_type.width <= 32:
+        widened_type = elem.IntType(
+            width=elem_type.width * 2, signed=elem_type.signed
+        )
+        ret.append(
+            guarded.Guarded(
+                guarded.elem_guard(widened_type, need_zvfh=False),
+                f"""template <>
+struct WidenedType<{elem_type.cpp_repr}> {{
+  using Type = {widened_type.cpp_repr};
+}};""",
+            ).cpp_repr
+        )
+    if isinstance(elem_type, elem.IntType) and elem_type.width >= 16:
+        narrowed_type = elem.IntType(
+            width=elem_type.width // 2, signed=elem_type.signed
+        )
+        ret.append(
+            guarded.Guarded(
+                guarded.elem_guard(elem_type, need_zvfh=False),
+                f"""template <>
+struct NarrowedType<{elem_type.cpp_repr}> {{
+  using Type = {narrowed_type.cpp_repr};
+}};""",
+            ).cpp_repr
+        )
+
+    return "\n".join(ret)
+
+
+def widened_narrowed_vreg_specialization_def(
+    elem_type: elem.RawElemType, ratio: misc.LitSizeTValue
+) -> cpp_repr.HasCppRepr:
+    if not validate.is_compatible_elem_ratio_may_under_guards(elem_type, ratio):
+        return ""
+    if not isinstance(elem_type, elem.IntType):
+        return ""
+    ret: list[guarded.Guarded] = []
+    if elem_type.width <= 32:
+        widened_type = elem.IntType(
+            width=elem_type.width * 2, signed=elem_type.signed
+        )
+        if validate.is_compatible_elem_ratio_may_under_guards(
+            widened_type, ratio
+        ):
+            ret.append(
+                guarded.Guarded(
+                    guarded.elem_ratio_guard(
+                        widened_type, ratio, need_zvfh=False
+                    ),
+                    f"""template <>
+struct WidenedType<vreg_t<{elem_type.cpp_repr}, {ratio.cpp_repr}>> {{
+  using Type = vreg_t<{widened_type.cpp_repr}, {ratio.cpp_repr}>;
+}};
+""",
+                )
+            )
+    if elem_type.width >= 16:
+        narrowed_type = elem.IntType(
+            width=elem_type.width // 2, signed=elem_type.signed
+        )
+        if validate.is_compatible_elem_ratio_may_under_guards(
+            narrowed_type, ratio
+        ):
+            ret.append(
+                guarded.Guarded(
+                    guarded.elem_ratio_guard(
+                        narrowed_type, ratio, need_zvfh=False
+                    ),
+                    f"""template <>
+struct NarrowedType<vreg_t<{elem_type.cpp_repr}, {ratio.cpp_repr}>> {{
+  using Type = vreg_t<{narrowed_type.cpp_repr}, {ratio.cpp_repr}>;
+}};
+""",
+                )
+            )
+    if len(ret) == 0:
+        return ""
+    if len(ret) == 1:
+        return guarded.Guarded(
+            guarded.elem_ratio_guard(elem_type, ratio, need_zvfh=False)
+            + ret[0].guards,
+            ret[0].cpp_repr,
+        )
+    return guarded.Guarded(
+        guarded.elem_ratio_guard(elem_type, ratio, need_zvfh=False),
+        "\n".join(map(lambda x: x.cpp_repr, ret)),
+    )
+
+
 rvv_type_header = header.Header(
     [
         header.Namespace(
@@ -58,6 +152,16 @@ rvv_type_header = header.Header(
                 ),
                 header.ForAllRatio(
                     lambda _, r: vmask_specialization_def(r),
+                ),
+                header.ForAllElemType(
+                    gen=lambda _, e: widened_narrowed_scalar_type_specialization_def(
+                        e
+                    )
+                ),
+                header.ForAllElemRatio(
+                    lambda _, e, r: widened_narrowed_vreg_specialization_def(
+                        e, r
+                    ),
                 ),
             ],
             allowed_variants={""},
