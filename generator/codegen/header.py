@@ -4,14 +4,13 @@ from typing import Callable, Iterable, Optional, Sequence, Union
 from . import cpp_repr, macro
 from .type import elem, lmul, misc
 
-ALL_VARIANTS: set[str] = {"", "m", "tu", "tum", "mu", "tumu"}
+ALL_VARIANTS: frozenset[str] = frozenset(["", "m", "tu", "tum", "mu", "tumu"])
 
 
 class HeaderPart(metaclass=abc.ABCMeta):
-    def __init__(self, allowed_variants: set[str]) -> None:
+    def __init__(self, allowed_variants: frozenset[str]) -> None:
         assert allowed_variants.issubset(ALL_VARIANTS)
-        self.allowed_variants: set[str] = allowed_variants
-        pass
+        self.allowed_variants: frozenset[str] = allowed_variants
 
     @abc.abstractmethod
     def _render(self, variants: Sequence[str]) -> str:
@@ -38,7 +37,7 @@ def render(part_like: HeaderPartLike, variants: Sequence[str]) -> str:
 
 class Include(HeaderPart):
     def __init__(
-        self, filename: str, allowed_variants: set[str] = ALL_VARIANTS
+        self, filename: str, allowed_variants: frozenset[str] = ALL_VARIANTS
     ) -> None:
         super().__init__(allowed_variants=allowed_variants)
         self.filename: str = filename
@@ -51,7 +50,7 @@ class Verbatim(HeaderPart):
     def __init__(
         self,
         content: cpp_repr.HasCppRepr,
-        allowed_variants: set[str] = ALL_VARIANTS,
+        allowed_variants: frozenset[str] = ALL_VARIANTS,
     ) -> None:
         super().__init__(allowed_variants=allowed_variants)
         self.content: cpp_repr.HasCppRepr = content
@@ -65,7 +64,7 @@ class Namespace(HeaderPart):
         self,
         name: str,
         content: Sequence[HeaderPartLike],
-        allowed_variants: set[str] = ALL_VARIANTS,
+        allowed_variants: frozenset[str] = ALL_VARIANTS,
     ) -> None:
         super().__init__(allowed_variants=allowed_variants)
         self.name: str = name
@@ -82,7 +81,7 @@ class VariantNamespace(HeaderPart):
     def __init__(
         self,
         content: Sequence[HeaderPartLike],
-        allowed_variants: set[str] = ALL_VARIANTS,
+        allowed_variants: frozenset[str] = ALL_VARIANTS,
     ) -> None:
         super().__init__(allowed_variants=allowed_variants)
         self.content: Sequence[HeaderPartLike] = content
@@ -124,12 +123,12 @@ class VariantNamespace(HeaderPart):
 
 
 def join_all_generated(all_generated: Iterable[Optional[str]]) -> str:
-    all: list[str] = []
+    all_str: list[str] = []
     for generated in all_generated:
         if generated is not None:
-            all.append(generated)
-    if len(all) != 0:
-        return "\n".join(all)
+            all_str.append(generated)
+    if len(all_str) != 0:
+        return "\n".join(all_str)
     return ""
 
 
@@ -137,7 +136,7 @@ class WithVariants(HeaderPart):
     def __init__(
         self,
         gen: Callable[[str], cpp_repr.HasCppRepr],
-        allowed_variants: set[str] = ALL_VARIANTS,
+        allowed_variants: frozenset[str] = ALL_VARIANTS,
     ) -> None:
         super().__init__(allowed_variants=allowed_variants)
         self.gen: Callable[[str], cpp_repr.HasCppRepr] = gen
@@ -155,7 +154,7 @@ class ForAllElemLmul(HeaderPart):
             [str, elem.RawElemType, lmul.LitLMulValue],
             Optional[cpp_repr.HasCppRepr],
         ],
-        allowed_variants: set[str] = ALL_VARIANTS,
+        allowed_variants: frozenset[str] = ALL_VARIANTS,
     ) -> None:
         super().__init__(allowed_variants=allowed_variants)
         self.gen: Callable[
@@ -176,7 +175,7 @@ class ForAllRatio(HeaderPart):
     def __init__(
         self,
         gen: Callable[[str, misc.LitSizeTValue], Optional[cpp_repr.HasCppRepr]],
-        allowed_variants: set[str] = ALL_VARIANTS,
+        allowed_variants: frozenset[str] = ALL_VARIANTS,
     ) -> None:
         super().__init__(allowed_variants=allowed_variants)
         self.gen: Callable[
@@ -199,7 +198,7 @@ class ForAllElemRatio(HeaderPart):
             [str, elem.RawElemType, misc.LitSizeTValue],
             Optional[cpp_repr.HasCppRepr],
         ],
-        allowed_variants: set[str] = ALL_VARIANTS,
+        allowed_variants: frozenset[str] = ALL_VARIANTS,
     ) -> None:
         super().__init__(allowed_variants=allowed_variants)
 
@@ -221,7 +220,7 @@ class ForAllElemSize(HeaderPart):
     def __init__(
         self,
         gen: Callable[[str, int], Optional[cpp_repr.HasCppRepr]],
-        allowed_variants: set[str] = ALL_VARIANTS,
+        allowed_variants: frozenset[str] = ALL_VARIANTS,
     ) -> None:
         super().__init__(allowed_variants=allowed_variants)
         self.gen: Callable[[str, int], Optional[cpp_repr.HasCppRepr]] = gen
@@ -239,7 +238,7 @@ class ForAllElemType(HeaderPart):
     def __init__(
         self,
         gen: Callable[[str, elem.RawElemType], Optional[cpp_repr.HasCppRepr]],
-        allowed_variants: set[str] = ALL_VARIANTS,
+        allowed_variants: frozenset[str] = ALL_VARIANTS,
     ) -> None:
         super().__init__(allowed_variants=allowed_variants)
         self.gen: Callable[
