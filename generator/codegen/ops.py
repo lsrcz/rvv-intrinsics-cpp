@@ -5,7 +5,10 @@ from codegen.type import vreg, vl, elem, misc
 
 
 def elem_require_clauses(
-    allowed_type_category: str, elem_type: elem.ElemType, ratio: misc.SizeTValue
+    allowed_type_category: str,
+    elem_type: elem.ElemType,
+    ratio: misc.SizeTValue,
+    widening: bool = False,
 ) -> list[str]:
     ret: list[str] = []
     match allowed_type_category:
@@ -26,11 +29,21 @@ def elem_require_clauses(
                 f"Unknown allowed type category: {allowed_type_category}"
             )
     ret.append(constraints.is_compatible_elem_ratio(elem_type, ratio))
+    if widening:
+        ret.append(constraints.widenable_type(elem_type))
+        ret.append(
+            constraints.is_compatible_elem_ratio(
+                elem.WidenElemType(base_type=elem_type), ratio
+            )
+        )
     return ret
 
 
 def vreg_require_clauses(
-    allowed_type_category: str, vreg_type: vreg.VRegType, ratio: misc.SizeTValue
+    allowed_type_category: str,
+    vreg_type: vreg.VRegType,
+    ratio: misc.SizeTValue,
+    widening: bool = False,
 ) -> list[str]:
     ret: list[str] = []
     match allowed_type_category:
@@ -51,6 +64,13 @@ def vreg_require_clauses(
                 f"Unknown allowed type category: {allowed_type_category}"
             )
     ret.append(constraints.is_compatible_vreg_ratio(vreg_type, ratio))
+    if widening:
+        ret.append(constraints.widenable_type(vreg_type))
+        ret.append(
+            constraints.is_compatible_vreg_ratio(
+                vreg.WidenVRegType(base_type=vreg_type), ratio
+            )
+        )
     return ret
 
 
@@ -156,3 +176,104 @@ def v_op(
             allowed_type_category, vreg_type, ratio
         ),
     )
+
+
+def widening_vx_or_wx_op(
+    inst: str, is_vx: bool, signed: bool
+) -> Callable[[str], func.Function]:
+    return func.template_elem_ratio(
+        lambda elem_type, ratio: vreg.ConcreteVRegType(
+            elem_type=elem.WidenElemType(base_type=elem_type), ratio=ratio
+        ),
+        inst,
+        lambda variant, elem_type, ratio: func.elem_ratio_extend_param_list(
+            elem.WidenElemType(base_type=elem_type),
+            ratio,
+            variant,
+            function.FunctionTypedParamList(
+                function.TypedParam(
+                    type=vreg.ConcreteVRegType(
+                        elem_type=(
+                            elem_type
+                            if is_vx
+                            else elem.WidenElemType(base_type=elem_type)
+                        ),
+                        ratio=ratio,
+                    ),
+                    name="vs2",
+                ),
+                function.TypedParam(type=elem_type, name="rs1"),
+                function.TypedParam(type=vl.VLType(ratio=ratio), name="vl"),
+            ),
+        ),
+        lambda variant, elem_type, ratio, param_list: (
+            "  return "
+            + func.apply_function(
+                f"__riscv_{inst}"
+                + ("" if signed else "u")
+                + ("_vx" if is_vx else "_wx")
+                + func.rv_postfix(variant, overloaded=True),
+                param_list,
+            )
+            + ";"
+        ),
+        require_clauses=lambda elem_type, ratio: elem_require_clauses(
+            "signed" if signed else "unsigned", elem_type, ratio, widening=True
+        ),
+    )
+
+
+def widening_vx_op(inst: str, signed: bool) -> Callable[[str], func.Function]:
+    return widening_vx_or_wx_op(inst, True, signed)
+
+
+def widening_wx_op(inst: str, signed: bool) -> Callable[[str], func.Function]:
+    return widening_vx_or_wx_op(inst, False, signed)
+
+
+def widening_vv_or_wv_op(
+    inst: str, is_vv: bool, signed: bool
+) -> Callable[[str], func.Function]:
+    return func.template_vreg_ratio(
+        lambda vreg_type, ratio: vreg.WidenVRegType(base_type=vreg_type),
+        inst,
+        lambda variant, vreg_type, ratio: func.vreg_ratio_extend_param_list(
+            vreg.WidenVRegType(base_type=vreg_type),
+            ratio,
+            variant,
+            function.FunctionTypedParamList(
+                function.TypedParam(
+                    type=(
+                        vreg_type
+                        if is_vv
+                        else vreg.WidenVRegType(base_type=vreg_type)
+                    ),
+                    name="vs2",
+                ),
+                function.TypedParam(type=vreg_type, name="vs1"),
+                function.TypedParam(type=vl.VLType(ratio=ratio), name="vl"),
+            ),
+        ),
+        lambda variant, elem_type, ratio, param_list: (
+            "  return "
+            + func.apply_function(
+                f"__riscv_{inst}"
+                + ("" if signed else "u")
+                + ("_vv" if is_vv else "_wv")
+                + func.rv_postfix(variant, overloaded=True),
+                param_list,
+            )
+            + ";"
+        ),
+        require_clauses=lambda vreg_type, ratio: vreg_require_clauses(
+            "signed" if signed else "unsigned", vreg_type, ratio, widening=True
+        ),
+    )
+
+
+def widening_vv_op(inst: str, signed: bool) -> Callable[[str], func.Function]:
+    return widening_vv_or_wv_op(inst, True, signed)
+
+
+def widening_wv_op(inst: str, signed: bool) -> Callable[[str], func.Function]:
+    return widening_vv_or_wv_op(inst, False, signed)

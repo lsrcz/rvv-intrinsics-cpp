@@ -103,3 +103,12 @@ class ParamElemType(ElemType, type.TypeParam):
     @property
     def kind(self) -> k.TypeKind:
         return k.TypeKind()
+
+
+@dataclass(frozen=True, kw_only=True)
+class WidenElemType(ElemType):
+    base_type: ElemType
+
+    @property
+    def cpp_repr(self) -> str:
+        return f"widen_t<{self.base_type.cpp_repr}>"

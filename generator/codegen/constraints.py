@@ -1,4 +1,4 @@
-from codegen.type import elem, lmul, misc, vreg
+from codegen.type import elem, lmul, misc, vreg, type
 
 
 def is_supported_ratio(ratio: misc.SizeTValue) -> str:
@@ -67,3 +67,7 @@ def is_supported_floating_point_vreg(
         f"is_supported_floating_point_vreg<{vreg_type.cpp_repr}, "
         + f"{'true' if need_zvfh else 'false'}>"
     )
+
+
+def widenable_type(t: type.Type) -> str:
+    return f"widenable<{t.cpp_repr}>"
