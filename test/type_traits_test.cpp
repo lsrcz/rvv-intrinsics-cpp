@@ -39,6 +39,9 @@ enum ElemTypeTraits {
   kReliesUnsupportedZve64x = 2048,
   kIsSupportedRvvElemType = 4096,
   kIsSupportedRvvElemTypeNeedZvfh = 8192,
+  kIsSupportedRvvIntegral = 16384,
+  kIsSupportedRvvFloatingPoint = 32768,
+  kIsSupportedRvvFloatingPointNeedZvfh = 65536,
 };
 
 template <typename Config>
@@ -53,61 +56,74 @@ class ElemTypeTraitsConfig {
 
 using ElemTypeTraitsTestConfigs = ::testing::Types<
 #if HAS_FLOAT16
-    ElemTypeTraitsConfig<rvv::float16_t,
-                         static_cast<ElemTypeTraits>(
-                             kIsFloat16 | kIsRvvFloatingPoint |
-                             (HAS_ZVFH ? kIsSupportedRvvElemTypeNeedZvfh
-                                       : kReliesUnsupportedZvfh) |
-                             (HAS_ZVFHMIN ? kIsSupportedRvvElemType
-                                          : kReliesUnsupportedZvfhmin))>,
+    ElemTypeTraitsConfig<
+        rvv::float16_t, static_cast<ElemTypeTraits>(
+                            kIsFloat16 | kIsRvvFloatingPoint |
+                            (HAS_ZVFH ? kIsSupportedRvvElemTypeNeedZvfh |
+                                            kIsSupportedRvvFloatingPointNeedZvfh
+                                      : kReliesUnsupportedZvfh) |
+                            (HAS_ZVFHMIN ? kIsSupportedRvvElemType |
+                                               kIsSupportedRvvFloatingPoint
+                                         : kReliesUnsupportedZvfhmin))>,
 #endif
-    ElemTypeTraitsConfig<float,
-                         static_cast<ElemTypeTraits>(
-                             kIsFloat32 | kIsRvvFloatingPoint |
-                             (HAS_ZVE32F ? kIsSupportedRvvElemType |
-                                               kIsSupportedRvvElemTypeNeedZvfh
-                                         : kReliesUnsupportedZve32f))>,
-    ElemTypeTraitsConfig<double,
-                         static_cast<ElemTypeTraits>(
-                             kIsFloat64 | kIsRvvFloatingPoint |
-                             (HAS_ZVE64D ? kIsSupportedRvvElemType |
-                                               kIsSupportedRvvElemTypeNeedZvfh
-                                         : kReliesUnsupportedZve64d))>,
+    ElemTypeTraitsConfig<
+        float, static_cast<ElemTypeTraits>(
+                   kIsFloat32 | kIsRvvFloatingPoint |
+                   (HAS_ZVE32F ? kIsSupportedRvvElemType |
+                                     kIsSupportedRvvElemTypeNeedZvfh |
+                                     kIsSupportedRvvFloatingPoint |
+                                     kIsSupportedRvvFloatingPointNeedZvfh
+                               : kReliesUnsupportedZve32f))>,
+    ElemTypeTraitsConfig<
+        double, static_cast<ElemTypeTraits>(
+                    kIsFloat64 | kIsRvvFloatingPoint |
+                    (HAS_ZVE64D ? kIsSupportedRvvElemType |
+                                      kIsSupportedRvvElemTypeNeedZvfh |
+                                      kIsSupportedRvvFloatingPoint |
+                                      kIsSupportedRvvFloatingPointNeedZvfh
+                                : kReliesUnsupportedZve64d))>,
     ElemTypeTraitsConfig<uint8_t, static_cast<ElemTypeTraits>(
                                       kIsRvvUnsigned | kIsRvvIntegral |
                                       kIsSupportedRvvElemType |
-                                      kIsSupportedRvvElemTypeNeedZvfh)>,
+                                      kIsSupportedRvvElemTypeNeedZvfh |
+                                      kIsSupportedRvvIntegral)>,
     ElemTypeTraitsConfig<uint16_t, static_cast<ElemTypeTraits>(
                                        kIsRvvUnsigned | kIsRvvIntegral |
                                        kIsSupportedRvvElemType |
-                                       kIsSupportedRvvElemTypeNeedZvfh)>,
+                                       kIsSupportedRvvElemTypeNeedZvfh |
+                                       kIsSupportedRvvIntegral)>,
     ElemTypeTraitsConfig<uint32_t, static_cast<ElemTypeTraits>(
                                        kIsRvvUnsigned | kIsRvvIntegral |
                                        kIsSupportedRvvElemType |
-                                       kIsSupportedRvvElemTypeNeedZvfh)>,
+                                       kIsSupportedRvvElemTypeNeedZvfh |
+                                       kIsSupportedRvvIntegral)>,
     ElemTypeTraitsConfig<uint64_t,
                          static_cast<ElemTypeTraits>(
                              kIsRvvUnsigned | kIsRvvIntegral |
                              (HAS_ZVE64X ? kIsSupportedRvvElemType |
-                                               kIsSupportedRvvElemTypeNeedZvfh
+                                               kIsSupportedRvvElemTypeNeedZvfh |
+                                               kIsSupportedRvvIntegral
                                          : kReliesUnsupportedZve64x))>,
-    ElemTypeTraitsConfig<int8_t, static_cast<ElemTypeTraits>(
-                                     kIsRvvSigned | kIsRvvIntegral |
-                                     kIsSupportedRvvElemType |
-                                     kIsSupportedRvvElemTypeNeedZvfh)>,
+    ElemTypeTraitsConfig<
+        int8_t, static_cast<ElemTypeTraits>(
+                    kIsRvvSigned | kIsRvvIntegral | kIsSupportedRvvElemType |
+                    kIsSupportedRvvElemTypeNeedZvfh | kIsSupportedRvvIntegral)>,
     ElemTypeTraitsConfig<int16_t, static_cast<ElemTypeTraits>(
                                       kIsRvvSigned | kIsRvvIntegral |
                                       kIsSupportedRvvElemType |
-                                      kIsSupportedRvvElemTypeNeedZvfh)>,
+                                      kIsSupportedRvvElemTypeNeedZvfh |
+                                      kIsSupportedRvvIntegral)>,
     ElemTypeTraitsConfig<int32_t, static_cast<ElemTypeTraits>(
                                       kIsRvvSigned | kIsRvvIntegral |
                                       kIsSupportedRvvElemType |
-                                      kIsSupportedRvvElemTypeNeedZvfh)>,
+                                      kIsSupportedRvvElemTypeNeedZvfh |
+                                      kIsSupportedRvvIntegral)>,
     ElemTypeTraitsConfig<int64_t,
                          static_cast<ElemTypeTraits>(
                              kIsRvvSigned | kIsRvvIntegral |
                              (HAS_ZVE64X ? kIsSupportedRvvElemType |
-                                               kIsSupportedRvvElemTypeNeedZvfh
+                                               kIsSupportedRvvElemTypeNeedZvfh |
+                                               kIsSupportedRvvIntegral
                                          : kReliesUnsupportedZve64x))>
 
     >;
@@ -180,6 +196,22 @@ TYPED_TEST(ElemTypeTraitsTest, is_supported_rvv_elem_type) {
   EXPECT_EQ(
       (rvv::is_supported_rvv_elem_type<typename TypeParam::ElemType, false>),
       !!(TypeParam::kTrait & ElemTypeTraits::kIsSupportedRvvElemType));
+}
+
+TYPED_TEST(ElemTypeTraitsTest, is_supported_rvv_integral) {
+  EXPECT_EQ((rvv::is_supported_rvv_integral<typename TypeParam::ElemType>),
+            !!(TypeParam::kTrait & ElemTypeTraits::kIsSupportedRvvIntegral));
+}
+
+TYPED_TEST(ElemTypeTraitsTest, is_supported_rvv_floating_point) {
+  EXPECT_EQ((rvv::is_supported_rvv_floating_point<typename TypeParam::ElemType,
+                                                  true>),
+            !!(TypeParam::kTrait &
+               ElemTypeTraits::kIsSupportedRvvFloatingPointNeedZvfh));
+  EXPECT_EQ(
+      (rvv::is_supported_rvv_floating_point<typename TypeParam::ElemType,
+                                            false>),
+      !!(TypeParam::kTrait & ElemTypeTraits::kIsSupportedRvvFloatingPoint));
 }
 
 enum RatioTypeTraits {

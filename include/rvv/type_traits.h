@@ -75,6 +75,16 @@ concept relies_on_unsupported_zve64x =
     is_any<E, int64_t, uint64_t>;
 #endif
 
+template <typename E>
+concept is_supported_rvv_integral =
+    !relies_on_unsupported_zve64x<E> && is_rvv_integral<E>;
+
+template <typename E, bool kNeedZvfh>
+concept is_supported_rvv_floating_point =
+    !relies_on_unsupported_zvfh<E, kNeedZvfh> &&
+    !relies_on_unsupported_zve32f<E> && !relies_on_unsupported_zve64d<E> &&
+    is_rvv_floating_point<E>;
+
 template <typename E, bool kNeedZvfh>
 concept is_supported_rvv_elem_type =
     !relies_on_unsupported_zvfh<E, kNeedZvfh> &&
