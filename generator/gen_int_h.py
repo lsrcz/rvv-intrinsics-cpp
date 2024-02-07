@@ -252,6 +252,36 @@ def extending_op(
     return inner
 
 
+def vncvt(variant: str) -> func.Function:
+    return func.template_vreg_ratio(
+        lambda vreg_type, ratio: vreg.NarrowVRegType(base_type=vreg_type),
+        "vncvt",
+        lambda variant, vreg_type, ratio: func.vreg_ratio_extend_param_list(
+            vreg.NarrowVRegType(base_type=vreg_type),
+            ratio,
+            variant,
+            function.FunctionTypedParamList(
+                function.TypedParam(
+                    type=vreg_type,
+                    name="vs2",
+                ),
+                function.TypedParam(type=vl.VLType(ratio=ratio), name="vl"),
+            ),
+        ),
+        lambda variant, elem_type, ratio, param_list: (
+            "  return "
+            + func.apply_function(
+                "__riscv_vncvt_x" + func.rv_postfix(variant, overloaded=True),
+                param_list,
+            )
+            + ";"
+        ),
+        require_clauses=lambda vreg_type, ratio: ops.vreg_require_clauses(
+            "int", vreg_type, ratio, narrowing=True
+        ),
+    )(variant)
+
+
 def vv_shifting_op(
     inst: str,
     allowed_type_category: str,
@@ -422,6 +452,8 @@ rvv_int_header = header.Header(
                         header.WithVariants(
                             narrowing_shift_op("vnsrl", op_variant="scalar")
                         ),
+                        "// 3.10. Vector Integer Narrowing Intrinsics",
+                        header.WithVariants(vncvt),
                     ]
                 )
             ],

@@ -142,3 +142,27 @@ narrow_t<V> vnsrl(vmask_t<kRatio> vm, V vs2, narrow_t<V> vs1, vl_t<kRatio> vl) {
   return __riscv_vnsrl(vm, vs2, vs1, vl);
 }"""
     )
+
+
+def test_vncvt() -> None:
+    assert (
+        gen_int_h.vncvt("").cpp_repr
+        == """template <typename V, size_t kRatio>
+  requires is_supported_integral_vreg<V> && is_compatible_vreg_ratio<V, kRatio> && narrowable<V> && is_compatible_vreg_ratio<narrow_t<V>, kRatio>
+RVV_ALWAYS_INLINE
+narrow_t<V> vncvt(V vs2, vl_t<kRatio> vl) {
+  return __riscv_vncvt_x(vs2, vl);
+}"""
+    )
+
+
+def test_vncvt_tum() -> None:
+    assert (
+        gen_int_h.vncvt("tum").cpp_repr
+        == """template <typename V, size_t kRatio>
+  requires is_supported_integral_vreg<V> && is_compatible_vreg_ratio<V, kRatio> && narrowable<V> && is_compatible_vreg_ratio<narrow_t<V>, kRatio>
+RVV_ALWAYS_INLINE
+narrow_t<V> vncvt(vmask_t<kRatio> vm, narrow_t<V> vd, V vs2, vl_t<kRatio> vl) {
+  return __riscv_vncvt_x_tum(vm, vd, vs2, vl);
+}"""
+    )
