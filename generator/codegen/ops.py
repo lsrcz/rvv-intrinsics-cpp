@@ -278,3 +278,36 @@ def widening_vv_op(inst: str, signed: bool) -> Callable[[str], func.Function]:
 
 def widening_wv_op(inst: str, signed: bool) -> Callable[[str], func.Function]:
     return widening_vv_or_wv_op(inst, False, signed)
+
+
+def widening_op(inst: str, signed: bool) -> Callable[[str], func.Function]:
+    return func.template_vreg_ratio(
+        lambda vreg_type, ratio: vreg.WidenVRegType(base_type=vreg_type),
+        inst,
+        lambda variant, vreg_type, ratio: func.vreg_ratio_extend_param_list(
+            vreg.WidenVRegType(base_type=vreg_type),
+            ratio,
+            variant,
+            function.FunctionTypedParamList(
+                function.TypedParam(
+                    type=vreg_type,
+                    name="vs2",
+                ),
+                function.TypedParam(type=vl.VLType(ratio=ratio), name="vl"),
+            ),
+        ),
+        lambda variant, elem_type, ratio, param_list: (
+            "  return "
+            + func.apply_function(
+                f"__riscv_{inst}"
+                + ("" if signed else "u")
+                + "_x"
+                + func.rv_postfix(variant, overloaded=True),
+                param_list,
+            )
+            + ";"
+        ),
+        require_clauses=lambda vreg_type, ratio: vreg_require_clauses(
+            "signed" if signed else "unsigned", vreg_type, ratio, widening=True
+        ),
+    )

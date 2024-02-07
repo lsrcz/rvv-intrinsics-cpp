@@ -129,3 +129,29 @@ widen_t<V> vwadd(vmask_t<kRatio> vm, widen_t<V> vd, V vs2, V vs1, vl_t<kRatio> v
   return __riscv_vwaddu_vv_tum(vm, vd, vs2, vs1, vl);
 }"""
     )
+
+
+def test_vwcvt_x() -> None:
+    f = ops.widening_op("vwcvt", True)
+    assert (
+        f("").cpp_repr
+        == """template <typename V, size_t kRatio>
+  requires is_supported_signed_vreg<V> && is_compatible_vreg_ratio<V, kRatio> && widenable<V> && is_compatible_vreg_ratio<widen_t<V>, kRatio>
+RVV_ALWAYS_INLINE
+widen_t<V> vwcvt(V vs2, vl_t<kRatio> vl) {
+  return __riscv_vwcvt_x(vs2, vl);
+}"""
+    )
+
+
+def test_vwcvtu_x_tum() -> None:
+    f = ops.widening_op("vwcvt", False)
+    assert (
+        f("tum").cpp_repr
+        == """template <typename V, size_t kRatio>
+  requires is_supported_unsigned_vreg<V> && is_compatible_vreg_ratio<V, kRatio> && widenable<V> && is_compatible_vreg_ratio<widen_t<V>, kRatio>
+RVV_ALWAYS_INLINE
+widen_t<V> vwcvt(vmask_t<kRatio> vm, widen_t<V> vd, V vs2, vl_t<kRatio> vl) {
+  return __riscv_vwcvtu_x_tum(vm, vd, vs2, vl);
+}"""
+    )
