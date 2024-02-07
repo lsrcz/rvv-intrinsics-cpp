@@ -44,6 +44,15 @@ class WidenVRegType(VRegType):
 
 
 @dataclass(frozen=True, kw_only=True)
+class NarrowVRegType(VRegType):
+    base_type: VRegType
+
+    @property
+    def cpp_repr(self) -> str:
+        return f"narrow_t<{self.base_type.cpp_repr}>"
+
+
+@dataclass(frozen=True, kw_only=True)
 class WidenNVRegType(VRegType):
     n: int
     base_type: VRegType

@@ -103,3 +103,42 @@ widen_n_t<8, V> vzext8(vmask_t<kRatio> vm, widen_n_t<8, V> vd, V vs2, vl_t<kRati
   return __riscv_vzext_vf8_tum(vm, vd, vs2, vl);
 }"""
     )
+
+
+def test_vnsrl_wx() -> None:
+    f = gen_int_h.narrowing_shift_op("vnsrl", op_variant="scalar")
+    assert (
+        f("").cpp_repr
+        == """template <typename V, size_t kRatio>
+  requires is_supported_unsigned_vreg<V> && is_compatible_vreg_ratio<V, kRatio> && narrowable<V> && is_compatible_vreg_ratio<narrow_t<V>, kRatio>
+RVV_ALWAYS_INLINE
+narrow_t<V> vnsrl(V vs2, size_t rs1, vl_t<kRatio> vl) {
+  return __riscv_vnsrl(vs2, rs1, vl);
+}"""
+    )
+
+
+def test_vnsra_wv_tum() -> None:
+    f = gen_int_h.narrowing_shift_op("vnsra")
+    assert (
+        f("tum").cpp_repr
+        == """template <typename V, size_t kRatio>
+  requires is_supported_signed_vreg<V> && is_compatible_vreg_ratio<V, kRatio> && narrowable<V> && is_compatible_vreg_ratio<narrow_t<V>, kRatio>
+RVV_ALWAYS_INLINE
+narrow_t<V> vnsra(vmask_t<kRatio> vm, narrow_t<V> vd, V vs2, narrow_t<to_unsigned_t<V>> vs1, vl_t<kRatio> vl) {
+  return __riscv_vnsra_tum(vm, vd, vs2, vs1, vl);
+}"""
+    )
+
+
+def test_vnsrl_wv_m() -> None:
+    f = gen_int_h.narrowing_shift_op("vnsrl")
+    assert (
+        f("m").cpp_repr
+        == """template <typename V, size_t kRatio>
+  requires is_supported_unsigned_vreg<V> && is_compatible_vreg_ratio<V, kRatio> && narrowable<V> && is_compatible_vreg_ratio<narrow_t<V>, kRatio>
+RVV_ALWAYS_INLINE
+narrow_t<V> vnsrl(vmask_t<kRatio> vm, V vs2, narrow_t<V> vs1, vl_t<kRatio> vl) {
+  return __riscv_vnsrl(vm, vs2, vs1, vl);
+}"""
+    )

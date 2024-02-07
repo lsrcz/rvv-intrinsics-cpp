@@ -45,6 +45,7 @@ def vreg_require_clauses(
     vreg_type: vreg.VRegType,
     ratio: misc.SizeTValue,
     widening: bool | int = False,
+    narrowing: bool = False,
 ) -> list[str]:
     ret: list[str] = []
     match allowed_type_category:
@@ -77,6 +78,13 @@ def vreg_require_clauses(
         ret.append(
             constraints.is_compatible_vreg_ratio(
                 vreg.WidenNVRegType(n=widening, base_type=vreg_type), ratio
+            )
+        )
+    elif narrowing:
+        ret.append(constraints.narrowable_type(vreg_type))
+        ret.append(
+            constraints.is_compatible_vreg_ratio(
+                vreg.NarrowVRegType(base_type=vreg_type), ratio
             )
         )
     return ret

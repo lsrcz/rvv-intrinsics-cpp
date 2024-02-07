@@ -2,7 +2,7 @@ from typing import Callable
 
 from codegen import func, header, main, ops
 from codegen.param_list import function
-from codegen.typing import elem, vl, vreg
+from codegen.typing import elem, misc, vl, vreg
 
 
 def widening_vx_or_wx_op(
@@ -46,6 +46,80 @@ def widening_vx_or_wx_op(
         ),
         require_clauses=lambda elem_type, ratio: ops.elem_require_clauses(
             "signed" if signed else "unsigned", elem_type, ratio, widening=True
+        ),
+    )
+
+
+def narrowing_shift_op(
+    inst: str, *, op_variant: str = ""
+) -> Callable[[str], func.Function]:
+    assert inst in ["vnsra", "vnsrl"]
+    assert op_variant in ["", "scalar"]
+
+    def function_param_list(
+        variant: str, vreg_type: vreg.ParamVRegType, ratio: misc.ParamSizeTValue
+    ) -> function.FunctionTypedParamList:
+        ret: list[function.TypedParam] = []
+        ret.append(
+            function.TypedParam(
+                type=vreg_type,
+                name="vs2",
+            )
+        )
+
+        match op_variant:
+            case "":
+                if inst == "vnsra":
+                    ret.append(
+                        function.TypedParam(
+                            type=vreg.NarrowVRegType(
+                                base_type=vreg.ToUnsignedVRegType(
+                                    base_type=vreg_type
+                                )
+                            ),
+                            name="vs1",
+                        )
+                    )
+                else:
+                    ret.append(
+                        function.TypedParam(
+                            type=vreg.NarrowVRegType(base_type=vreg_type),
+                            name="vs1",
+                        )
+                    )
+            case "scalar":
+                ret.append(
+                    function.TypedParam(type=misc.SizeTType(), name="rs1")
+                )
+            case _:
+                pass
+
+        ret.append(function.TypedParam(type=vl.VLType(ratio=ratio), name="vl"))
+
+        return func.vreg_ratio_extend_param_list(
+            vreg.NarrowVRegType(base_type=vreg_type),
+            ratio,
+            variant,
+            function.FunctionTypedParamList(*ret),
+        )
+
+    return func.template_vreg_ratio(
+        lambda vreg_type, ratio: vreg.NarrowVRegType(base_type=vreg_type),
+        inst,
+        function_param_list,
+        lambda variant, elem_type, ratio, param_list: (
+            "  return "
+            + func.apply_function(
+                f"__riscv_{inst}" + func.rv_postfix(variant, overloaded=True),
+                param_list,
+            )
+            + ";"
+        ),
+        require_clauses=lambda vreg_type, ratio: ops.vreg_require_clauses(
+            "signed" if inst == "vnsra" else "unsigned",
+            vreg_type,
+            ratio,
+            narrowing=True,
         ),
     )
 
@@ -338,6 +412,15 @@ rvv_int_header = header.Header(
                             ["vsll", "vsrl"],
                             ["unsigned"],
                             [vv_shifting_op, vx_shifting_op],
+                        ),
+                        "// 3.9. Vector Narrowing Integer Right Shift Intrinsics",
+                        header.WithVariants(narrowing_shift_op("vnsra")),
+                        header.WithVariants(
+                            narrowing_shift_op("vnsra", op_variant="scalar")
+                        ),
+                        header.WithVariants(narrowing_shift_op("vnsrl")),
+                        header.WithVariants(
+                            narrowing_shift_op("vnsrl", op_variant="scalar")
                         ),
                     ]
                 )

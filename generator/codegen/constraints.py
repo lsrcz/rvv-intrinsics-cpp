@@ -73,3 +73,7 @@ def widenable_type(t: base.Type) -> str:
 
 def widenable_n_type(n: int, t: base.Type) -> str:
     return f"widenable_n<{n}, {t.cpp_repr}>"
+
+
+def narrowable_type(t: base.Type) -> str:
+    return f"narrowable<{t.cpp_repr}>"
