@@ -702,3 +702,19 @@ TYPED_TEST(ToSignedUnsignedTest, to_unsigned) {
   EXPECT_TRUE((std::is_same_v<rvv::to_unsigned_t<typename TypeParam::Signed>,
                               typename TypeParam::Unsigned>));
 }
+
+TEST(SignedToSignedTest, scalar) {
+  EXPECT_TRUE((std::is_same_v<rvv::to_signed_t<int8_t>, int8_t>));
+}
+
+TEST(SignedToSignedTest, vreg) {
+  EXPECT_TRUE((std::is_same_v<rvv::to_signed_t<vint8m1_t>, vint8m1_t>));
+}
+
+TEST(UnsignedToUnsignedTest, scalar) {
+  EXPECT_TRUE((std::is_same_v<rvv::to_unsigned_t<uint8_t>, uint8_t>));
+}
+
+TEST(UnsignedToUnsignedTest, vreg) {
+  EXPECT_TRUE((std::is_same_v<rvv::to_unsigned_t<vuint8m1_t>, vuint8m1_t>));
+}

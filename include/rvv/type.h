@@ -182,10 +182,29 @@ struct ToUnsigned {
   using Type = T;
 };
 template <typename T>
+  requires is_supported_rvv_unsigned<T>
+struct ToUnsigned<T> {
+  using Type = T;
+};
+template <typename T>
+  requires is_supported_unsigned_vreg<T>
+struct ToUnsigned<T> {
+  using Type = T;
+};
+template <typename T>
 struct ToSigned {
   using Type = T;
 };
-
+template <typename T>
+  requires is_supported_rvv_signed<T>
+struct ToSigned<T> {
+  using Type = T;
+};
+template <typename T>
+  requires is_supported_signed_vreg<T>
+struct ToSigned<T> {
+  using Type = T;
+};
 }  // namespace internal
 
 template <typename T>
