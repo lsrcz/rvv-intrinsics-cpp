@@ -402,7 +402,7 @@ rvv_int_header = header.Header(
                                 "int",
                                 op_variant="use_and_produce_carry",
                             ),
-                            allowed_variants={"", "tu"},
+                            allowed_variants={""},
                         ),
                         header.WithVariants(
                             ops.binary_op_template_on_vreg(
@@ -410,7 +410,7 @@ rvv_int_header = header.Header(
                                 "int",
                                 op_variant="use_and_produce_carry",
                             ),
-                            allowed_variants={"", "tu"},
+                            allowed_variants={""},
                         ),
                         header.WithVariants(
                             ops.binary_op_template_on_elem(
@@ -430,7 +430,7 @@ rvv_int_header = header.Header(
                                 "int",
                                 op_variant="use_and_produce_carry",
                             ),
-                            allowed_variants={"", "tu"},
+                            allowed_variants={""},
                         ),
                         header.WithVariants(
                             ops.binary_op_template_on_vreg(
@@ -438,7 +438,7 @@ rvv_int_header = header.Header(
                                 "int",
                                 op_variant="use_and_produce_carry",
                             ),
-                            allowed_variants={"", "tu"},
+                            allowed_variants={""},
                         ),
                         "// 3.6. Vector Bitwise Binary Logical Intrinsics",
                         header.CrossProduct(
