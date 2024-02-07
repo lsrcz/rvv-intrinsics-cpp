@@ -85,8 +85,10 @@ def vreg_require_clauses(
 def vx_op(
     inst: str,
     allowed_type_category: str,
+    *,
     with_carry: bool = False,
     return_carry: bool = False,
+    shifting: bool = False,
 ) -> Callable[[str], func.Function]:
     if return_carry:
         assert with_carry
@@ -111,7 +113,10 @@ def vx_op(
                         ),
                         name="vs2",
                     ),
-                    function.TypedParam(type=elem_type, name="rs1"),
+                    function.TypedParam(
+                        type=misc.SizeTType() if shifting else elem_type,
+                        name="rs1",
+                    ),
                 )
                 + (
                     function.FunctionTypedParamList(
@@ -146,6 +151,7 @@ def vv_op(
     allowed_type_category: str,
     with_carry: bool = False,
     return_carry: bool = False,
+    shifting: bool = False,
 ) -> Callable[[str], func.Function]:
 
     if return_carry:
@@ -166,7 +172,14 @@ def vv_op(
                     type=vreg_type,
                     name="vs2",
                 ),
-                function.TypedParam(type=vreg_type, name="vs1"),
+                function.TypedParam(
+                    type=(
+                        vreg.ToUnsignedVRegType(base_type=vreg_type)
+                        if shifting
+                        else vreg_type
+                    ),
+                    name="vs1",
+                ),
             )
             + (
                 function.FunctionTypedParamList(

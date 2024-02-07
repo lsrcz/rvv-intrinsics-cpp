@@ -178,10 +178,26 @@ def extending_op(
     return inner
 
 
+def vv_shifting_op(
+    inst: str,
+    allowed_type_category: str,
+) -> Callable[[str], func.Function]:
+    return ops.vv_op(inst, allowed_type_category, shifting=True)
+
+
+def vx_shifting_op(
+    inst: str,
+    allowed_type_category: str,
+) -> Callable[[str], func.Function]:
+    return ops.vx_op(inst, allowed_type_category, shifting=True)
+
+
 def bin_part(
-    op: str, f: Callable[[str, str], Callable[[str], func.Function]]
+    op: str,
+    allowed_type_category: str,
+    f: Callable[[str, str], Callable[[str], func.Function]],
 ) -> header.HeaderPart:
-    return header.WithVariants(f(op, "int"))
+    return header.WithVariants(f(op, allowed_type_category))
 
 
 def widening_part(
@@ -203,7 +219,10 @@ rvv_int_header = header.Header(
                         "// 3. Vector Integer Arithmetic Intrinsics",
                         "// 3.1. Vector Single-Width Integer Add and Substract Intrinsics",
                         header.CrossProduct(
-                            bin_part, ["vadd", "vsub"], [ops.vv_op, ops.vx_op]
+                            bin_part,
+                            ["vadd", "vsub"],
+                            ["int"],
+                            [ops.vv_op, ops.vx_op],
                         ),
                         header.WithVariants(ops.vx_op("vrsub", "int")),
                         header.WithVariants(ops.v_op("vneg", "int")),
@@ -286,10 +305,24 @@ rvv_int_header = header.Header(
                         header.CrossProduct(
                             bin_part,
                             ["vand", "vor", "vxor"],
+                            ["int"],
                             [ops.vv_op, ops.vx_op],
                         ),
                         "// 3.7. Vector Bitwise Unary Logical Intrinsics",
                         header.WithVariants(ops.v_op("vnot", "int")),
+                        "// 3.8. Vector Single-Width Bit Shift Intrinsics",
+                        header.CrossProduct(
+                            bin_part,
+                            ["vsll", "vsra"],
+                            ["signed"],
+                            [vv_shifting_op, vx_shifting_op],
+                        ),
+                        header.CrossProduct(
+                            bin_part,
+                            ["vsll", "vsrl"],
+                            ["unsigned"],
+                            [vv_shifting_op, vx_shifting_op],
+                        ),
                     ]
                 )
             ],
