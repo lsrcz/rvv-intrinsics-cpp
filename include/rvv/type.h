@@ -176,6 +176,24 @@ template <size_t kN, typename T>
 concept widenable_n =
     requires { typename internal::WidenedNType<kN>::template Type<T>; };
 
+namespace internal {
+template <typename T>
+struct ToUnsigned {
+  using Type = T;
+};
+template <typename T>
+struct ToSigned {
+  using Type = T;
+};
+
+}  // namespace internal
+
+template <typename T>
+using to_unsigned_t = typename internal::ToUnsigned<T>::Type;
+
+template <typename T>
+using to_signed_t = typename internal::ToSigned<T>::Type;
+
 }  // namespace rvv
 
 #include <rvv/type.inc>

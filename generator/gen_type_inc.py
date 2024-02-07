@@ -1,7 +1,7 @@
 from typing import Optional
 
 from codegen import cpp_repr, guarded, header, main, validate
-from codegen.typing import elem, lmul, misc
+from codegen.typing import elem, lmul, misc, vreg
 
 
 def vreg_specialization_def(
@@ -143,6 +143,54 @@ struct NarrowedType<vreg_t<{elem_type.cpp_repr}, {ratio.cpp_repr}>> {{
     )
 
 
+def to_signed_unsigned_scalar_type_specialization_def(
+    elem_type: elem.RawElemType,
+) -> cpp_repr.HasCppRepr:
+    if not isinstance(elem_type, elem.IntType):
+        return ""
+    if not elem_type.signed:
+        return ""
+    unsigned_type = elem.IntType(width=elem_type.width, signed=False)
+    return guarded.Guarded(
+        guarded.elem_guard(elem_type, False),
+        f"""template <>
+struct ToUnsigned<{elem_type.cpp_repr}> {{
+  using Type = {unsigned_type.cpp_repr};
+}};
+template <>
+struct ToSigned<{unsigned_type.cpp_repr}> {{
+  using Type = {elem_type.cpp_repr};
+}};""",
+    )
+
+
+def to_signed_unsigned_vreg_type_specialization_def(
+    elem_type: elem.RawElemType, ratio: misc.LitSizeTValue
+) -> cpp_repr.HasCppRepr:
+    if not isinstance(elem_type, elem.IntType):
+        return ""
+    if not elem_type.signed:
+        return ""
+    if not validate.is_compatible_elem_ratio_may_under_guards(elem_type, ratio):
+        return ""
+
+    signed_type = vreg.ConcreteVRegType(elem_type=elem_type, ratio=ratio)
+    unsigned_type = vreg.ConcreteVRegType(
+        elem_type=elem.IntType(width=elem_type.width, signed=False), ratio=ratio
+    )
+    return guarded.Guarded(
+        guarded.elem_ratio_guard(elem_type, ratio, need_zvfh=False),
+        f"""template <>
+struct ToUnsigned<{signed_type.cpp_repr}> {{
+  using Type = {unsigned_type.cpp_repr};
+}};
+template <>
+struct ToSigned<{unsigned_type.cpp_repr}> {{
+  using Type = {signed_type.cpp_repr};
+}};""",
+    )
+
+
 rvv_type_header = header.Header(
     [
         header.Namespace(
@@ -158,6 +206,15 @@ rvv_type_header = header.Header(
                 ),
                 header.CrossProduct(
                     widened_narrowed_vreg_specialization_def,
+                    elem.ALL_ELEM_TYPES,
+                    misc.ALL_RATIO,
+                ),
+                header.CrossProduct(
+                    to_signed_unsigned_scalar_type_specialization_def,
+                    elem.ALL_ELEM_TYPES,
+                ),
+                header.CrossProduct(
+                    to_signed_unsigned_vreg_type_specialization_def,
                     elem.ALL_ELEM_TYPES,
                     misc.ALL_RATIO,
                 ),

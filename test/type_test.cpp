@@ -671,3 +671,34 @@ TYPED_TEST(WideningNTest, widening_n) {
                  typename TypeParam::Wide>));
   }
 }
+
+template <typename Config>
+class ToSignedUnsignedTest : public ::testing::Test {};
+
+template <typename Signed_, typename Unsigned_>
+class ToSignedUnsignedConfig {
+ public:
+  using Signed = Signed_;
+  using Unsigned = Unsigned_;
+};
+
+using ToSignedUnsignedConfigs =
+    ::testing::Types<ToSignedUnsignedConfig<int8_t, uint8_t>,
+                     ToSignedUnsignedConfig<int16_t, uint16_t>,
+                     ToSignedUnsignedConfig<int32_t, uint32_t>,
+#if HAS_ZVE64X
+                     ToSignedUnsignedConfig<int64_t, uint64_t>,
+#endif
+                     ToSignedUnsignedConfig<vint8m1_t, vuint8m1_t>>;
+
+TYPED_TEST_SUITE(ToSignedUnsignedTest, ToSignedUnsignedConfigs);
+
+TYPED_TEST(ToSignedUnsignedTest, to_signed) {
+  EXPECT_TRUE((std::is_same_v<rvv::to_signed_t<typename TypeParam::Unsigned>,
+                              typename TypeParam::Signed>));
+}
+
+TYPED_TEST(ToSignedUnsignedTest, to_unsigned) {
+  EXPECT_TRUE((std::is_same_v<rvv::to_unsigned_t<typename TypeParam::Signed>,
+                              typename TypeParam::Unsigned>));
+}
