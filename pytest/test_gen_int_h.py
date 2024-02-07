@@ -21,7 +21,7 @@ def test_vwaddu_vx_tum() -> None:
         == """template <typename E, size_t kRatio>
   requires is_supported_rvv_unsigned<E> && is_compatible_elem_ratio<E, kRatio> && widenable<E> && is_compatible_elem_ratio<widen_t<E>, kRatio>
 RVV_ALWAYS_INLINE
-vreg_t<widen_t<E>, kRatio> vwadd(vmask_t<kRatio> vm, vreg_t<widen_t<E>, kRatio> vd, vreg_t<E, kRatio> vs2, E rs1, vl_t<kRatio> vl) {
+vreg_t<widen_t<E>, kRatio> vwaddu(vmask_t<kRatio> vm, vreg_t<widen_t<E>, kRatio> vd, vreg_t<E, kRatio> vs2, E rs1, vl_t<kRatio> vl) {
   return __riscv_vwaddu_vx_tum(vm, vd, vs2, rs1, vl);
 }"""
     )
@@ -47,7 +47,7 @@ def test_vwadd_vv_tum() -> None:
         == """template <typename V, size_t kRatio>
   requires is_supported_unsigned_vreg<V> && is_compatible_vreg_ratio<V, kRatio> && widenable<V> && is_compatible_vreg_ratio<widen_t<V>, kRatio>
 RVV_ALWAYS_INLINE
-widen_t<V> vwadd(vmask_t<kRatio> vm, widen_t<V> vd, V vs2, V vs1, vl_t<kRatio> vl) {
+widen_t<V> vwaddu(vmask_t<kRatio> vm, widen_t<V> vd, V vs2, V vs1, vl_t<kRatio> vl) {
   return __riscv_vwaddu_vv_tum(vm, vd, vs2, vs1, vl);
 }"""
     )

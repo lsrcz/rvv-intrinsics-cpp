@@ -12,7 +12,7 @@ def widening_vx_or_wx_op(
         lambda elem_type, ratio: vreg.ConcreteVRegType(
             elem_type=elem.WidenElemType(base_type=elem_type), ratio=ratio
         ),
-        inst,
+        inst + ("" if signed else "u"),
         lambda variant, elem_type, ratio: func.elem_ratio_extend_param_list(
             elem.WidenElemType(base_type=elem_type),
             ratio,
@@ -50,86 +50,12 @@ def widening_vx_or_wx_op(
     )
 
 
-def narrowing_shift_op(
-    inst: str, *, op_variant: str = ""
-) -> Callable[[str], func.Function]:
-    assert inst in ["vnsra", "vnsrl"]
-    assert op_variant in ["", "scalar"]
-
-    def function_param_list(
-        variant: str, vreg_type: vreg.ParamVRegType, ratio: misc.ParamSizeTValue
-    ) -> function.FunctionTypedParamList:
-        ret: list[function.TypedParam] = []
-        ret.append(
-            function.TypedParam(
-                type=vreg_type,
-                name="vs2",
-            )
-        )
-
-        match op_variant:
-            case "":
-                if inst == "vnsra":
-                    ret.append(
-                        function.TypedParam(
-                            type=vreg.NarrowVRegType(
-                                base_type=vreg.ToUnsignedVRegType(
-                                    base_type=vreg_type
-                                )
-                            ),
-                            name="vs1",
-                        )
-                    )
-                else:
-                    ret.append(
-                        function.TypedParam(
-                            type=vreg.NarrowVRegType(base_type=vreg_type),
-                            name="vs1",
-                        )
-                    )
-            case "scalar":
-                ret.append(
-                    function.TypedParam(type=misc.SizeTType(), name="rs1")
-                )
-            case _:
-                pass
-
-        ret.append(function.TypedParam(type=vl.VLType(ratio=ratio), name="vl"))
-
-        return func.vreg_ratio_extend_param_list(
-            vreg.NarrowVRegType(base_type=vreg_type),
-            ratio,
-            variant,
-            function.FunctionTypedParamList(*ret),
-        )
-
-    return func.template_vreg_ratio(
-        lambda vreg_type, ratio: vreg.NarrowVRegType(base_type=vreg_type),
-        inst,
-        function_param_list,
-        lambda variant, elem_type, ratio, param_list: (
-            "  return "
-            + func.apply_function(
-                f"__riscv_{inst}" + func.rv_postfix(variant, overloaded=True),
-                param_list,
-            )
-            + ";"
-        ),
-        require_clauses=lambda vreg_type, ratio: ops.vreg_require_clauses(
-            "signed" if inst == "vnsra" else "unsigned",
-            vreg_type,
-            ratio,
-            narrowing=True,
-        ),
-    )
-
-
 def widening_vv_or_wv_op(
     inst: str, is_vv: bool, signed: bool
 ) -> Callable[[str], func.Function]:
     return func.template_vreg_ratio(
         lambda vreg_type, ratio: vreg.WidenVRegType(base_type=vreg_type),
-        inst,
+        inst + ("" if signed else "u"),
         lambda variant, vreg_type, ratio: func.vreg_ratio_extend_param_list(
             vreg.WidenVRegType(base_type=vreg_type),
             ratio,
@@ -209,6 +135,80 @@ def widening_op(inst: str, signed: bool) -> Callable[[str], func.Function]:
         ),
         require_clauses=lambda vreg_type, ratio: ops.vreg_require_clauses(
             "signed" if signed else "unsigned", vreg_type, ratio, widening=True
+        ),
+    )
+
+
+def narrowing_shift_op(
+    inst: str, *, op_variant: str = ""
+) -> Callable[[str], func.Function]:
+    assert inst in ["vnsra", "vnsrl"]
+    assert op_variant in ["", "scalar"]
+
+    def function_param_list(
+        variant: str, vreg_type: vreg.ParamVRegType, ratio: misc.ParamSizeTValue
+    ) -> function.FunctionTypedParamList:
+        ret: list[function.TypedParam] = []
+        ret.append(
+            function.TypedParam(
+                type=vreg_type,
+                name="vs2",
+            )
+        )
+
+        match op_variant:
+            case "":
+                if inst == "vnsra":
+                    ret.append(
+                        function.TypedParam(
+                            type=vreg.NarrowVRegType(
+                                base_type=vreg.ToUnsignedVRegType(
+                                    base_type=vreg_type
+                                )
+                            ),
+                            name="vs1",
+                        )
+                    )
+                else:
+                    ret.append(
+                        function.TypedParam(
+                            type=vreg.NarrowVRegType(base_type=vreg_type),
+                            name="vs1",
+                        )
+                    )
+            case "scalar":
+                ret.append(
+                    function.TypedParam(type=misc.SizeTType(), name="rs1")
+                )
+            case _:
+                pass
+
+        ret.append(function.TypedParam(type=vl.VLType(ratio=ratio), name="vl"))
+
+        return func.vreg_ratio_extend_param_list(
+            vreg.NarrowVRegType(base_type=vreg_type),
+            ratio,
+            variant,
+            function.FunctionTypedParamList(*ret),
+        )
+
+    return func.template_vreg_ratio(
+        lambda vreg_type, ratio: vreg.NarrowVRegType(base_type=vreg_type),
+        inst,
+        function_param_list,
+        lambda variant, elem_type, ratio, param_list: (
+            "  return "
+            + func.apply_function(
+                f"__riscv_{inst}" + func.rv_postfix(variant, overloaded=True),
+                param_list,
+            )
+            + ";"
+        ),
+        require_clauses=lambda vreg_type, ratio: ops.vreg_require_clauses(
+            "signed" if inst == "vnsra" else "unsigned",
+            vreg_type,
+            ratio,
+            narrowing=True,
         ),
     )
 
@@ -296,7 +296,9 @@ def vx_comparing_op(
     allowed_type_category: str,
 ) -> Callable[[str], func.Function]:
     return ops.binary_op_template_on_elem(
-        inst, allowed_type_category, op_variant="comparing"
+        inst + ("u" if allowed_type_category == "unsigned" else ""),
+        allowed_type_category,
+        op_variant="comparing",
     )
 
 
@@ -305,7 +307,9 @@ def vv_comparing_op(
     allowed_type_category: str,
 ) -> Callable[[str], func.Function]:
     return ops.binary_op_template_on_vreg(
-        inst, allowed_type_category, op_variant="comparing"
+        inst + ("u" if allowed_type_category == "unsigned" else ""),
+        allowed_type_category,
+        op_variant="comparing",
     )
 
 
@@ -482,13 +486,7 @@ rvv_int_header = header.Header(
                         header.CrossProduct(
                             bin_part,
                             ["vmslt", "vmsle", "vmsgt", "vmsge"],
-                            ["signed"],
-                            [vv_comparing_op, vx_comparing_op],
-                        ),
-                        header.CrossProduct(
-                            bin_part,
-                            ["vmsltu", "vmsleu", "vmsgtu", "vmsgeu"],
-                            ["unsigned"],
+                            ["signed", "unsigned"],
                             [vv_comparing_op, vx_comparing_op],
                         ),
                     ]
