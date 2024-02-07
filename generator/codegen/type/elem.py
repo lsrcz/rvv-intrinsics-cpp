@@ -97,6 +97,8 @@ ALL_FLOAT_TYPES: list[FloatType] = [
 
 ALL_ELEM_TYPES: Sequence[RawElemType] = ALL_INT_TYPES + ALL_FLOAT_TYPES
 
+ALL_ELEM_SIZES: list[int] = [8, 16, 32, 64]
+
 
 @dataclass(frozen=True, kw_only=True)
 class ParamElemType(ElemType, type.TypeParam):

@@ -7,10 +7,12 @@ class HasCppReprProperty(Protocol):
         raise NotImplementedError
 
 
-HasCppRepr = Union[str, HasCppReprProperty]
+HasCppRepr = Union[str, HasCppReprProperty, None]
 
 
 def to_cpp_repr(x: HasCppRepr) -> str:
+    if x is None:
+        return ""
     if isinstance(x, str):
         return x
     return x.cpp_repr

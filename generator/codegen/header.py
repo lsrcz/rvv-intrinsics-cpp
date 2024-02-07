@@ -1,25 +1,37 @@
 import abc
 import itertools
 import os
-from typing import Any, Callable, Iterable, Optional, Sequence, Union
-from . import cpp_repr, macro
-from .type import elem, lmul, misc
+from typing import (
+    Any,
+    Callable,
+    Concatenate,
+    Iterable,
+    Optional,
+    ParamSpec,
+    Sequence,
+    Union,
+)
+from . import cpp_repr
 
-ALL_VARIANTS: frozenset[str] = frozenset(["", "m", "tu", "tum", "mu", "tumu"])
+ALL_VARIANTS: tuple[str, ...] = ("", "m", "tu", "tum", "mu", "tumu")
+ALL_VARIANTS_SET: frozenset[str] = frozenset(
+    ["", "m", "tu", "tum", "mu", "tumu"]
+)
 
 
 class HeaderPart(metaclass=abc.ABCMeta):
-    def __init__(self, allowed_variants: frozenset[str]) -> None:
-        assert allowed_variants.issubset(ALL_VARIANTS)
-        self.allowed_variants: frozenset[str] = allowed_variants
+    def __init__(self, allowed_variants: Iterable[str]) -> None:
+        frozen_allowed_variants = frozenset(allowed_variants)
+        assert frozen_allowed_variants.issubset(ALL_VARIANTS_SET)
+        self.allowed_variants: frozenset[str] = frozen_allowed_variants
 
     @abc.abstractmethod
-    def _render(self, variants: Sequence[str]) -> str:
+    def _render(self, variants: Iterable[str]) -> str:
         pass
 
-    def render(self, variants: Sequence[str]) -> str:
+    def render(self, variants: Iterable[str]) -> str:
         assert set(variants).issubset(ALL_VARIANTS)
-        filtered_variants: Sequence[str] = [
+        filtered_variants: Iterable[str] = [
             variant for variant in variants if variant in self.allowed_variants
         ]
         if len(filtered_variants) == 0:
@@ -27,10 +39,12 @@ class HeaderPart(metaclass=abc.ABCMeta):
         return self._render(filtered_variants)
 
 
-HeaderPartLike = Union[cpp_repr.HasCppRepr, HeaderPart]
+HeaderPartLike = Union[cpp_repr.HasCppRepr, HeaderPart, None]
 
 
-def render(part_like: HeaderPartLike, variants: Sequence[str]) -> str:
+def render(part_like: HeaderPartLike, variants: Iterable[str]) -> str:
+    if part_like is None:
+        return ""
     if isinstance(part_like, HeaderPart):
         return part_like.render(variants)
     return cpp_repr.to_cpp_repr(part_like)
@@ -38,12 +52,12 @@ def render(part_like: HeaderPartLike, variants: Sequence[str]) -> str:
 
 class Include(HeaderPart):
     def __init__(
-        self, filename: str, allowed_variants: frozenset[str] = ALL_VARIANTS
+        self, filename: str, allowed_variants: Iterable[str] = ALL_VARIANTS
     ) -> None:
         super().__init__(allowed_variants=allowed_variants)
         self.filename: str = filename
 
-    def _render(self, variants: Sequence[str]) -> str:
+    def _render(self, variants: Iterable[str]) -> str:
         return f"#include <{self.filename}>"
 
 
@@ -51,12 +65,12 @@ class Verbatim(HeaderPart):
     def __init__(
         self,
         content: cpp_repr.HasCppRepr,
-        allowed_variants: frozenset[str] = ALL_VARIANTS,
+        allowed_variants: Iterable[str] = ALL_VARIANTS,
     ) -> None:
         super().__init__(allowed_variants=allowed_variants)
         self.content: cpp_repr.HasCppRepr = content
 
-    def _render(self, variants: Sequence[str]) -> str:
+    def _render(self, variants: Iterable[str]) -> str:
         return cpp_repr.to_cpp_repr(self.content)
 
 
@@ -65,13 +79,13 @@ class Namespace(HeaderPart):
         self,
         name: str,
         content: Sequence[HeaderPartLike],
-        allowed_variants: frozenset[str] = ALL_VARIANTS,
+        allowed_variants: Iterable[str] = ALL_VARIANTS,
     ) -> None:
         super().__init__(allowed_variants=allowed_variants)
         self.name: str = name
         self.content: Sequence[HeaderPartLike] = content
 
-    def _render(self, variants: Sequence[str]) -> str:
+    def _render(self, variants: Iterable[str]) -> str:
         rendered = "\n".join([render(part, variants) for part in self.content])
         return f"""namespace {self.name} {{
 {rendered}
@@ -82,12 +96,12 @@ class VariantNamespace(HeaderPart):
     def __init__(
         self,
         content: Sequence[HeaderPartLike],
-        allowed_variants: frozenset[str] = ALL_VARIANTS,
+        allowed_variants: Iterable[str] = ALL_VARIANTS,
     ) -> None:
         super().__init__(allowed_variants=allowed_variants)
         self.content: Sequence[HeaderPartLike] = content
 
-    def _render(self, variants: Sequence[str]) -> str:
+    def _render(self, variants: Iterable[str]) -> str:
         namespaces: dict[str, list[str]] = dict()
 
         def add(namespace_name: str, variant: str) -> None:
@@ -126,7 +140,7 @@ class VariantNamespace(HeaderPart):
 def join_all_generated(all_generated: Iterable[Optional[str]]) -> str:
     all_str: list[str] = []
     for generated in all_generated:
-        if generated is not None:
+        if generated is not None and generated:
             all_str.append(generated)
     if len(all_str) != 0:
         return "\n".join(all_str)
@@ -136,123 +150,19 @@ def join_all_generated(all_generated: Iterable[Optional[str]]) -> str:
 class WithVariants(HeaderPart):
     def __init__(
         self,
-        gen: Callable[[str], cpp_repr.HasCppRepr],
-        allowed_variants: frozenset[str] = ALL_VARIANTS,
+        gen: Callable[[str], Optional[cpp_repr.HasCppRepr]],
+        allowed_variants: Iterable[str] = ALL_VARIANTS,
     ) -> None:
         super().__init__(allowed_variants=allowed_variants)
-        self.gen: Callable[[str], cpp_repr.HasCppRepr] = gen
+        self.gen: Callable[[str], Optional[cpp_repr.HasCppRepr]] = gen
 
-    def _render(self, variants: Sequence[str]) -> str:
+    def _render(self, variants: Iterable[str]) -> str:
         return join_all_generated(
             [cpp_repr.to_cpp_repr(self.gen(variant)) for variant in variants]
         )
 
 
-class ForAllElemLmul(HeaderPart):
-    def __init__(
-        self,
-        gen: Callable[
-            [str, elem.RawElemType, lmul.LitLMulValue],
-            Optional[cpp_repr.HasCppRepr],
-        ],
-        allowed_variants: frozenset[str] = ALL_VARIANTS,
-    ) -> None:
-        super().__init__(allowed_variants=allowed_variants)
-        self.gen: Callable[
-            [str, elem.RawElemType, lmul.LitLMulValue],
-            Optional[cpp_repr.HasCppRepr],
-        ] = gen
-
-    def _render(self, variants: Sequence[str]) -> str:
-        return join_all_generated(
-            [
-                macro.for_all_elem_lmul(lambda e, l: self.gen(variant, e, l))
-                for variant in variants
-            ]
-        )
-
-
-class ForAllRatio(HeaderPart):
-    def __init__(
-        self,
-        gen: Callable[[str, misc.LitSizeTValue], Optional[cpp_repr.HasCppRepr]],
-        allowed_variants: frozenset[str] = ALL_VARIANTS,
-    ) -> None:
-        super().__init__(allowed_variants=allowed_variants)
-        self.gen: Callable[
-            [str, misc.LitSizeTValue], Optional[cpp_repr.HasCppRepr]
-        ] = gen
-
-    def _render(self, variants: Sequence[str]) -> str:
-        return join_all_generated(
-            [
-                macro.for_all_ratio(lambda r: self.gen(variant, r))
-                for variant in variants
-            ]
-        )
-
-
-class ForAllElemRatio(HeaderPart):
-    def __init__(
-        self,
-        gen: Callable[
-            [str, elem.RawElemType, misc.LitSizeTValue],
-            Optional[cpp_repr.HasCppRepr],
-        ],
-        allowed_variants: frozenset[str] = ALL_VARIANTS,
-    ) -> None:
-        super().__init__(allowed_variants=allowed_variants)
-
-        self.gen: Callable[
-            [str, elem.RawElemType, misc.LitSizeTValue],
-            Optional[cpp_repr.HasCppRepr],
-        ] = gen
-
-    def _render(self, variants: Sequence[str]) -> str:
-        return join_all_generated(
-            [
-                macro.for_all_elem_ratio(lambda e, r: self.gen(variant, e, r))
-                for variant in variants
-            ]
-        )
-
-
-class ForAllElemSize(HeaderPart):
-    def __init__(
-        self,
-        gen: Callable[[str, int], Optional[cpp_repr.HasCppRepr]],
-        allowed_variants: frozenset[str] = ALL_VARIANTS,
-    ) -> None:
-        super().__init__(allowed_variants=allowed_variants)
-        self.gen: Callable[[str, int], Optional[cpp_repr.HasCppRepr]] = gen
-
-    def _render(self, variants: Sequence[str]) -> str:
-        return join_all_generated(
-            [
-                macro.for_all_elem_size(lambda size: self.gen(variant, size))
-                for variant in variants
-            ]
-        )
-
-
-class ForAllElemType(HeaderPart):
-    def __init__(
-        self,
-        gen: Callable[[str, elem.RawElemType], Optional[cpp_repr.HasCppRepr]],
-        allowed_variants: frozenset[str] = ALL_VARIANTS,
-    ) -> None:
-        super().__init__(allowed_variants=allowed_variants)
-        self.gen: Callable[
-            [str, elem.RawElemType], Optional[cpp_repr.HasCppRepr]
-        ] = gen
-
-    def _render(self, variants: Sequence[str]) -> str:
-        return join_all_generated(
-            [
-                macro.for_all_elem(lambda e: self.gen(variant, e))
-                for variant in variants
-            ]
-        )
+P = ParamSpec("P")
 
 
 class CrossProduct(HeaderPart):
@@ -260,17 +170,32 @@ class CrossProduct(HeaderPart):
         self,
         gen: Callable[..., HeaderPartLike],
         *args: Sequence[Any],
-        allowed_variants: frozenset[str] = ALL_VARIANTS,
+        allowed_variants: Iterable[str] = ALL_VARIANTS,
     ):
         super().__init__(allowed_variants=allowed_variants)
         self.gen: Callable[..., HeaderPartLike] = gen
         self.args: Sequence[Sequence[Any]] = args
 
-    def _render(self, variants: Sequence[str]) -> str:
+    def _render(self, variants: Iterable[str]) -> str:
         ret: list[str] = []
         for next_args in itertools.product(*self.args):
             ret.append(render(self.gen(*next_args), variants))
-        return "\n".join(ret)
+        return "\n".join(filter(None, ret))
+
+    @staticmethod
+    def variant(
+        gen: Callable[Concatenate[str, P], cpp_repr.HasCppRepr],
+        *args: Sequence[Any],
+        allowed_variants: Iterable[str] = ALL_VARIANTS,
+    ) -> "CrossProduct":
+        def func(*args: P.args, **kwargs: P.kwargs) -> HeaderPartLike:
+            return WithVariants(lambda variant: gen(variant, *args, **kwargs))
+
+        return CrossProduct(
+            func,
+            *args,
+            allowed_variants=allowed_variants,
+        )
 
 
 class Header:
@@ -280,7 +205,7 @@ class Header:
         self.parts: Sequence[HeaderPartLike] = parts
         self.need_include_guard: bool = need_include_guard
 
-    def render(self, variants: Sequence[str], filename: str) -> str:
+    def render(self, variants: Iterable[str], filename: str) -> str:
         rendered: str = "\n".join(
             [render(part, variants) for part in self.parts]
         )
@@ -305,9 +230,9 @@ class Header:
 """
 
     def write(
-        self, variants: Sequence[str], base_dir: str, filename: str
+        self, variants: Iterable[str], base_dir: str, filename: str
     ) -> None:
         header_filename = os.path.join(base_dir, filename)
         os.makedirs(os.path.dirname(header_filename), exist_ok=True)
-        with open(os.path.join(base_dir, filename), "w") as f:
+        with open(os.path.join(base_dir, filename), "w", encoding="utf-8") as f:
             f.write(self.render(variants, filename))

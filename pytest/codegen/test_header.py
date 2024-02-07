@@ -1,6 +1,4 @@
-from typing import Callable, Optional
 from codegen import header, cpp_repr
-from codegen.type import elem, lmul, misc
 import tempfile
 import os
 
@@ -54,104 +52,44 @@ _tumu
 def test_with_variants() -> None:
     assert (
         header.WithVariants(
-            lambda variant: variant,
+            lambda variant: ":" + variant,
             allowed_variants={"", "m", "tu"},
         ).render(["", "m", "tu", "tum"])
-        == f"""
-m
-tu"""
+        == f""":
+:m
+:tu"""
     )
-
-
-def test_for_all_elem_lmul() -> None:
-    def gen(
-        variant: str, e: elem.RawElemType, l: lmul.LitLMulValue
-    ) -> Optional[cpp_repr.HasCppRepr]:
-        if (e.element_width.bit_count() + l.lmul.lmul.bit_count()) % 2 == 0:
-            return None
-        return f"{variant}, {e.cpp_repr}, {l.lmul.short_name}"
-
-    expected: list[str] = []
-    for v in ["tu", "tum"]:
-        for e in elem.ALL_ELEM_TYPES:
-            for l in lmul.ALL_LMUL:
-                generated = gen(v, e, l)
-                if generated is not None:
-                    expected.append(cpp_repr.to_cpp_repr(generated))
-
-    assert header.ForAllElemLmul(
-        gen, allowed_variants={"m", "tu", "tum"}
-    ).render(["", "tu", "tum", "mu", "tumu"]) == "\n".join(expected)
-
-
-def test_for_all_ratio() -> None:
-    def gen(
-        variant: str, r: misc.LitSizeTValue
-    ) -> Optional[cpp_repr.HasCppRepr]:
-        if r.value.bit_count() % 2 == 0:
-            return None
-        return f"{variant}, {r.value}"
-
-    expected: list[str] = []
-    for v in ["tu", "tum"]:
-        for r in misc.ALL_RATIO:
-            generated = gen(v, r)
-            if generated is not None:
-                expected.append(cpp_repr.to_cpp_repr(generated))
-
-    assert header.ForAllRatio(gen, allowed_variants={"m", "tu", "tum"}).render(
-        ["", "tu", "tum", "mu", "tumu"]
-    ) == "\n".join(expected)
-
-
-def test_for_all_elem_ratio() -> None:
-    def gen(
-        variant: str, e: elem.RawElemType, r: misc.LitSizeTValue
-    ) -> Optional[cpp_repr.HasCppRepr]:
-        if (e.element_width.bit_count() + r.value.bit_count()) % 2 == 0:
-            return None
-        return f"{variant}, {r.value}"
-
-    expected: list[str] = []
-    for v in ["tu", "tum"]:
-        for e in elem.ALL_ELEM_TYPES:
-            for r in misc.ALL_RATIO:
-                generated = gen(v, e, r)
-                if generated is not None:
-                    expected.append(cpp_repr.to_cpp_repr(generated))
-
-    assert header.ForAllElemRatio(
-        gen, allowed_variants={"m", "tu", "tum"}
-    ).render(["", "tu", "tum", "mu", "tumu"]) == "\n".join(expected)
-
-
-def test_for_all_elem_size() -> None:
-    def gen(variant: str, width: int) -> Optional[str]:
-        if width <= 32:
-            return f"{variant}, {width}"
-        return None
-
-    expected: list[str] = []
-    for v in ["tu", "tum"]:
-        for i in [8, 16, 32, 64]:
-            generated = gen(v, i)
-            if generated is not None:
-                expected.append(cpp_repr.to_cpp_repr(generated))
-    assert header.ForAllElemSize(
-        gen, allowed_variants={"m", "tu", "tum"}
-    ).render(["", "tu", "tum", "mu", "tumu"]) == "\n".join(expected)
 
 
 def test_cross_product() -> None:
     def gen(arg1: str, arg2: str) -> header.HeaderPart:
+        if arg1 == "a" and arg2 == "d":
+            return header.Verbatim("")
         return header.WithVariants(lambda v: f"{v}, {arg1}, {arg2}")
 
     assert (
         header.CrossProduct(gen, ["a", "b"], ["c", "d"]).render(["", "m"])
         == """, a, c
 m, a, c
-, a, d
-m, a, d
+, b, c
+m, b, c
+, b, d
+m, b, d"""
+    )
+
+
+def test_cross_product_variants() -> None:
+    def gen(variant: str, arg1: str, arg2: str) -> cpp_repr.HasCppRepr:
+        if arg1 == "a" and arg2 == "d":
+            return None
+        return f"{variant}, {arg1}, {arg2}"
+
+    assert (
+        header.CrossProduct.variant(gen, ["a", "b"], ["c", "d"]).render(
+            ["", "m"]
+        )
+        == """, a, c
+m, a, c
 , b, c
 m, b, c
 , b, d

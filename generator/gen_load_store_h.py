@@ -315,21 +315,27 @@ rvv_load_store_header = header.Header(
                     [
                         "// 1. Vector Loads and Stores Intrinsics",
                         "// 1.1. Vector Unit-Stride Load Intrinsics",
-                        header.ForAllElemRatio(
+                        header.CrossProduct.variant(
                             non_indexed_load_base_def_template("vle"),
+                            elem.ALL_ELEM_TYPES,
+                            misc.ALL_RATIO,
                             allowed_variants={""},
                         ),
-                        header.ForAllElemSize(
+                        header.CrossProduct.variant(
                             non_indexed_load_variant_def_template("vle"),
+                            elem.ALL_ELEM_SIZES,
                             allowed_variants={"m", "mu", "tu", "tum", "tumu"},
                         ),
                         "// 1.2. Vector Unit-Stride Store Intrinsics",
-                        header.ForAllElemSize(
+                        header.CrossProduct.variant(
                             non_indexed_store_def_template("vse"),
+                            elem.ALL_ELEM_SIZES,
                             allowed_variants={"", "m"},
                         ),
                         "// 1.3. Vector Mask Load/Store Intrinsics",
-                        header.ForAllRatio(vlm_defs, allowed_variants={""}),
+                        header.CrossProduct.variant(
+                            vlm_defs, misc.ALL_RATIO, allowed_variants={""}
+                        ),
                         header.Verbatim(
                             """template <size_t kRatio>
 RVV_ALWAYS_INLINE
@@ -339,22 +345,27 @@ vmask_t<kRatio> vsm(uint8_t *rs1, vmask_t<kRatio> vs3, vl_t<kRatio> vl) {
                             allowed_variants={""},
                         ),
                         "// 1.4. Vector Strided Load Intrinsics",
-                        header.ForAllElemRatio(
+                        header.CrossProduct.variant(
                             non_indexed_load_base_def_template("vlse"),
+                            elem.ALL_ELEM_TYPES,
+                            misc.ALL_RATIO,
                             allowed_variants={""},
                         ),
-                        header.ForAllElemSize(
+                        header.CrossProduct.variant(
                             non_indexed_load_variant_def_template("vlse"),
+                            elem.ALL_ELEM_SIZES,
                             allowed_variants={"m", "mu", "tu", "tum", "tumu"},
                         ),
                         "// 1.5. Vector Strided Store Intrinsics",
-                        header.ForAllElemSize(
+                        header.CrossProduct.variant(
                             non_indexed_store_def_template("vsse"),
+                            elem.ALL_ELEM_SIZES,
                             allowed_variants={"", "m"},
                         ),
                         "// 1.6 Vector Indexed Load Intrinsics",
-                        header.ForAllElemSize(
+                        header.CrossProduct.variant(
                             vlxei_defs("vloxei"),
+                            elem.ALL_ELEM_SIZES,
                             allowed_variants={
                                 "",
                                 "m",
@@ -364,8 +375,9 @@ vmask_t<kRatio> vsm(uint8_t *rs1, vmask_t<kRatio> vs3, vl_t<kRatio> vl) {
                                 "tumu",
                             },
                         ),
-                        header.ForAllElemSize(
+                        header.CrossProduct.variant(
                             vlxei_defs("vluxei"),
+                            elem.ALL_ELEM_SIZES,
                             allowed_variants={
                                 "",
                                 "m",
@@ -376,21 +388,26 @@ vmask_t<kRatio> vsm(uint8_t *rs1, vmask_t<kRatio> vs3, vl_t<kRatio> vl) {
                             },
                         ),
                         "// 1.7 Vector Indexed Store Intrinsics",
-                        header.ForAllElemSize(
+                        header.CrossProduct.variant(
                             vsxei_defs("vsoxei"),
+                            elem.ALL_ELEM_SIZES,
                             allowed_variants={"", "m"},
                         ),
-                        header.ForAllElemSize(
+                        header.CrossProduct.variant(
                             vsxei_defs("vsuxei"),
+                            elem.ALL_ELEM_SIZES,
                             allowed_variants={"", "m"},
                         ),
                         "// 1.8. Unit-stride Fault-Only-First Loads Intrinsics",
-                        header.ForAllElemRatio(
+                        header.CrossProduct.variant(
                             non_indexed_load_base_def_template("vleff"),
+                            elem.ALL_ELEM_TYPES,
+                            misc.ALL_RATIO,
                             allowed_variants={""},
                         ),
-                        header.ForAllElemSize(
+                        header.CrossProduct.variant(
                             non_indexed_load_variant_def_template("vleff"),
+                            elem.ALL_ELEM_SIZES,
                             allowed_variants={"m", "mu", "tu", "tum", "tumu"},
                         ),
                     ]

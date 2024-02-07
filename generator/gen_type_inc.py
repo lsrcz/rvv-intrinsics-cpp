@@ -147,21 +147,18 @@ rvv_type_header = header.Header(
         header.Namespace(
             "rvv::internal",
             [
-                header.ForAllElemRatio(
-                    lambda _, e, r: vreg_specialization_def(e, r),
+                header.CrossProduct(
+                    vreg_specialization_def, elem.ALL_ELEM_TYPES, misc.ALL_RATIO
                 ),
-                header.ForAllRatio(
-                    lambda _, r: vmask_specialization_def(r),
+                header.CrossProduct(vmask_specialization_def, misc.ALL_RATIO),
+                header.CrossProduct(
+                    widened_narrowed_scalar_type_specialization_def,
+                    elem.ALL_ELEM_TYPES,
                 ),
-                header.ForAllElemType(
-                    gen=lambda _, e: widened_narrowed_scalar_type_specialization_def(
-                        e
-                    )
-                ),
-                header.ForAllElemRatio(
-                    lambda _, e, r: widened_narrowed_vreg_specialization_def(
-                        e, r
-                    ),
+                header.CrossProduct(
+                    widened_narrowed_vreg_specialization_def,
+                    elem.ALL_ELEM_TYPES,
+                    misc.ALL_RATIO,
                 ),
             ],
             allowed_variants={""},

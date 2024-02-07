@@ -51,9 +51,13 @@ rvv_misc_header = header.Header(
             "rvv",
             [
                 header.WithVariants(vsetvl_decl("vsetvl", True)),
-                header.ForAllRatio(vsetvl_defs("vsetvl", True)),
+                header.CrossProduct.variant(
+                    vsetvl_defs("vsetvl", True), misc.ALL_RATIO
+                ),
                 header.WithVariants(vsetvl_decl("vsetvlmax", False)),
-                header.ForAllRatio(vsetvl_defs("vsetvlmax", False)),
+                header.CrossProduct.variant(
+                    vsetvl_defs("vsetvlmax", False), misc.ALL_RATIO
+                ),
                 """
 template <typename E, LMul kLMul>
   requires is_compatible_elem_lmul<E, kLMul>
