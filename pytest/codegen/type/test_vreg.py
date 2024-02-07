@@ -1,6 +1,4 @@
-from codegen.type import vreg
-from codegen.type import elem
-from codegen.type import misc
+from codegen.typing import elem, misc, vreg
 
 
 def test_concrete_vreg_type() -> None:

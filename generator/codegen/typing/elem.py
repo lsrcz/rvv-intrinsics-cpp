@@ -1,12 +1,13 @@
 import abc
-from typing import Sequence
-from . import type
-from . import kind as k
 from dataclasses import dataclass
+from typing import Sequence
+
+from codegen.typing import base
+from codegen.typing import kind as k
 
 
 @dataclass(frozen=True, kw_only=True)
-class ElemType(type.Type):
+class ElemType(base.Type, metaclass=abc.ABCMeta):
     pass
 
 
@@ -101,7 +102,7 @@ ALL_ELEM_SIZES: list[int] = [8, 16, 32, 64]
 
 
 @dataclass(frozen=True, kw_only=True)
-class ParamElemType(ElemType, type.TypeParam):
+class ParamElemType(ElemType, base.TypeParam):
     @property
     def kind(self) -> k.TypeKind:
         return k.TypeKind()

@@ -1,5 +1,5 @@
 from codegen import constraints
-from codegen.type import misc, elem, lmul, vreg
+from codegen.typing import elem, lmul, misc, vreg
 
 
 def test_is_supported_ratio() -> None:

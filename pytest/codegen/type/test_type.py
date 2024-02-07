@@ -1,6 +1,5 @@
-from codegen.type import type
-from codegen.type import misc
+from codegen.typing import base, misc
 
 
 def test_data_kind() -> None:
-    assert type.DataKind(data_type=misc.SizeTType()).cpp_repr == "size_t"
+    assert base.DataKind(data_type=misc.SizeTType()).cpp_repr == "size_t"

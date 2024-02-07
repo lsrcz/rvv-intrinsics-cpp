@@ -1,4 +1,4 @@
-from codegen.type import vmask, misc
+from codegen.typing import misc, vmask
 
 
 def test_vmask() -> None:

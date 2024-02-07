@@ -1,7 +1,8 @@
 from typing import Callable
-from codegen import header, main, func, validate
-from codegen.type import misc, vl, elem
+
+from codegen import func, header, main, validate
 from codegen.param_list import function, template
+from codegen.typing import elem, misc, vl
 
 
 def vsetvl_decl(

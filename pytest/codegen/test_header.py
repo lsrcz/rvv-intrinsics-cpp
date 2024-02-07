@@ -1,6 +1,7 @@
-from codegen import header, cpp_repr
-import tempfile
 import os
+import tempfile
+
+from codegen import cpp_repr, header
 
 
 def test_include() -> None:
@@ -36,16 +37,16 @@ def test_variant_namespace() -> None:
                 )
             ]
         ).render(["", "m", "tu", "tum", "mu", "tumu"])
-        == f"""_
+        == """_
 _m
 
-namespace tu {{
+namespace tu {
 _tu
-}}  // namespace tu
+}  // namespace tu
 
-namespace tumu {{
+namespace tumu {
 _tumu
-}}  // namespace tumu"""
+}  // namespace tumu"""
     )
 
 
@@ -55,7 +56,7 @@ def test_with_variants() -> None:
             lambda variant: ":" + variant,
             allowed_variants={"", "m", "tu"},
         ).render(["", "m", "tu", "tum"])
-        == f""":
+        == """:
 :m
 :tu"""
     )
@@ -155,7 +156,7 @@ def test_header_write() -> None:
         [header.Include("a.h"), header_body],
         need_include_guard=False,
     ).write(["", "m", "tu", "tum"], base_dir, "test/test.h")
-    with open(os.path.join(base_dir, "test/test.h")) as f:
+    with open(os.path.join(base_dir, "test/test.h"), encoding="utf-8") as f:
         content = f.read()
         assert (
             content

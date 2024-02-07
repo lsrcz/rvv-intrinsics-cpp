@@ -1,5 +1,4 @@
-from codegen.type import elem
-from codegen.type import misc
+from codegen.typing import elem, misc
 
 
 def test_non_const_ptr_type() -> None:

@@ -1,5 +1,5 @@
 from codegen import cpp_repr
-from codegen.type import misc
+from codegen.typing import misc
 
 
 def test_cpp_repr_str() -> None:

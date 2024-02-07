@@ -1,6 +1,7 @@
 from typing import Optional
-from codegen.type import elem, misc, lmul
-from codegen import validate, header, main, guarded, cpp_repr
+
+from codegen import cpp_repr, guarded, header, main, validate
+from codegen.typing import elem, lmul, misc
 
 
 def vreg_specialization_def(

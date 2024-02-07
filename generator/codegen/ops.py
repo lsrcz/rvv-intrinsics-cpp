@@ -1,7 +1,8 @@
 from typing import Callable
+
+from codegen import constraints, func
 from codegen.param_list import function
-from codegen import func, constraints
-from codegen.type import vreg, vl, elem, misc
+from codegen.typing import elem, misc, vl, vreg
 
 
 def elem_require_clauses(

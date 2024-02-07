@@ -1,12 +1,13 @@
-from . import type
-from . import misc
-from . import elem
-from . import kind as k
+import abc
 from dataclasses import dataclass
+
+from codegen.typing import base, elem
+from codegen.typing import kind as k
+from codegen.typing import misc
 
 
 @dataclass(frozen=True, kw_only=True)
-class VRegType(type.Type):
+class VRegType(base.Type, metaclass=abc.ABCMeta):
     pass
 
 
@@ -27,7 +28,7 @@ class RawVRegType(ConcreteVRegType):
 
 
 @dataclass(frozen=True, kw_only=True)
-class ParamVRegType(VRegType, type.TypeParam):
+class ParamVRegType(VRegType, base.TypeParam):
     @property
     def kind(self) -> k.TypeKind:
         return k.TypeKind()

@@ -1,6 +1,8 @@
-from typing import Sequence
+import abc
 from dataclasses import dataclass
-from . import type
+from typing import Sequence
+
+from codegen.typing import base
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -37,14 +39,14 @@ class LMul:
 
 
 @dataclass(frozen=True, kw_only=True)
-class LMulType(type.Type):
+class LMulType(base.Type):
     @property
     def cpp_repr(self) -> str:
         return "LMul"
 
 
 @dataclass(frozen=True, kw_only=True)
-class LMulValue(type.Type):
+class LMulValue(base.Type, metaclass=abc.ABCMeta):
     pass
 
 
@@ -69,7 +71,7 @@ ALL_LMUL: Sequence[LitLMulValue] = [
 
 
 @dataclass(frozen=True, kw_only=True)
-class ParamLMulValueType(LMulValue, type.TypeParam):
+class ParamLMulValueType(LMulValue, base.TypeParam):
     @property
-    def kind(self) -> type.DataKind:
-        return type.DataKind(data_type=LMulType())
+    def kind(self) -> base.DataKind:
+        return base.DataKind(data_type=LMulType())

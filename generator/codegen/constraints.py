@@ -1,4 +1,4 @@
-from codegen.type import elem, lmul, misc, vreg, type
+from codegen.typing import base, elem, lmul, misc, vreg
 
 
 def is_supported_ratio(ratio: misc.SizeTValue) -> str:
@@ -18,9 +18,9 @@ def is_compatible_vreg_ratio(
 
 
 def is_compatible_elem_lmul(
-    elem_type: elem.ElemType, lmul: lmul.LMulValue
+    elem_type: elem.ElemType, l: lmul.LMulValue
 ) -> str:
-    return f"is_compatible_elem_lmul<{elem_type.cpp_repr}, {lmul.cpp_repr}>"
+    return f"is_compatible_elem_lmul<{elem_type.cpp_repr}, {l.cpp_repr}>"
 
 
 def has_width(elem_type: elem.ElemType, width: int) -> str:
@@ -69,5 +69,5 @@ def is_supported_floating_point_vreg(
     )
 
 
-def widenable_type(t: type.Type) -> str:
+def widenable_type(t: base.Type) -> str:
     return f"widenable<{t.cpp_repr}>"

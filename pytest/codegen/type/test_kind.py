@@ -1,4 +1,4 @@
-from codegen.type import kind
+from codegen.typing import kind
 
 
 def test_type_kind() -> None:

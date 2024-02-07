@@ -1,6 +1,7 @@
 import abc
-from . import kind as k
 from dataclasses import dataclass
+
+from codegen.typing import kind as k
 
 
 @dataclass(frozen=True, kw_only=True)

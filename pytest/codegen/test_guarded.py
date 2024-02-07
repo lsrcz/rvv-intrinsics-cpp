@@ -1,6 +1,7 @@
-import pytest
-from codegen.type import elem, misc
 from codegen import guarded
+from codegen.typing import elem, misc
+
+import pytest
 
 
 @pytest.mark.parametrize(

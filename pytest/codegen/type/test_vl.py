@@ -1,4 +1,4 @@
-from codegen.type import vl, misc
+from codegen.typing import misc, vl
 
 
 def test_vl() -> None:

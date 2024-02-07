@@ -1,9 +1,10 @@
-from . import type, misc
 from dataclasses import dataclass
+
+from codegen.typing import base, misc
 
 
 @dataclass(frozen=True, kw_only=True)
-class VMaskType(type.Type):
+class VMaskType(base.Type):
     ratio: misc.SizeTValue
 
     @property

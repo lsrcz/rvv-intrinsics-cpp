@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import Sequence
 
 from codegen import cpp_repr
-from codegen.type import elem, misc
+from codegen.typing import elem, misc
 
 
 @dataclass(frozen=True, kw_only=True)

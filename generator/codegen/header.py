@@ -11,7 +11,8 @@ from typing import (
     Sequence,
     Union,
 )
-from . import cpp_repr
+
+from codegen import cpp_repr
 
 ALL_VARIANTS: tuple[str, ...] = ("", "m", "tu", "tum", "mu", "tumu")
 ALL_VARIANTS_SET: frozenset[str] = frozenset(

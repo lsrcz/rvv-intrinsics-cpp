@@ -1,7 +1,9 @@
-from ..type import type as ty
-from . import param_list
-from typing import Sequence, Union, overload
+import abc
 from dataclasses import dataclass
+from typing import Sequence, Union, overload
+
+from codegen.param_list import param_list
+from codegen.typing import base as ty
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -14,7 +16,7 @@ class TypedParam:
         return f"{self.type.cpp_repr} {self.name}"
 
 
-class FunctionParamList(param_list.ParamList):
+class FunctionParamList(param_list.ParamList, metaclass=abc.ABCMeta):
     @property
     def _left_bracket(self) -> str:
         return "("

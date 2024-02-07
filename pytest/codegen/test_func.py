@@ -1,7 +1,9 @@
 from typing import Optional
-from codegen.param_list import function, template
+
 from codegen import func, guarded
-from codegen.type import misc, elem, vmask, vreg
+from codegen.param_list import function, template
+from codegen.typing import elem, misc, vmask, vreg
+
 import pytest
 
 
@@ -63,7 +65,7 @@ feature_guards: list[guarded.Guard] = guarded.elem_guard(
 
 
 def test_function() -> None:
-    function = func.Function(
+    f = func.Function(
         ret_type=ret_type,
         func_name=func_name,
         function_param_list=function_param_list,
@@ -73,7 +75,7 @@ def test_function() -> None:
         feature_guards=feature_guards,
     )
     assert (
-        function.cpp_repr
+        f.cpp_repr
         == """#if HAS_ZVFHMIN
 template <typename E>
   requires sizeof<E> == 4
@@ -86,7 +88,7 @@ int32_t func(E param1, float16_t param2) {
 
 
 def test_function_no_body() -> None:
-    function = func.Function(
+    f = func.Function(
         ret_type=ret_type,
         func_name=func_name,
         function_param_list=function_param_list,
@@ -96,7 +98,7 @@ def test_function_no_body() -> None:
         feature_guards=feature_guards,
     )
     assert (
-        function.cpp_repr
+        f.cpp_repr
         == """#if HAS_ZVFHMIN
 template <typename E>
   requires sizeof<E> == 4
@@ -107,7 +109,7 @@ int32_t func(E param1, float16_t param2);
 
 
 def test_function_no_template() -> None:
-    function = func.Function(
+    f = func.Function(
         ret_type=ret_type,
         func_name=func_name,
         function_param_list=function_param_list,
@@ -115,7 +117,7 @@ def test_function_no_template() -> None:
         feature_guards=feature_guards,
     )
     assert (
-        function.cpp_repr
+        f.cpp_repr
         == """#if HAS_ZVFHMIN
 RVV_ALWAYS_INLINE
 int32_t func(E param1, float16_t param2) {
@@ -126,7 +128,7 @@ int32_t func(E param1, float16_t param2) {
 
 
 def test_function_template_no_requires() -> None:
-    function = func.Function(
+    f = func.Function(
         ret_type=ret_type,
         func_name=func_name,
         function_param_list=function_param_list,
@@ -135,7 +137,7 @@ def test_function_template_no_requires() -> None:
         feature_guards=feature_guards,
     )
     assert (
-        function.cpp_repr
+        f.cpp_repr
         == """#if HAS_ZVFHMIN
 template <typename E>
 RVV_ALWAYS_INLINE
@@ -147,7 +149,7 @@ int32_t func(E param1, float16_t param2) {
 
 
 def test_function_template_multiple_requires() -> None:
-    function = func.Function(
+    f = func.Function(
         ret_type=ret_type,
         func_name=func_name,
         function_param_list=function_param_list,
@@ -157,7 +159,7 @@ def test_function_template_multiple_requires() -> None:
         feature_guards=feature_guards,
     )
     assert (
-        function.cpp_repr
+        f.cpp_repr
         == """#if HAS_ZVFHMIN
 template <typename E>
   requires sizeof<E> == 4 && some_concept<E>
@@ -170,7 +172,7 @@ int32_t func(E param1, float16_t param2) {
 
 
 def test_function_no_feature_guards() -> None:
-    function = func.Function(
+    f = func.Function(
         ret_type=ret_type,
         func_name=func_name,
         function_param_list=function_param_list,
@@ -179,7 +181,7 @@ def test_function_no_feature_guards() -> None:
         require_clauses=single_require_clauses,
     )
     assert (
-        function.cpp_repr
+        f.cpp_repr
         == """template <typename E>
   requires sizeof<E> == 4
 RVV_ALWAYS_INLINE

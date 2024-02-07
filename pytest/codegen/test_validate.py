@@ -1,5 +1,6 @@
-from codegen.type import elem, misc, lmul
 from codegen import validate
+from codegen.typing import elem, lmul, misc
+
 import pytest
 
 elem_ratio_lmul_test: pytest.MarkDecorator = pytest.mark.parametrize(
@@ -24,7 +25,6 @@ def test_elem_ratio_to_lmul(
     assert validate.elem_ratio_to_lmul(
         elem_type, misc.LitSizeTValue(value=ratio)
     ) == lmul.LitLMulValue(lmul=lmul_value)
-    pass
 
 
 @elem_ratio_lmul_test
@@ -34,7 +34,6 @@ def test_elem_lmul_to_ratio(
     assert validate.elem_ratio_to_lmul(
         elem_type, misc.LitSizeTValue(value=ratio)
     ) == lmul.LitLMulValue(lmul=lmul_value)
-    pass
 
 
 @pytest.mark.parametrize(
@@ -66,7 +65,6 @@ def test_is_compatible_elem_ratio(
         )
         == expected
     )
-    pass
 
 
 @pytest.mark.parametrize(
@@ -94,4 +92,3 @@ def test_is_compatible_elem_lmul(
         )
         == expected
     )
-    pass

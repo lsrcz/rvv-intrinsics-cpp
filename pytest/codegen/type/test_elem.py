@@ -1,4 +1,4 @@
-from codegen.type import elem
+from codegen.typing import elem
 
 
 def test_int_type_signed() -> None:

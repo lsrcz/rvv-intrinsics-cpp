@@ -1,5 +1,5 @@
-from codegen.type import elem, misc
 import gen_load_store_h
+from codegen.typing import elem, misc
 
 
 def test_vle_base_def_int8_ratio8() -> None:

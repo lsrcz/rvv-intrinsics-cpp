@@ -1,10 +1,12 @@
-from . import type
+import abc
 from dataclasses import dataclass
+
+from codegen.typing import base
 
 
 @dataclass(frozen=True, kw_only=True)
-class PtrType(type.Type):
-    base_type: type.Type
+class PtrType(base.Type):
+    base_type: base.Type
     is_const: bool
 
     @property
@@ -16,24 +18,24 @@ class PtrType(type.Type):
 
 
 @dataclass(frozen=True, kw_only=True)
-class VoidType(type.Type):
+class VoidType(base.Type):
     @property
     def cpp_repr(self) -> str:
         return "void"
 
 
 @dataclass(frozen=True, kw_only=True)
-class SizeTType(type.Type):
+class SizeTType(base.Type):
     @property
     def cpp_repr(self) -> str:
         return "size_t"
 
 
-size_t_kind: type.DataKind = type.DataKind(data_type=SizeTType())
+size_t_kind: base.DataKind = base.DataKind(data_type=SizeTType())
 
 
 @dataclass(frozen=True, kw_only=True)
-class SizeTValue(type.Type):
+class SizeTValue(base.Type, metaclass=abc.ABCMeta):
     pass
 
 
@@ -58,14 +60,14 @@ ALL_RATIO: list[LitSizeTValue] = [
 
 
 @dataclass(frozen=True, kw_only=True)
-class ParamSizeTValue(SizeTValue, type.TypeParam):
+class ParamSizeTValue(SizeTValue, base.TypeParam):
     @property
-    def kind(self) -> type.DataKind:
+    def kind(self) -> base.DataKind:
         return size_t_kind
 
 
 @dataclass(frozen=True, kw_only=True)
-class PtrdiffTType(type.Type):
+class PtrdiffTType(base.Type):
     @property
     def cpp_repr(self) -> str:
         return "ptrdiff_t"

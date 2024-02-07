@@ -1,6 +1,4 @@
-from codegen.type import elem
-from codegen.type import misc
-from codegen.type import lmul
+from codegen.typing import elem, lmul, misc
 
 
 def elem_ratio_to_lmul(

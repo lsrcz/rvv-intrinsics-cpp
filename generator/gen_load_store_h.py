@@ -1,7 +1,8 @@
 from typing import Callable, Optional
-from codegen import header, main, func, validate, constraints
+
+from codegen import constraints, func, header, main, validate
 from codegen.param_list import function
-from codegen.type import misc, elem, vreg, lmul, vl, vmask
+from codegen.typing import elem, lmul, misc, vl, vmask, vreg
 
 
 def non_indexed_ret_type(

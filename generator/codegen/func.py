@@ -1,7 +1,8 @@
 from typing import Callable, Optional, Sequence
+
+from codegen import constraints, guarded, validate
 from codegen.param_list import function, template
-from codegen import guarded, constraints, validate
-from codegen.type import type, misc, elem, vmask, vreg
+from codegen.typing import base, elem, misc, vmask, vreg
 
 
 def apply_function(
@@ -25,7 +26,7 @@ def rv_postfix(variant: str, overloaded: bool = False) -> str:
 class Function:
     def __init__(
         self,
-        ret_type: type.Type,
+        ret_type: base.Type,
         func_name: str,
         function_param_list: function.FunctionTypedParamList,
         function_body: Optional[str],
@@ -40,7 +41,7 @@ class Function:
             template_param_list
         )
         self.require_clauses: Sequence[str] = require_clauses
-        self.ret_type: type.Type = ret_type
+        self.ret_type: base.Type = ret_type
         self.cpp_intrinsics_base_name: str = func_name
         self.function_param_list: function.FunctionTypedParamList = (
             function_param_list
@@ -72,7 +73,7 @@ class Function:
 
 
 def template_ratio(
-    ret_type: Callable[[misc.ParamSizeTValue], type.Type],
+    ret_type: Callable[[misc.ParamSizeTValue], base.Type],
     cpp_intrinsics_base_name: str,
     function_param_list: Callable[
         [str, misc.ParamSizeTValue], function.FunctionTypedParamList
@@ -84,7 +85,7 @@ def template_ratio(
     *,
     template_param_list: Callable[
         [misc.ParamSizeTValue], Optional[template.TemplateTypeParamList]
-    ] = lambda ratio: template.TemplateTypeParamList(ratio),
+    ] = template.TemplateTypeParamList,
     require_clauses: Callable[
         [misc.ParamSizeTValue], Sequence[str]
     ] = lambda ratio: [constraints.is_supported_ratio(ratio)],
@@ -109,7 +110,7 @@ def template_ratio(
 
 
 def for_all_ratio(
-    ret_type: Callable[[misc.LitSizeTValue], type.Type],
+    ret_type: Callable[[misc.LitSizeTValue], base.Type],
     cpp_intrinsics_base_name: str,
     function_param_list: Callable[
         [str, misc.LitSizeTValue], function.FunctionTypedParamList
@@ -123,7 +124,7 @@ def for_all_ratio(
     require_clauses: Sequence[str] = tuple(),
     feature_guards: Callable[
         [misc.LitSizeTValue], Sequence[guarded.Guard]
-    ] = lambda ratio: guarded.ratio_guard(ratio),
+    ] = guarded.ratio_guard,
 ) -> Callable[[str, misc.LitSizeTValue], Function]:
     def inner(variant: str, ratio: misc.LitSizeTValue) -> Function:
         param_list = function_param_list(variant, ratio)
@@ -141,7 +142,7 @@ def for_all_ratio(
 
 
 def for_all_elem_ratio(
-    ret_type: Callable[[elem.RawElemType, misc.LitSizeTValue], type.Type],
+    ret_type: Callable[[elem.RawElemType, misc.LitSizeTValue], base.Type],
     cpp_intrinsics_base_name: str,
     function_param_list: Callable[
         [str, elem.RawElemType, misc.LitSizeTValue],
@@ -228,7 +229,7 @@ def elem_ratio_extend_param_list(
 
 
 def template_elem_ratio_for_all_size(
-    ret_type: Callable[[elem.ParamElemType, misc.ParamSizeTValue], type.Type],
+    ret_type: Callable[[elem.ParamElemType, misc.ParamSizeTValue], base.Type],
     cpp_intrinsics_base_name: str,
     function_param_list: Callable[
         [str, elem.ParamElemType, misc.ParamSizeTValue, int],
@@ -248,9 +249,7 @@ def template_elem_ratio_for_all_size(
     template_param_list: Callable[
         [elem.ParamElemType, misc.ParamSizeTValue],
         Optional[template.TemplateTypeParamList],
-    ] = lambda elem_type, ratio: template.TemplateTypeParamList(
-        elem_type, ratio
-    ),
+    ] = template.TemplateTypeParamList,
     require_clauses: Callable[
         [elem.ParamElemType, misc.ParamSizeTValue, int], Sequence[str]
     ] = lambda elem_type, ratio, width: [
@@ -280,7 +279,7 @@ def template_elem_ratio_for_all_size(
 
 
 def template_elem_ratio(
-    ret_type: Callable[[elem.ParamElemType, misc.ParamSizeTValue], type.Type],
+    ret_type: Callable[[elem.ParamElemType, misc.ParamSizeTValue], base.Type],
     cpp_intrinsics_base_name: str,
     function_param_list: Callable[
         [str, elem.ParamElemType, misc.ParamSizeTValue],
@@ -299,9 +298,7 @@ def template_elem_ratio(
     template_param_list: Callable[
         [elem.ParamElemType, misc.ParamSizeTValue],
         Optional[template.TemplateTypeParamList],
-    ] = lambda elem_type, ratio: template.TemplateTypeParamList(
-        elem_type, ratio
-    ),
+    ] = template.TemplateTypeParamList,
     require_clauses: Callable[
         [elem.ParamElemType, misc.ParamSizeTValue], Sequence[str]
     ] = lambda elem_type, ratio: [
@@ -363,7 +360,7 @@ def vreg_ratio_extend_param_list(
 
 
 def template_vreg_ratio(
-    ret_type: Callable[[vreg.ParamVRegType, misc.ParamSizeTValue], type.Type],
+    ret_type: Callable[[vreg.ParamVRegType, misc.ParamSizeTValue], base.Type],
     cpp_intrinsics_base_name: str,
     function_param_list: Callable[
         [str, vreg.ParamVRegType, misc.ParamSizeTValue],
@@ -382,9 +379,7 @@ def template_vreg_ratio(
     template_param_list: Callable[
         [vreg.ParamVRegType, misc.ParamSizeTValue],
         Optional[template.TemplateTypeParamList],
-    ] = lambda vreg_type, ratio: template.TemplateTypeParamList(
-        vreg_type, ratio
-    ),
+    ] = template.TemplateTypeParamList,
     require_clauses: Callable[
         [vreg.ParamVRegType, misc.ParamSizeTValue], Sequence[str]
     ] = lambda vreg_type, ratio: [

@@ -1,6 +1,7 @@
-import pytest
-from codegen.type import elem
 from codegen.param_list import function
+from codegen.typing import elem
+
+import pytest
 
 arg0 = function.TypedParam(type=elem.FloatType(width=32), name="arg0")
 arg1 = function.TypedParam(type=elem.FloatType(width=64), name="arg1")

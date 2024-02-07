@@ -1,5 +1,6 @@
-from codegen import header, ops, main, func
 from typing import Callable
+
+from codegen import func, header, main, ops
 
 
 def widening_part(

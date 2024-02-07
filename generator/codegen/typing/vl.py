@@ -1,10 +1,10 @@
-from . import type
-from . import misc
 from dataclasses import dataclass
+
+from codegen.typing import base, misc
 
 
 @dataclass(frozen=True, kw_only=True)
-class VLType(type.Type):
+class VLType(base.Type):
     ratio: misc.SizeTValue
 
     @property

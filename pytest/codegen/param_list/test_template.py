@@ -1,6 +1,7 @@
-import pytest
-from codegen.type import elem, misc, vreg
 from codegen.param_list import template
+from codegen.typing import elem, misc, vreg
+
+import pytest
 
 type_param0 = misc.ParamSizeTValue(typename="type_param0")
 type_param1 = elem.ParamElemType(typename="type_param1")

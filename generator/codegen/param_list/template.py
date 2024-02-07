@@ -1,9 +1,11 @@
+import abc
 from typing import Sequence, Union, overload
-from ..type import type
-from . import param_list
+
+from codegen.param_list import param_list
+from codegen.typing import base
 
 
-class TemplateParamList(param_list.ParamList):
+class TemplateParamList(param_list.ParamList, metaclass=abc.ABCMeta):
     @property
     def _left_bracket(self) -> str:
         return "<"
@@ -14,8 +16,8 @@ class TemplateParamList(param_list.ParamList):
 
 
 class TemplateTypeArgumentList(TemplateParamList):
-    def __init__(self, *type_arg_list: type.Type) -> None:
-        self.type_arg_list: Sequence[type.Type] = type_arg_list
+    def __init__(self, *type_arg_list: base.Type) -> None:
+        self.type_arg_list: Sequence[base.Type] = type_arg_list
 
     @property
     def _cpp_repr_without_brackets(self) -> str:
@@ -34,7 +36,7 @@ class TemplateTypeArgumentList(TemplateParamList):
         return len(self.type_arg_list)
 
     @overload
-    def __getitem__(self, index: int) -> type.Type:
+    def __getitem__(self, index: int) -> base.Type:
         pass
 
     @overload
@@ -43,7 +45,7 @@ class TemplateTypeArgumentList(TemplateParamList):
 
     def __getitem__(
         self, index: int | slice
-    ) -> Union[type.Type, "TemplateTypeArgumentList"]:
+    ) -> Union[base.Type, "TemplateTypeArgumentList"]:
         if isinstance(index, slice):
             return TemplateTypeArgumentList(*self.type_arg_list[index])
         return self.type_arg_list[index]
@@ -55,8 +57,8 @@ class TemplateTypeArgumentList(TemplateParamList):
 
 
 class TemplateTypeParamList(TemplateParamList):
-    def __init__(self, *type_param_list: type.TypeParam) -> None:
-        self.type_param_list: Sequence[type.TypeParam] = type_param_list
+    def __init__(self, *type_param_list: base.TypeParam) -> None:
+        self.type_param_list: Sequence[base.TypeParam] = type_param_list
 
     @property
     def _cpp_repr_without_brackets(self) -> str:
@@ -83,7 +85,7 @@ class TemplateTypeParamList(TemplateParamList):
 
     def __getitem__(
         self, index: int | slice
-    ) -> Union[type.TypeParam, "TemplateTypeParamList"]:
+    ) -> Union[base.TypeParam, "TemplateTypeParamList"]:
         if isinstance(index, slice):
             return TemplateTypeParamList(*self.type_param_list[index])
         return self.type_param_list[index]
