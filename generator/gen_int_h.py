@@ -183,7 +183,7 @@ def vv_shifting_op(
     allowed_type_category: str,
 ) -> Callable[[str], func.Function]:
     return ops.binary_op_template_on_vreg(
-        inst, allowed_type_category, shifting=True
+        inst, allowed_type_category, op_variant="shifting"
     )
 
 
@@ -192,7 +192,7 @@ def vx_shifting_op(
     allowed_type_category: str,
 ) -> Callable[[str], func.Function]:
     return ops.binary_op_template_on_vreg(
-        inst, allowed_type_category, shifting=True, shifting_scalar=True
+        inst, allowed_type_category, op_variant="shifting_scalar"
     )
 
 
@@ -260,13 +260,13 @@ rvv_int_header = header.Header(
                         "// 3.5. Vector Integer Add-with-Carry and Subtract-with-Borrow Intrinsics",
                         header.WithVariants(
                             ops.binary_op_template_on_elem(
-                                "vadc", "int", with_carry=True
+                                "vadc", "int", op_variant="use_carry"
                             ),
                             allowed_variants={"", "tu"},
                         ),
                         header.WithVariants(
                             ops.binary_op_template_on_vreg(
-                                "vadc", "int", with_carry=True
+                                "vadc", "int", op_variant="use_carry"
                             ),
                             allowed_variants={"", "tu"},
                         ),
@@ -274,8 +274,7 @@ rvv_int_header = header.Header(
                             ops.binary_op_template_on_elem(
                                 "vmadc",
                                 "int",
-                                with_carry=True,
-                                return_carry=True,
+                                op_variant="use_and_produce_carry",
                             ),
                             allowed_variants={"", "tu"},
                         ),
@@ -283,20 +282,19 @@ rvv_int_header = header.Header(
                             ops.binary_op_template_on_vreg(
                                 "vmadc",
                                 "int",
-                                with_carry=True,
-                                return_carry=True,
+                                op_variant="use_and_produce_carry",
                             ),
                             allowed_variants={"", "tu"},
                         ),
                         header.WithVariants(
                             ops.binary_op_template_on_elem(
-                                "vsbc", "int", with_carry=True
+                                "vsbc", "int", op_variant="use_carry"
                             ),
                             allowed_variants={"", "tu"},
                         ),
                         header.WithVariants(
                             ops.binary_op_template_on_vreg(
-                                "vsbc", "int", with_carry=True
+                                "vsbc", "int", op_variant="use_carry"
                             ),
                             allowed_variants={"", "tu"},
                         ),
@@ -304,8 +302,7 @@ rvv_int_header = header.Header(
                             ops.binary_op_template_on_elem(
                                 "vmsbc",
                                 "int",
-                                with_carry=True,
-                                return_carry=True,
+                                op_variant="use_and_produce_carry",
                             ),
                             allowed_variants={"", "tu"},
                         ),
@@ -313,8 +310,7 @@ rvv_int_header = header.Header(
                             ops.binary_op_template_on_vreg(
                                 "vmsbc",
                                 "int",
-                                with_carry=True,
-                                return_carry=True,
+                                op_variant="use_and_produce_carry",
                             ),
                             allowed_variants={"", "tu"},
                         ),
