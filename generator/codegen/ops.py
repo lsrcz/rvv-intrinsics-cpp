@@ -82,13 +82,12 @@ def vreg_require_clauses(
     return ret
 
 
-def vx_op(
+def binary_op_template_on_elem(
     inst: str,
     allowed_type_category: str,
     *,
     with_carry: bool = False,
     return_carry: bool = False,
-    shifting: bool = False,
 ) -> Callable[[str], func.Function]:
     if return_carry:
         assert with_carry
@@ -114,7 +113,7 @@ def vx_op(
                         name="vs2",
                     ),
                     function.TypedParam(
-                        type=misc.SizeTType() if shifting else elem_type,
+                        type=elem_type,
                         name="rs1",
                     ),
                 )
@@ -146,18 +145,24 @@ def vx_op(
     )
 
 
-def vv_op(
+def binary_op_template_on_vreg(
     inst: str,
     allowed_type_category: str,
     with_carry: bool = False,
     return_carry: bool = False,
     shifting: bool = False,
+    shifting_scalar: bool = False,
 ) -> Callable[[str], func.Function]:
 
     if return_carry:
         assert with_carry
     if with_carry:
         assert allowed_type_category in ["int", "signed", "unsigned"]
+    if shifting:
+        assert not with_carry
+        assert allowed_type_category in ["int", "signed", "unsigned"]
+    if shifting_scalar:
+        assert shifting
     return func.template_vreg_ratio(
         lambda vreg_type, ratio: (
             vmask.VMaskType(ratio=ratio) if return_carry else vreg_type
@@ -174,11 +179,15 @@ def vv_op(
                 ),
                 function.TypedParam(
                     type=(
-                        vreg.ToUnsignedVRegType(base_type=vreg_type)
+                        (
+                            misc.SizeTType()
+                            if shifting_scalar
+                            else vreg.ToUnsignedVRegType(base_type=vreg_type)
+                        )
                         if shifting
                         else vreg_type
                     ),
-                    name="vs1",
+                    name="rs1" if shifting_scalar else "vs1",
                 ),
             )
             + (

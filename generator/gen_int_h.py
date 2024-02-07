@@ -182,14 +182,18 @@ def vv_shifting_op(
     inst: str,
     allowed_type_category: str,
 ) -> Callable[[str], func.Function]:
-    return ops.vv_op(inst, allowed_type_category, shifting=True)
+    return ops.binary_op_template_on_vreg(
+        inst, allowed_type_category, shifting=True
+    )
 
 
 def vx_shifting_op(
     inst: str,
     allowed_type_category: str,
 ) -> Callable[[str], func.Function]:
-    return ops.vx_op(inst, allowed_type_category, shifting=True)
+    return ops.binary_op_template_on_vreg(
+        inst, allowed_type_category, shifting=True, shifting_scalar=True
+    )
 
 
 def bin_part(
@@ -222,9 +226,14 @@ rvv_int_header = header.Header(
                             bin_part,
                             ["vadd", "vsub"],
                             ["int"],
-                            [ops.vv_op, ops.vx_op],
+                            [
+                                ops.binary_op_template_on_vreg,
+                                ops.binary_op_template_on_elem,
+                            ],
                         ),
-                        header.WithVariants(ops.vx_op("vrsub", "int")),
+                        header.WithVariants(
+                            ops.binary_op_template_on_elem("vrsub", "int")
+                        ),
                         header.WithVariants(ops.v_op("vneg", "int")),
                         "// 3.2. Vector Widening Integer Add/Subtract Intrinsics",
                         header.CrossProduct(
@@ -250,15 +259,19 @@ rvv_int_header = header.Header(
                         ),
                         "// 3.5. Vector Integer Add-with-Carry and Subtract-with-Borrow Intrinsics",
                         header.WithVariants(
-                            ops.vx_op("vadc", "int", with_carry=True),
+                            ops.binary_op_template_on_elem(
+                                "vadc", "int", with_carry=True
+                            ),
                             allowed_variants={"", "tu"},
                         ),
                         header.WithVariants(
-                            ops.vv_op("vadc", "int", with_carry=True),
+                            ops.binary_op_template_on_vreg(
+                                "vadc", "int", with_carry=True
+                            ),
                             allowed_variants={"", "tu"},
                         ),
                         header.WithVariants(
-                            ops.vx_op(
+                            ops.binary_op_template_on_elem(
                                 "vmadc",
                                 "int",
                                 with_carry=True,
@@ -267,7 +280,7 @@ rvv_int_header = header.Header(
                             allowed_variants={"", "tu"},
                         ),
                         header.WithVariants(
-                            ops.vv_op(
+                            ops.binary_op_template_on_vreg(
                                 "vmadc",
                                 "int",
                                 with_carry=True,
@@ -276,15 +289,19 @@ rvv_int_header = header.Header(
                             allowed_variants={"", "tu"},
                         ),
                         header.WithVariants(
-                            ops.vx_op("vsbc", "int", with_carry=True),
+                            ops.binary_op_template_on_elem(
+                                "vsbc", "int", with_carry=True
+                            ),
                             allowed_variants={"", "tu"},
                         ),
                         header.WithVariants(
-                            ops.vv_op("vsbc", "int", with_carry=True),
+                            ops.binary_op_template_on_vreg(
+                                "vsbc", "int", with_carry=True
+                            ),
                             allowed_variants={"", "tu"},
                         ),
                         header.WithVariants(
-                            ops.vx_op(
+                            ops.binary_op_template_on_elem(
                                 "vmsbc",
                                 "int",
                                 with_carry=True,
@@ -293,7 +310,7 @@ rvv_int_header = header.Header(
                             allowed_variants={"", "tu"},
                         ),
                         header.WithVariants(
-                            ops.vv_op(
+                            ops.binary_op_template_on_vreg(
                                 "vmsbc",
                                 "int",
                                 with_carry=True,
@@ -306,7 +323,10 @@ rvv_int_header = header.Header(
                             bin_part,
                             ["vand", "vor", "vxor"],
                             ["int"],
-                            [ops.vv_op, ops.vx_op],
+                            [
+                                ops.binary_op_template_on_vreg,
+                                ops.binary_op_template_on_elem,
+                            ],
                         ),
                         "// 3.7. Vector Bitwise Unary Logical Intrinsics",
                         header.WithVariants(ops.v_op("vnot", "int")),
