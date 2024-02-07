@@ -178,6 +178,12 @@ def extending_op(
     return inner
 
 
+def bin_part(
+    op: str, f: Callable[[str, str], Callable[[str], func.Function]]
+) -> header.HeaderPart:
+    return header.WithVariants(f(op, "int"))
+
+
 def widening_part(
     op: str,
     signed: bool,
@@ -196,10 +202,9 @@ rvv_int_header = header.Header(
                     [
                         "// 3. Vector Integer Arithmetic Intrinsics",
                         "// 3.1. Vector Single-Width Integer Add and Substract Intrinsics",
-                        header.WithVariants(ops.vx_op("vadd", "int")),
-                        header.WithVariants(ops.vv_op("vadd", "int")),
-                        header.WithVariants(ops.vx_op("vsub", "int")),
-                        header.WithVariants(ops.vv_op("vsub", "int")),
+                        header.CrossProduct(
+                            bin_part, ["vadd", "vsub"], [ops.vv_op, ops.vx_op]
+                        ),
                         header.WithVariants(ops.vx_op("vrsub", "int")),
                         header.WithVariants(ops.v_op("vneg", "int")),
                         "// 3.2. Vector Widening Integer Add/Subtract Intrinsics",
@@ -277,6 +282,14 @@ rvv_int_header = header.Header(
                             ),
                             allowed_variants={"", "tu"},
                         ),
+                        "// 3.6. Vector Bitwise Binary Logical Intrinsics",
+                        header.CrossProduct(
+                            bin_part,
+                            ["vand", "vor", "vxor"],
+                            [ops.vv_op, ops.vx_op],
+                        ),
+                        "// 3.7. Vector Bitwise Unary Logical Intrinsics",
+                        header.WithVariants(ops.v_op("vnot", "int")),
                     ]
                 )
             ],
