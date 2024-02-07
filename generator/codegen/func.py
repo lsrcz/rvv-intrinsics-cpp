@@ -14,7 +14,7 @@ def apply_function(
     return f"{func}{param_list.cpp_repr}"
 
 
-def rv_postfix(variant: str, overloaded: bool = False) -> str:
+def rvv_postfix(variant: str, overloaded: bool = False) -> str:
     if variant == "":
         return ""
     if variant == "m" and overloaded:
@@ -130,7 +130,7 @@ def for_all_ratio(
         param_list = function_param_list(variant, ratio)
         return Function(
             ret_type(ratio),
-            f"{cpp_intrinsics_base_name}{rv_postfix(variant)}",
+            f"{cpp_intrinsics_base_name}{rvv_postfix(variant)}",
             param_list,
             function_body(variant, ratio, param_list),
             template_param_list=template_param_list,
@@ -184,7 +184,7 @@ def for_all_elem_ratio(
         param_list = function_param_list(variant, elem_type, ratio)
         return Function(
             ret_type(elem_type, ratio),
-            f"{cpp_intrinsics_base_name}{rv_postfix(variant)}",
+            f"{cpp_intrinsics_base_name}{rvv_postfix(variant)}",
             param_list,
             function_body(variant, elem_type, ratio, param_list),
             template_param_list=template_param_list,

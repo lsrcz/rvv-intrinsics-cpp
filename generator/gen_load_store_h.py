@@ -96,7 +96,7 @@ def non_indexed_variant_load_function_body(
                 "  return "
                 + func.apply_function(
                     f"__riscv_{inst}{width}"
-                    + func.rv_postfix(variant, overloaded=True),
+                    + func.rvv_postfix(variant, overloaded=True),
                     param_list,
                 )
                 + ";"
@@ -106,7 +106,7 @@ def non_indexed_variant_load_function_body(
                 "  return "
                 + func.apply_function(
                     f"__riscv_vle{width}ff"
-                    + func.rv_postfix(variant, overloaded=True),
+                    + func.rvv_postfix(variant, overloaded=True),
                     param_list[0:-1].forward
                     + function.FunctionArgumentList("&vl->vl", "vl->vl"),
                 )
@@ -160,7 +160,7 @@ def non_indexed_store_function_body(
     return (
         func.apply_function(
             f"  __riscv_{inst}{width}"
-            + func.rv_postfix(variant, overloaded=True),
+            + func.rvv_postfix(variant, overloaded=True),
             param_list,
         )
         + ";"
@@ -222,7 +222,7 @@ def vlxei_defs(inst: str) -> Callable[[str, int], Optional[func.Function]]:
         lambda variant, elem_type, ratio, width, param_list: (
             "  return "
             + func.apply_function(
-                f"__riscv_{inst}{width}{func.rv_postfix(variant, overloaded=True)}",
+                f"__riscv_{inst}{width}{func.rvv_postfix(variant, overloaded=True)}",
                 param_list,
             )
             + ";"
@@ -255,7 +255,7 @@ def vsxei_defs(inst: str) -> Callable[[str, int], Optional[func.Function]]:
         ),
         lambda variant, elem_type, ratio, width, param_list: (
             func.apply_function(
-                f"  __riscv_{inst}{width}{func.rv_postfix(variant, overloaded=True)}",
+                f"  __riscv_{inst}{width}{func.rvv_postfix(variant, overloaded=True)}",
                 param_list,
             )
             + ";"

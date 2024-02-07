@@ -31,7 +31,7 @@ def widening_vx_or_wx_op(
                 f"__riscv_{inst}"
                 + ("" if signed else "u")
                 + ("_vx" if is_vx else "_wx")
-                + func.rv_postfix(variant, overloaded=True),
+                + func.rvv_postfix(variant, overloaded=True),
                 param_list,
             )
             + ";"
@@ -65,7 +65,7 @@ def widening_vv_or_wv_op(
                 f"__riscv_{inst}"
                 + ("" if signed else "u")
                 + ("_vv" if is_vv else "_wv")
-                + func.rv_postfix(variant, overloaded=True),
+                + func.rvv_postfix(variant, overloaded=True),
                 param_list,
             )
             + ";"
@@ -109,7 +109,7 @@ def widening_op(inst: str, signed: bool) -> Callable[[str], func.Function]:
                 f"__riscv_{inst}"
                 + ("" if signed else "u")
                 + "_x"
-                + func.rv_postfix(variant, overloaded=True),
+                + func.rvv_postfix(variant, overloaded=True),
                 param_list,
             )
             + ";"
@@ -160,7 +160,7 @@ def narrowing_shift_op(
         lambda variant, elem_type, ratio, param_list: (
             "  return "
             + func.apply_function(
-                f"__riscv_{inst}" + func.rv_postfix(variant, overloaded=True),
+                f"__riscv_{inst}" + func.rvv_postfix(variant, overloaded=True),
                 param_list,
             )
             + ";"
@@ -192,7 +192,7 @@ def extending_op(
                 + func.apply_function(
                     f"__riscv_{inst}"
                     + f"_vf{n}"
-                    + func.rv_postfix(variant, overloaded=True),
+                    + func.rvv_postfix(variant, overloaded=True),
                     param_list,
                 )
                 + ";"
@@ -219,7 +219,7 @@ def vncvt(variant: str) -> func.Function:
         lambda variant, elem_type, ratio, param_list: (
             "  return "
             + func.apply_function(
-                "__riscv_vncvt_x" + func.rv_postfix(variant, overloaded=True),
+                "__riscv_vncvt_x" + func.rvv_postfix(variant, overloaded=True),
                 param_list,
             )
             + ";"

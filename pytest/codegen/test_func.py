@@ -31,18 +31,18 @@ def test_apply_function_argument_list() -> None:
 
 
 def test_rv_postfix() -> None:
-    assert func.rv_postfix("") == ""
-    assert func.rv_postfix("m") == "_m"
-    assert func.rv_postfix("tu") == "_tu"
-    assert func.rv_postfix("tum") == "_tum"
-    assert func.rv_postfix("mu") == "_mu"
-    assert func.rv_postfix("tumu") == "_tumu"
-    assert func.rv_postfix("", overloaded=True) == ""
-    assert func.rv_postfix("m", overloaded=True) == ""
-    assert func.rv_postfix("tu", overloaded=True) == "_tu"
-    assert func.rv_postfix("tum", overloaded=True) == "_tum"
-    assert func.rv_postfix("mu", overloaded=True) == "_mu"
-    assert func.rv_postfix("tumu", overloaded=True) == "_tumu"
+    assert func.rvv_postfix("") == ""
+    assert func.rvv_postfix("m") == "_m"
+    assert func.rvv_postfix("tu") == "_tu"
+    assert func.rvv_postfix("tum") == "_tum"
+    assert func.rvv_postfix("mu") == "_mu"
+    assert func.rvv_postfix("tumu") == "_tumu"
+    assert func.rvv_postfix("", overloaded=True) == ""
+    assert func.rvv_postfix("m", overloaded=True) == ""
+    assert func.rvv_postfix("tu", overloaded=True) == "_tu"
+    assert func.rvv_postfix("tum", overloaded=True) == "_tum"
+    assert func.rvv_postfix("mu", overloaded=True) == "_mu"
+    assert func.rvv_postfix("tumu", overloaded=True) == "_tumu"
 
 
 ret_type = elem.int32_t

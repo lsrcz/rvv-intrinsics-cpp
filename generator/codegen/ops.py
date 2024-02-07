@@ -145,7 +145,7 @@ def binary_op_template_on_elem(
         lambda variant, elem_type, ratio, param_list: (
             "  return "
             + func.apply_function(
-                rvv_inst + func.rv_postfix(variant, overloaded=True),
+                rvv_inst + func.rvv_postfix(variant, overloaded=True),
                 param_list,
             )
             + ";"
@@ -241,7 +241,7 @@ def binary_op_template_on_vreg(
         lambda variant, vreg_type, ratio, param_list: (
             "  return "
             + func.apply_function(
-                rvv_inst + func.rv_postfix(variant, overloaded=True),
+                rvv_inst + func.rvv_postfix(variant, overloaded=True),
                 param_list,
             )
             + ";"
@@ -269,7 +269,7 @@ def v_op(
         lambda variant, vreg_type, ratio, param_list: (
             "  return "
             + func.apply_function(
-                f"__riscv_{inst}" + func.rv_postfix(variant, overloaded=True),
+                f"__riscv_{inst}" + func.rvv_postfix(variant, overloaded=True),
                 param_list,
             )
             + ";"
