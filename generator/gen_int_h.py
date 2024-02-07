@@ -217,11 +217,65 @@ rvv_int_header = header.Header(
                         "// 3.3. Vector Integer Widening Intrinsics",
                         header.WithVariants(widening_op("vwcvt", True)),
                         header.WithVariants(widening_op("vwcvt", False)),
+                        "// 3.4. Vector Integer Extension Intrinsics",
                         header.CrossProduct.variant(
                             extending_op("vsext", True), [2, 4, 8]
                         ),
                         header.CrossProduct.variant(
                             extending_op("vzext", False), [2, 4, 8]
+                        ),
+                        "// 3.5. Vector Integer Add-with-Carry and Subtract-with-Borrow Intrinsics",
+                        header.WithVariants(
+                            ops.vx_op("vadc", "int", with_carry=True),
+                            allowed_variants={"", "tu"},
+                        ),
+                        header.WithVariants(
+                            ops.vv_op("vadc", "int", with_carry=True),
+                            allowed_variants={"", "tu"},
+                        ),
+                        header.WithVariants(
+                            ops.vx_op(
+                                "vmadc",
+                                "int",
+                                with_carry=True,
+                                return_carry=True,
+                            ),
+                            allowed_variants={"", "tu"},
+                        ),
+                        header.WithVariants(
+                            ops.vv_op(
+                                "vmadc",
+                                "int",
+                                with_carry=True,
+                                return_carry=True,
+                            ),
+                            allowed_variants={"", "tu"},
+                        ),
+                        header.WithVariants(
+                            ops.vx_op("vsbc", "int", with_carry=True),
+                            allowed_variants={"", "tu"},
+                        ),
+                        header.WithVariants(
+                            ops.vv_op("vsbc", "int", with_carry=True),
+                            allowed_variants={"", "tu"},
+                        ),
+                        header.WithVariants(
+                            ops.vx_op(
+                                "vmsbc",
+                                "int",
+                                with_carry=True,
+                                return_carry=True,
+                            ),
+                            allowed_variants={"", "tu"},
+                        ),
+                        header.WithVariants(
+                            ops.vv_op(
+                                "vmsbc",
+                                "int",
+                                with_carry=True,
+                                return_carry=True,
+                            ),
+                            allowed_variants={"", "tu"},
                         ),
                     ]
                 )

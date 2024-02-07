@@ -2,7 +2,7 @@ from typing import Callable
 
 from codegen import constraints, func
 from codegen.param_list import function
-from codegen.typing import elem, misc, vl, vreg
+from codegen.typing import elem, misc, vl, vmask, vreg
 
 
 def elem_require_clauses(
@@ -83,26 +83,48 @@ def vreg_require_clauses(
 
 
 def vx_op(
-    inst: str, allowed_type_category: str
+    inst: str,
+    allowed_type_category: str,
+    with_carry: bool = False,
+    return_carry: bool = False,
 ) -> Callable[[str], func.Function]:
+    if return_carry:
+        assert with_carry
+    if with_carry:
+        assert allowed_type_category in ["int", "signed", "unsigned"]
     return func.template_elem_ratio(
-        lambda elem_type, ratio: vreg.ConcreteVRegType(
-            elem_type=elem_type, ratio=ratio
+        lambda elem_type, ratio: (
+            vmask.VMaskType(ratio=ratio)
+            if return_carry
+            else vreg.ConcreteVRegType(elem_type=elem_type, ratio=ratio)
         ),
         inst,
         lambda variant, elem_type, ratio: func.elem_ratio_extend_param_list(
             elem_type,
             ratio,
             variant,
-            function.FunctionTypedParamList(
-                function.TypedParam(
-                    type=vreg.ConcreteVRegType(
-                        elem_type=elem_type, ratio=ratio
+            (
+                function.FunctionTypedParamList(
+                    function.TypedParam(
+                        type=vreg.ConcreteVRegType(
+                            elem_type=elem_type, ratio=ratio
+                        ),
+                        name="vs2",
                     ),
-                    name="vs2",
-                ),
-                function.TypedParam(type=elem_type, name="rs1"),
-                function.TypedParam(type=vl.VLType(ratio=ratio), name="vl"),
+                    function.TypedParam(type=elem_type, name="rs1"),
+                )
+                + (
+                    function.FunctionTypedParamList(
+                        function.TypedParam(
+                            type=vmask.VMaskType(ratio=ratio), name="v0"
+                        )
+                    )
+                    if with_carry
+                    else function.FunctionTypedParamList()
+                )
+                + function.FunctionTypedParamList(
+                    function.TypedParam(type=vl.VLType(ratio=ratio), name="vl"),
+                )
             ),
         ),
         lambda variant, elem_type, ratio, param_list: (
@@ -120,11 +142,20 @@ def vx_op(
 
 
 def vv_op(
-    inst: str, allowed_type_category: str
+    inst: str,
+    allowed_type_category: str,
+    with_carry: bool = False,
+    return_carry: bool = False,
 ) -> Callable[[str], func.Function]:
 
+    if return_carry:
+        assert with_carry
+    if with_carry:
+        assert allowed_type_category in ["int", "signed", "unsigned"]
     return func.template_vreg_ratio(
-        lambda vreg_type, ratio: vreg_type,
+        lambda vreg_type, ratio: (
+            vmask.VMaskType(ratio=ratio) if return_carry else vreg_type
+        ),
         inst,
         lambda variant, vreg_type, ratio: func.vreg_ratio_extend_param_list(
             vreg_type,
@@ -136,6 +167,17 @@ def vv_op(
                     name="vs2",
                 ),
                 function.TypedParam(type=vreg_type, name="vs1"),
+            )
+            + (
+                function.FunctionTypedParamList(
+                    function.TypedParam(
+                        type=vmask.VMaskType(ratio=ratio), name="v0"
+                    )
+                )
+                if with_carry
+                else function.FunctionTypedParamList()
+            )
+            + function.FunctionTypedParamList(
                 function.TypedParam(type=vl.VLType(ratio=ratio), name="vl"),
             ),
         ),
