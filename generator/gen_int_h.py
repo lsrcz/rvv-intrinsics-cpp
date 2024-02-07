@@ -476,7 +476,7 @@ rvv_int_header = header.Header(
                         ),
                         "// 3.10. Vector Integer Narrowing Intrinsics",
                         header.WithVariants(vncvt),
-                        "// 3.11. Vector Integer Narrowing Intrinsics",
+                        "// 3.11. Vector Integer Compare Intrinsics",
                         header.CrossProduct(
                             bin_part,
                             ["vmseq", "vmsne"],
