@@ -129,3 +129,9 @@ foreach(test_file ${CPP_TESTS})
   get_filename_component(test_name ${test_file} NAME_WE)
   rvv_add_test(${test_name} ${test_file})
 endforeach()
+
+file(GLOB_RECURSE CPP_COMPILE_TEST compile_test/*.cpp)
+
+rvv_add_test(compile_test ${CPP_COMPILE_TEST})
+target_include_directories(compile_test
+                           PRIVATE ${PROJECT_SOURCE_DIR}/compile_test)

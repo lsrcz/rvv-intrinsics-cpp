@@ -109,7 +109,7 @@ def widening_wv_op(inst: str, signed: bool) -> Callable[[str], func.Function]:
 def widening_op(inst: str, signed: bool) -> Callable[[str], func.Function]:
     return func.template_vreg_ratio(
         lambda vreg_type, ratio: vreg.WidenVRegType(base_type=vreg_type),
-        inst,
+        inst + ("" if signed else "u"),
         lambda variant, vreg_type, ratio: func.vreg_ratio_extend_param_list(
             vreg.WidenVRegType(base_type=vreg_type),
             ratio,
