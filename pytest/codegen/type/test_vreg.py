@@ -22,3 +22,24 @@ def test_param_vreg_type() -> None:
     assert param_vreg.cpp_repr == "V"
     assert param_vreg.kind == vreg.k.TypeKind()
     assert param_vreg.typename == "V"
+
+
+def test_widen_vreg_type() -> None:
+    widen_vreg = vreg.WidenVRegType(
+        base_type=vreg.ConcreteVRegType(
+            elem_type=elem.ParamElemType(typename="E"),
+            ratio=misc.ParamSizeTValue(typename="kRatio"),
+        )
+    )
+    assert widen_vreg.cpp_repr == "widen_t<vreg_t<E, kRatio>>"
+
+
+def test_widen_n_vreg_type() -> None:
+    widen_n_vreg = vreg.WidenNVRegType(
+        n=4,
+        base_type=vreg.ConcreteVRegType(
+            elem_type=elem.ParamElemType(typename="E"),
+            ratio=misc.ParamSizeTValue(typename="kRatio"),
+        ),
+    )
+    assert widen_n_vreg.cpp_repr == "widen_n_t<4, vreg_t<E, kRatio>>"

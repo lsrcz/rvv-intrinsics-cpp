@@ -144,6 +144,38 @@ concept widenable = requires { typename internal::WidenedType<T>::Type; };
 template <typename T>
 concept narrowable = requires { typename internal::NarrowedType<T>::Type; };
 
+namespace internal {
+template <size_t kN>
+struct WidenedNType {};
+
+template <>
+struct WidenedNType<2> {
+  template <typename T>
+    requires widenable<T>
+  using Type = widen_t<T>;
+};
+template <>
+struct WidenedNType<4> {
+  template <typename T>
+    requires widenable<T> && widenable<widen_t<T>>
+  using Type = widen_t<widen_t<T>>;
+};
+template <>
+struct WidenedNType<8> {
+  template <typename T>
+    requires widenable<T> && widenable<widen_t<T>> &&
+                 widenable<widen_t<widen_t<T>>>
+  using Type = widen_t<widen_t<widen_t<T>>>;
+};
+}  // namespace internal
+
+template <size_t kN, typename T>
+using widen_n_t = typename internal::WidenedNType<kN>::template Type<T>;
+
+template <size_t kN, typename T>
+concept widenable_n =
+    requires { typename internal::WidenedNType<kN>::template Type<T>; };
+
 }  // namespace rvv
 
 #include <rvv/type.inc>

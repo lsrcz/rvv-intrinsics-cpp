@@ -17,9 +17,7 @@ def is_compatible_vreg_ratio(
     return f"is_compatible_vreg_ratio<{vreg_type.cpp_repr}, {ratio.cpp_repr}>"
 
 
-def is_compatible_elem_lmul(
-    elem_type: elem.ElemType, l: lmul.LMulValue
-) -> str:
+def is_compatible_elem_lmul(elem_type: elem.ElemType, l: lmul.LMulValue) -> str:
     return f"is_compatible_elem_lmul<{elem_type.cpp_repr}, {l.cpp_repr}>"
 
 
@@ -71,3 +69,7 @@ def is_supported_floating_point_vreg(
 
 def widenable_type(t: base.Type) -> str:
     return f"widenable<{t.cpp_repr}>"
+
+
+def widenable_n_type(n: int, t: base.Type) -> str:
+    return f"widenable_n<{n}, {t.cpp_repr}>"

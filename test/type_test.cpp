@@ -599,3 +599,75 @@ TYPED_TEST(NarrowingTest, narrowing) {
                                 typename TypeParam::Narrow>));
   }
 }
+
+template <typename Config>
+class WideningNTest : public ::testing::Test {};
+
+template <typename Narrow_, typename Wide_, size_t kN_, bool kWidenable_>
+class WideningNConfig {
+ public:
+  using Narrow = Narrow_;
+  using Wide = Wide_;
+  static constexpr size_t kN = kN_;
+  static constexpr bool kWidenable = kWidenable_;
+};
+
+using WideningNConfigs =
+    ::testing::Types<WideningNConfig<int8_t, int16_t, 2, true>,
+                     WideningNConfig<uint8_t, uint16_t, 2, true>,
+                     WideningNConfig<int8_t, int32_t, 4, true>,
+                     WideningNConfig<uint8_t, uint32_t, 4, true>,
+                     WideningNConfig<int16_t, int32_t, 2, true>,
+                     WideningNConfig<uint16_t, uint32_t, 2, true>,
+                     WideningNConfig<int16_t, void, 8, false>,
+                     WideningNConfig<uint16_t, void, 8, false>,
+                     WideningNConfig<int32_t, void, 4, false>,
+                     WideningNConfig<uint32_t, void, 4, false>,
+                     WideningNConfig<int32_t, void, 8, false>,
+                     WideningNConfig<uint32_t, void, 8, false>,
+                     WideningNConfig<int64_t, void, 2, false>,
+                     WideningNConfig<uint64_t, void, 2, false>,
+                     WideningNConfig<int64_t, void, 4, false>,
+                     WideningNConfig<uint64_t, void, 4, false>,
+                     WideningNConfig<int64_t, void, 8, false>,
+                     WideningNConfig<uint64_t, void, 8, false>,
+#if HAS_ZVE64X
+                     WideningNConfig<int8_t, int64_t, 8, true>,
+                     WideningNConfig<uint8_t, uint64_t, 8, true>,
+                     WideningNConfig<int16_t, int64_t, 4, true>,
+                     WideningNConfig<uint16_t, uint64_t, 4, true>,
+                     WideningNConfig<int32_t, int64_t, 2, true>,
+                     WideningNConfig<uint32_t, uint64_t, 2, true>,
+#else
+                     WideningNConfig<int8_t, void, 8, false>,
+                     WideningNConfig<uint8_t, void, 8, false>,
+                     WideningNConfig<int16_t, void, 4, false>,
+                     WideningNConfig<uint16_t, void, 4, false>,
+                     WideningNConfig<int32_t, void, 2, false>,
+                     WideningNConfig<uint32_t, void, 2, false>,
+#endif
+                     WideningNConfig<float, void, 2, false>,
+                     WideningNConfig<vint8m1_t, vint16m2_t, 2, true>,
+                     WideningNConfig<vint8m1_t, vint32m4_t, 4, true>,
+#if HAS_ZVE64X
+                     WideningNConfig<vuint8m1_t, vuint64m8_t, 8, true>,
+                     WideningNConfig<vuint64m4_t, void, 2, false>,
+#else
+                     WideningNConfig<vuint8m1_t, void, 8, false>,
+#endif
+#if HAS_ZVE32F
+                     WideningNConfig<vfloat32m1_t, void, 2, false>,
+#endif
+                     WideningNConfig<vint8m8_t, void, 2, false>>;
+
+TYPED_TEST_SUITE(WideningNTest, WideningNConfigs);
+
+TYPED_TEST(WideningNTest, widening_n) {
+  EXPECT_TRUE((rvv::widenable_n<TypeParam::kN, typename TypeParam::Narrow> ==
+               TypeParam::kWidenable));
+  if constexpr (rvv::widenable_n<TypeParam::kN, typename TypeParam::Narrow>) {
+    EXPECT_TRUE((std::is_same_v<
+                 rvv::widen_n_t<TypeParam::kN, typename TypeParam::Narrow>,
+                 typename TypeParam::Wide>));
+  }
+}

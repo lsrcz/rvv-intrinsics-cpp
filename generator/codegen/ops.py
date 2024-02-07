@@ -44,7 +44,7 @@ def vreg_require_clauses(
     allowed_type_category: str,
     vreg_type: vreg.VRegType,
     ratio: misc.SizeTValue,
-    widening: bool = False,
+    widening: bool | int = False,
 ) -> list[str]:
     ret: list[str] = []
     match allowed_type_category:
@@ -65,11 +65,18 @@ def vreg_require_clauses(
                 f"Unknown allowed type category: {allowed_type_category}"
             )
     ret.append(constraints.is_compatible_vreg_ratio(vreg_type, ratio))
-    if widening:
+    if widening is True:
         ret.append(constraints.widenable_type(vreg_type))
         ret.append(
             constraints.is_compatible_vreg_ratio(
                 vreg.WidenVRegType(base_type=vreg_type), ratio
+            )
+        )
+    elif widening in [2, 4, 8]:
+        ret.append(constraints.widenable_n_type(widening, vreg_type))
+        ret.append(
+            constraints.is_compatible_vreg_ratio(
+                vreg.WidenNVRegType(n=widening, base_type=vreg_type), ratio
             )
         )
     return ret
@@ -311,3 +318,42 @@ def widening_op(inst: str, signed: bool) -> Callable[[str], func.Function]:
             "signed" if signed else "unsigned", vreg_type, ratio, widening=True
         ),
     )
+
+
+def extending_op(
+    inst: str, signed: bool
+) -> Callable[[str, int], func.Function]:
+    def inner(variant: str, n: int) -> func.Function:
+        return func.template_vreg_ratio(
+            lambda vreg_type, ratio: vreg.WidenNVRegType(
+                n=n, base_type=vreg_type
+            ),
+            f"{inst}{n}",
+            lambda variant, vreg_type, ratio: func.vreg_ratio_extend_param_list(
+                vreg.WidenNVRegType(n=n, base_type=vreg_type),
+                ratio,
+                variant,
+                function.FunctionTypedParamList(
+                    function.TypedParam(
+                        type=vreg_type,
+                        name="vs2",
+                    ),
+                    function.TypedParam(type=vl.VLType(ratio=ratio), name="vl"),
+                ),
+            ),
+            lambda variant, elem_type, ratio, param_list: (
+                "  return "
+                + func.apply_function(
+                    f"__riscv_{inst}"
+                    + f"_vf{n}"
+                    + func.rv_postfix(variant, overloaded=True),
+                    param_list,
+                )
+                + ";"
+            ),
+            require_clauses=lambda vreg_type, ratio: vreg_require_clauses(
+                "signed" if signed else "unsigned", vreg_type, ratio, widening=n
+            ),
+        )(variant)
+
+    return inner

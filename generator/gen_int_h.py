@@ -42,6 +42,12 @@ rvv_int_header = header.Header(
                         "// 3.3. Vector Integer Widening Intrinsics",
                         header.WithVariants(ops.widening_op("vwcvt", True)),
                         header.WithVariants(ops.widening_op("vwcvt", False)),
+                        header.CrossProduct.variant(
+                            ops.extending_op("vsext", True), [2, 4, 8]
+                        ),
+                        header.CrossProduct.variant(
+                            ops.extending_op("vzext", False), [2, 4, 8]
+                        ),
                     ]
                 )
             ],

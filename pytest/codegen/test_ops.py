@@ -155,3 +155,29 @@ widen_t<V> vwcvt(vmask_t<kRatio> vm, widen_t<V> vd, V vs2, vl_t<kRatio> vl) {
   return __riscv_vwcvtu_x_tum(vm, vd, vs2, vl);
 }"""
     )
+
+
+def test_vsext2() -> None:
+    f = ops.extending_op("vsext", True)
+    assert (
+        f("", 2).cpp_repr
+        == """template <typename V, size_t kRatio>
+  requires is_supported_signed_vreg<V> && is_compatible_vreg_ratio<V, kRatio> && widenable_n<2, V> && is_compatible_vreg_ratio<widen_n_t<2, V>, kRatio>
+RVV_ALWAYS_INLINE
+widen_n_t<2, V> vsext2(V vs2, vl_t<kRatio> vl) {
+  return __riscv_vsext_vf2(vs2, vl);
+}"""
+    )
+
+
+def test_vzext8_tum() -> None:
+    f = ops.extending_op("vzext", False)
+    assert (
+        f("tum", 8).cpp_repr
+        == """template <typename V, size_t kRatio>
+  requires is_supported_unsigned_vreg<V> && is_compatible_vreg_ratio<V, kRatio> && widenable_n<8, V> && is_compatible_vreg_ratio<widen_n_t<8, V>, kRatio>
+RVV_ALWAYS_INLINE
+widen_n_t<8, V> vzext8(vmask_t<kRatio> vm, widen_n_t<8, V> vd, V vs2, vl_t<kRatio> vl) {
+  return __riscv_vzext_vf8_tum(vm, vd, vs2, vl);
+}"""
+    )

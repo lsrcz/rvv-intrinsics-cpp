@@ -116,3 +116,17 @@ def test_is_supported_floating_point_vreg() -> None:
         )
         == "is_supported_floating_point_vreg<V, false>"
     )
+
+
+def test_widenable_type() -> None:
+    assert (
+        constraints.widenable_type(elem.ParamElemType(typename="E"))
+        == "widenable<E>"
+    )
+
+
+def test_widenable_n_type() -> None:
+    assert (
+        constraints.widenable_n_type(4, elem.ParamElemType(typename="E"))
+        == "widenable_n<4, E>"
+    )
