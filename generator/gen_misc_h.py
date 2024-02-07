@@ -9,14 +9,12 @@ def vsetvl_decl(
     fname: str, has_size_param: bool
 ) -> Callable[[str], func.Function]:
     return func.template_ratio(
-        lambda ratio: vl.VLType(ratio=ratio),
+        vl.vl,
         fname,
-        lambda _, __: function.FunctionTypedParamList(
-            *(
-                [function.TypedParam(type=misc.SizeTType(), name="avl")]
-                if has_size_param
-                else []
-            )
+        lambda _, __: (
+            function.param_list([misc.size_t], ["avl"])
+            if has_size_param
+            else function.param_list()
         ),
         lambda _, __, ___: None,
     )
@@ -26,19 +24,17 @@ def vsetvl_defs(
     fname: str, has_size_param: bool
 ) -> Callable[[str, misc.LitSizeTValue], func.Function]:
     return func.for_all_ratio(
-        lambda ratio: vl.VLType(ratio=ratio),
+        vl.vl,
         fname,
-        lambda _, __: function.FunctionTypedParamList(
-            *(
-                [function.TypedParam(type=misc.SizeTType(), name="avl")]
-                if has_size_param
-                else []
-            )
+        lambda _, __: (
+            function.param_list([misc.size_t], ["avl"])
+            if has_size_param
+            else function.param_list()
         ),
         lambda _, ratio, param_list: f"""  return """
         f"""vl_t<{ratio.value}>{{__riscv_{fname}_e8"""
         f"""{validate.elem_ratio_to_lmul(
-            elem.IntType(width=8, signed=False), 
+            elem.uint8_t, 
             ratio
             ).lmul.short_name}{param_list.forward.cpp_repr}}};""",
         template_param_list=template.TemplateTypeParamList(),

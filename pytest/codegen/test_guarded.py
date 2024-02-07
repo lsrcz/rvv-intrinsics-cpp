@@ -7,37 +7,37 @@ import pytest
 @pytest.mark.parametrize(
     "e,need_zvfh,expected",
     [
-        (elem.IntType(width=8, signed=True), True, []),
-        (elem.IntType(width=32, signed=True), True, []),
+        (elem.int8_t, True, []),
+        (elem.int32_t, True, []),
         (
-            elem.IntType(width=64, signed=True),
+            elem.int64_t,
             True,
             [guarded.FlagGuard(flag="HAS_ZVE64X")],
         ),
-        (elem.IntType(width=8, signed=False), True, []),
-        (elem.IntType(width=32, signed=False), True, []),
+        (elem.uint8_t, True, []),
+        (elem.uint32_t, True, []),
         (
-            elem.IntType(width=64, signed=False),
+            elem.uint64_t,
             True,
             [guarded.FlagGuard(flag="HAS_ZVE64X")],
         ),
         (
-            elem.FloatType(width=16),
+            elem.float16_t,
             True,
             [guarded.FlagGuard(flag="HAS_ZVFH")],
         ),
         (
-            elem.FloatType(width=16),
+            elem.float16_t,
             False,
             [guarded.FlagGuard(flag="HAS_ZVFHMIN")],
         ),
         (
-            elem.FloatType(width=32),
+            elem.float32_t,
             True,
             [guarded.FlagGuard(flag="HAS_ZVE32F")],
         ),
         (
-            elem.FloatType(width=64),
+            elem.float64_t,
             True,
             [guarded.FlagGuard(flag="HAS_ZVE64D")],
         ),
@@ -54,12 +54,12 @@ def test_elem_guard(
     [(1, []), (32, []), (64, [guarded.FlagGuard(flag="HAS_ELEN64")])],
 )
 def test_ratio_guard(ratio: int, expected: list[guarded.Guard]) -> None:
-    assert guarded.ratio_guard(misc.LitSizeTValue(value=ratio)) == expected
+    assert guarded.ratio_guard(misc.lit_size_t(ratio)) == expected
 
 
 def test_elem_ratio_guard() -> None:
     assert guarded.elem_ratio_guard(
-        elem.FloatType(width=32), misc.LitSizeTValue(value=64), True
+        elem.float32_t, misc.lit_size_t(64), True
     ) == [
         guarded.FlagGuard(flag="HAS_ZVE32F"),
         guarded.FlagGuard(flag="HAS_ELEN64"),

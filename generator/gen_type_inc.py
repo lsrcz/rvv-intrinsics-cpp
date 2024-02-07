@@ -54,9 +54,7 @@ def widened_narrowed_scalar_type_specialization_def(
 ) -> str:
     ret: list[str] = []
     if isinstance(elem_type, elem.IntType) and elem_type.width <= 32:
-        widened_type = elem.IntType(
-            width=elem_type.width * 2, signed=elem_type.signed
-        )
+        widened_type = elem.int_type(elem_type.width * 2, elem_type.signed)
         ret.append(
             guarded.Guarded(
                 guarded.elem_guard(widened_type, need_zvfh=False),
@@ -67,9 +65,7 @@ struct WidenedType<{elem_type.cpp_repr}> {{
             ).cpp_repr
         )
     if isinstance(elem_type, elem.IntType) and elem_type.width >= 16:
-        narrowed_type = elem.IntType(
-            width=elem_type.width // 2, signed=elem_type.signed
-        )
+        narrowed_type = elem.int_type(elem_type.width // 2, elem_type.signed)
         ret.append(
             guarded.Guarded(
                 guarded.elem_guard(elem_type, need_zvfh=False),
@@ -92,9 +88,7 @@ def widened_narrowed_vreg_specialization_def(
         return ""
     ret: list[guarded.Guarded] = []
     if elem_type.width <= 32:
-        widened_type = elem.IntType(
-            width=elem_type.width * 2, signed=elem_type.signed
-        )
+        widened_type = elem.int_type(elem_type.width * 2, elem_type.signed)
         if validate.is_compatible_elem_ratio_may_under_guards(
             widened_type, ratio
         ):
@@ -111,9 +105,7 @@ struct WidenedType<vreg_t<{elem_type.cpp_repr}, {ratio.cpp_repr}>> {{
                 )
             )
     if elem_type.width >= 16:
-        narrowed_type = elem.IntType(
-            width=elem_type.width // 2, signed=elem_type.signed
-        )
+        narrowed_type = elem.int_type(elem_type.width // 2, elem_type.signed)
         if validate.is_compatible_elem_ratio_may_under_guards(
             narrowed_type, ratio
         ):
@@ -150,7 +142,7 @@ def to_signed_unsigned_scalar_type_specialization_def(
         return ""
     if not elem_type.signed:
         return ""
-    unsigned_type = elem.IntType(width=elem_type.width, signed=False)
+    unsigned_type = elem.int_type(elem_type.width, False)
     return guarded.Guarded(
         guarded.elem_guard(elem_type, False),
         f"""template <>
@@ -174,10 +166,8 @@ def to_signed_unsigned_vreg_type_specialization_def(
     if not validate.is_compatible_elem_ratio_may_under_guards(elem_type, ratio):
         return ""
 
-    signed_type = vreg.ConcreteVRegType(elem_type=elem_type, ratio=ratio)
-    unsigned_type = vreg.ConcreteVRegType(
-        elem_type=elem.IntType(width=elem_type.width, signed=False), ratio=ratio
-    )
+    signed_type = vreg.concrete(elem_type, ratio)
+    unsigned_type = vreg.concrete(elem.int_type(elem_type.width, False), ratio)
     return guarded.Guarded(
         guarded.elem_ratio_guard(elem_type, ratio, need_zvfh=False),
         f"""template <>

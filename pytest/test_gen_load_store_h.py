@@ -7,8 +7,8 @@ def test_vle_base_def_int8_ratio8() -> None:
         "vle",
     )(
         "",
-        elem.IntType(width=8, signed=True),
-        misc.LitSizeTValue(value=8),
+        elem.int8_t,
+        misc.lit_size_t(8),
     )
     assert res is not None
     assert (
@@ -25,8 +25,8 @@ def test_vle_base_def_int8_ratio64() -> None:
         "vle",
     )(
         "",
-        elem.IntType(width=8, signed=True),
-        misc.LitSizeTValue(value=64),
+        elem.int8_t,
+        misc.lit_size_t(64),
     )
     assert res is not None
     assert (
@@ -45,8 +45,8 @@ def test_vle_base_def_int64_ratio8() -> None:
         "vle",
     )(
         "",
-        elem.IntType(width=64, signed=True),
-        misc.LitSizeTValue(value=8),
+        elem.int64_t,
+        misc.lit_size_t(8),
     )
     assert res is not None
     assert (
@@ -65,8 +65,8 @@ def test_vlse_base_def_int8_ratio8() -> None:
         "vlse",
     )(
         "",
-        elem.IntType(width=8, signed=True),
-        misc.LitSizeTValue(value=8),
+        elem.int8_t,
+        misc.lit_size_t(8),
     )
     assert res is not None
     assert (
@@ -83,8 +83,8 @@ def test_vleff_base_def_int8_ratio8() -> None:
         "vleff",
     )(
         "",
-        elem.IntType(width=8, signed=True),
-        misc.LitSizeTValue(value=8),
+        elem.int8_t,
+        misc.lit_size_t(8),
     )
     assert res is not None
     assert (
@@ -177,7 +177,7 @@ void vsse(vmask_t<kRatio> vm, E * rs1, ptrdiff_t rs2, vreg_t<E, kRatio> vs3, vl_
 
 
 def test_vlm_8() -> None:
-    res = gen_load_store_h.vlm_defs("", misc.LitSizeTValue(value=8))
+    res = gen_load_store_h.vlm_defs("", misc.lit_size_t(8))
     assert res is not None
     assert (
         res.cpp_repr
@@ -189,7 +189,7 @@ vmask_t<8> vlm(const uint8_t * rs1, vl_t<8> vl) {
 
 
 def test_vlm_64() -> None:
-    res = gen_load_store_h.vlm_defs("", misc.LitSizeTValue(value=64))
+    res = gen_load_store_h.vlm_defs("", misc.lit_size_t(64))
     assert res is not None
     assert (
         res.cpp_repr

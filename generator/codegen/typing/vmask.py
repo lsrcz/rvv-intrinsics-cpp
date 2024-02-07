@@ -10,3 +10,7 @@ class VMaskType(base.Type):
     @property
     def cpp_repr(self) -> str:
         return f"vmask_t<{self.ratio}>"
+
+
+def vmask(ratio: misc.SizeTValue) -> VMaskType:
+    return VMaskType(ratio=ratio)

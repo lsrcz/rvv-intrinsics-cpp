@@ -9,29 +9,21 @@ def widening_vx_or_wx_op(
     inst: str, is_vx: bool, signed: bool
 ) -> Callable[[str], func.Function]:
     return func.template_elem_ratio(
-        lambda elem_type, ratio: vreg.ConcreteVRegType(
-            elem_type=elem.WidenElemType(base_type=elem_type), ratio=ratio
-        ),
+        lambda elem_type, ratio: vreg.concrete(elem.widen(elem_type), ratio),
         inst + ("" if signed else "u"),
-        lambda variant, elem_type, ratio: func.elem_ratio_extend_param_list(
-            elem.WidenElemType(base_type=elem_type),
+        lambda variant, elem_type, ratio: func.elem_ratio_param_list(
+            elem.widen(elem_type),
             ratio,
             variant,
-            function.FunctionTypedParamList(
-                function.TypedParam(
-                    type=vreg.ConcreteVRegType(
-                        elem_type=(
-                            elem_type
-                            if is_vx
-                            else elem.WidenElemType(base_type=elem_type)
-                        ),
-                        ratio=ratio,
-                    ),
-                    name="vs2",
+            [
+                vreg.concrete(
+                    (elem_type if is_vx else elem.widen(elem_type)),
+                    ratio,
                 ),
-                function.TypedParam(type=elem_type, name="rs1"),
-                function.TypedParam(type=vl.VLType(ratio=ratio), name="vl"),
-            ),
+                elem_type,
+                vl.vl(ratio),
+            ],
+            ["vs2", "rs1", "vl"],
         ),
         lambda variant, elem_type, ratio, param_list: (
             "  return "
@@ -54,24 +46,18 @@ def widening_vv_or_wv_op(
     inst: str, is_vv: bool, signed: bool
 ) -> Callable[[str], func.Function]:
     return func.template_vreg_ratio(
-        lambda vreg_type, ratio: vreg.WidenVRegType(base_type=vreg_type),
+        lambda vreg_type, ratio: vreg.widen(vreg_type),
         inst + ("" if signed else "u"),
-        lambda variant, vreg_type, ratio: func.vreg_ratio_extend_param_list(
-            vreg.WidenVRegType(base_type=vreg_type),
+        lambda variant, vreg_type, ratio: func.vreg_ratio_param_list(
+            vreg.widen(vreg_type),
             ratio,
             variant,
-            function.FunctionTypedParamList(
-                function.TypedParam(
-                    type=(
-                        vreg_type
-                        if is_vv
-                        else vreg.WidenVRegType(base_type=vreg_type)
-                    ),
-                    name="vs2",
-                ),
-                function.TypedParam(type=vreg_type, name="vs1"),
-                function.TypedParam(type=vl.VLType(ratio=ratio), name="vl"),
-            ),
+            [
+                vreg_type if is_vv else vreg.widen(vreg_type),
+                vreg_type,
+                vl.vl(ratio),
+            ],
+            ["vs2", "vs1", "vl"],
         ),
         lambda variant, elem_type, ratio, param_list: (
             "  return "
@@ -108,19 +94,14 @@ def widening_wv_op(inst: str, signed: bool) -> Callable[[str], func.Function]:
 
 def widening_op(inst: str, signed: bool) -> Callable[[str], func.Function]:
     return func.template_vreg_ratio(
-        lambda vreg_type, ratio: vreg.WidenVRegType(base_type=vreg_type),
+        lambda vreg_type, ratio: vreg.widen(vreg_type),
         inst + ("" if signed else "u"),
-        lambda variant, vreg_type, ratio: func.vreg_ratio_extend_param_list(
-            vreg.WidenVRegType(base_type=vreg_type),
+        lambda variant, vreg_type, ratio: func.vreg_ratio_param_list(
+            vreg.widen(vreg_type),
             ratio,
             variant,
-            function.FunctionTypedParamList(
-                function.TypedParam(
-                    type=vreg_type,
-                    name="vs2",
-                ),
-                function.TypedParam(type=vl.VLType(ratio=ratio), name="vl"),
-            ),
+            [vreg_type, vl.vl(ratio)],
+            ["vs2", "vl"],
         ),
         lambda variant, elem_type, ratio, param_list: (
             "  return "
@@ -148,52 +129,32 @@ def narrowing_shift_op(
     def function_param_list(
         variant: str, vreg_type: vreg.ParamVRegType, ratio: misc.ParamSizeTValue
     ) -> function.FunctionTypedParamList:
-        ret: list[function.TypedParam] = []
-        ret.append(
-            function.TypedParam(
-                type=vreg_type,
-                name="vs2",
-            )
-        )
+        param_list = function.param_list([vreg_type], ["vs2"])
 
         match op_variant:
             case "":
                 if inst == "vnsra":
-                    ret.append(
-                        function.TypedParam(
-                            type=vreg.NarrowVRegType(
-                                base_type=vreg.ToUnsignedVRegType(
-                                    base_type=vreg_type
-                                )
-                            ),
-                            name="vs1",
-                        )
+                    param_list = param_list + (
+                        vreg.narrow(vreg.to_unsigned(vreg_type)),
+                        "vs1",
                     )
                 else:
-                    ret.append(
-                        function.TypedParam(
-                            type=vreg.NarrowVRegType(base_type=vreg_type),
-                            name="vs1",
-                        )
+                    param_list = param_list + (
+                        vreg.narrow(vreg_type),
+                        "vs1",
                     )
             case "scalar":
-                ret.append(
-                    function.TypedParam(type=misc.SizeTType(), name="rs1")
-                )
+                param_list = param_list + (misc.size_t, "rs1")
             case _:
                 pass
-
-        ret.append(function.TypedParam(type=vl.VLType(ratio=ratio), name="vl"))
+        param_list = param_list + (vl.vl(ratio), "vl")
 
         return func.vreg_ratio_extend_param_list(
-            vreg.NarrowVRegType(base_type=vreg_type),
-            ratio,
-            variant,
-            function.FunctionTypedParamList(*ret),
+            vreg.narrow(vreg_type), ratio, variant, param_list
         )
 
     return func.template_vreg_ratio(
-        lambda vreg_type, ratio: vreg.NarrowVRegType(base_type=vreg_type),
+        lambda vreg_type, ratio: vreg.narrow(vreg_type),
         inst,
         function_param_list,
         lambda variant, elem_type, ratio, param_list: (
@@ -218,21 +179,13 @@ def extending_op(
 ) -> Callable[[str, int], func.Function]:
     def inner(variant: str, n: int) -> func.Function:
         return func.template_vreg_ratio(
-            lambda vreg_type, ratio: vreg.WidenNVRegType(
-                n=n, base_type=vreg_type
-            ),
+            lambda vreg_type, ratio: vreg.widen_n(n, vreg_type),
             f"{inst}{n}",
             lambda variant, vreg_type, ratio: func.vreg_ratio_extend_param_list(
-                vreg.WidenNVRegType(n=n, base_type=vreg_type),
+                vreg.widen_n(n, vreg_type),
                 ratio,
                 variant,
-                function.FunctionTypedParamList(
-                    function.TypedParam(
-                        type=vreg_type,
-                        name="vs2",
-                    ),
-                    function.TypedParam(type=vl.VLType(ratio=ratio), name="vl"),
-                ),
+                function.param_list([vreg_type, vl.vl(ratio)], ["vs2", "vl"]),
             ),
             lambda variant, elem_type, ratio, param_list: (
                 "  return "
@@ -254,19 +207,14 @@ def extending_op(
 
 def vncvt(variant: str) -> func.Function:
     return func.template_vreg_ratio(
-        lambda vreg_type, ratio: vreg.NarrowVRegType(base_type=vreg_type),
+        lambda vreg_type, ratio: vreg.narrow(vreg_type),
         "vncvt",
-        lambda variant, vreg_type, ratio: func.vreg_ratio_extend_param_list(
-            vreg.NarrowVRegType(base_type=vreg_type),
+        lambda variant, vreg_type, ratio: func.vreg_ratio_param_list(
+            vreg.narrow(vreg_type),
             ratio,
             variant,
-            function.FunctionTypedParamList(
-                function.TypedParam(
-                    type=vreg_type,
-                    name="vs2",
-                ),
-                function.TypedParam(type=vl.VLType(ratio=ratio), name="vl"),
-            ),
+            [vreg_type, vl.vl(ratio)],
+            ["vs2", "vl"],
         ),
         lambda variant, elem_type, ratio, param_list: (
             "  return "

@@ -3,9 +3,9 @@ from codegen.typing import elem, misc, vreg
 
 import pytest
 
-type_param0 = misc.ParamSizeTValue(typename="type_param0")
-type_param1 = elem.ParamElemType(typename="type_param1")
-type_param2 = vreg.ParamVRegType(typename="type_param2")
+type_param0 = misc.param_size_t("type_param0")
+type_param1 = elem.param("type_param1")
+type_param2 = vreg.param("type_param2")
 
 param_list_empty = template.TemplateTypeParamList()
 param_list_0 = template.TemplateTypeParamList(type_param0)
@@ -70,9 +70,9 @@ def test_template_param_list_get_slice() -> None:
     assert param_list_012[1:3] == param_list_12
 
 
-type0 = misc.LitSizeTValue(value=32)
-type1 = elem.FloatType(width=32)
-type2 = misc.PtrdiffTType()
+type0 = misc.lit_size_t(32)
+type1 = elem.float32_t
+type2 = misc.ptrdiff_t
 
 arg_list_empty = template.TemplateTypeArgumentList()
 arg_list_0 = template.TemplateTypeArgumentList(type0)

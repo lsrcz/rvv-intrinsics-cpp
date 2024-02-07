@@ -73,7 +73,7 @@ def test_vwcvtu_x_tum() -> None:
         == """template <typename V, size_t kRatio>
   requires is_supported_unsigned_vreg<V> && is_compatible_vreg_ratio<V, kRatio> && widenable<V> && is_compatible_vreg_ratio<widen_t<V>, kRatio>
 RVV_ALWAYS_INLINE
-widen_t<V> vwcvt(vmask_t<kRatio> vm, widen_t<V> vd, V vs2, vl_t<kRatio> vl) {
+widen_t<V> vwcvtu(vmask_t<kRatio> vm, widen_t<V> vd, V vs2, vl_t<kRatio> vl) {
   return __riscv_vwcvtu_x_tum(vm, vd, vs2, vl);
 }"""
     )

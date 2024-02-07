@@ -3,9 +3,9 @@ from codegen.typing import elem
 
 import pytest
 
-arg0 = function.TypedParam(type=elem.FloatType(width=32), name="arg0")
-arg1 = function.TypedParam(type=elem.FloatType(width=64), name="arg1")
-arg2 = function.TypedParam(type=elem.FloatType(width=16), name="arg2")
+arg0 = function.TypedParam(type=elem.float32_t, name="arg0")
+arg1 = function.TypedParam(type=elem.float64_t, name="arg1")
+arg2 = function.TypedParam(type=elem.float16_t, name="arg2")
 
 param_list_empty = function.FunctionTypedParamList()
 param_list_0 = function.FunctionTypedParamList(arg0)

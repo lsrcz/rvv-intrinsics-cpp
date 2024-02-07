@@ -54,6 +54,28 @@ class IntType(RawElemType):
         return self.width
 
 
+def int_type(width: int, signed: bool) -> IntType:
+    return IntType(width=width, signed=signed)
+
+
+def signed_type(width: int) -> IntType:
+    return int_type(width=width, signed=True)
+
+
+def unsigned_type(width: int) -> IntType:
+    return int_type(width=width, signed=False)
+
+
+int8_t = signed_type(8)
+int16_t = signed_type(16)
+int32_t = signed_type(32)
+int64_t = signed_type(64)
+uint8_t = unsigned_type(8)
+uint16_t = unsigned_type(16)
+uint32_t = unsigned_type(32)
+uint64_t = unsigned_type(64)
+
+
 @dataclass(frozen=True, kw_only=True)
 class FloatType(RawElemType):
     width: int
@@ -74,27 +96,22 @@ class FloatType(RawElemType):
         return self.width
 
 
-ALL_UNSIGNED_INT_TYPES: list[IntType] = [
-    IntType(width=8, signed=False),
-    IntType(width=16, signed=False),
-    IntType(width=32, signed=False),
-    IntType(width=64, signed=False),
-]
+def float_type(width: int) -> FloatType:
+    return FloatType(width=width)
 
-ALL_SIGNED_INT_TYPES: list[IntType] = [
-    IntType(width=8, signed=True),
-    IntType(width=16, signed=True),
-    IntType(width=32, signed=True),
-    IntType(width=64, signed=True),
-]
+
+float16_t = float_type(16)
+float32_t = float_type(32)
+float64_t = float_type(64)
+
+
+ALL_UNSIGNED_INT_TYPES: list[IntType] = [uint8_t, uint16_t, uint32_t, uint64_t]
+
+ALL_SIGNED_INT_TYPES: list[IntType] = [int8_t, int16_t, int32_t, int64_t]
 
 ALL_INT_TYPES: list[IntType] = ALL_UNSIGNED_INT_TYPES + ALL_SIGNED_INT_TYPES
 
-ALL_FLOAT_TYPES: list[FloatType] = [
-    FloatType(width=16),
-    FloatType(width=32),
-    FloatType(width=64),
-]
+ALL_FLOAT_TYPES: list[FloatType] = [float16_t, float32_t, float64_t]
 
 ALL_ELEM_TYPES: Sequence[RawElemType] = ALL_INT_TYPES + ALL_FLOAT_TYPES
 
@@ -105,7 +122,11 @@ ALL_ELEM_SIZES: list[int] = [8, 16, 32, 64]
 class ParamElemType(ElemType, base.TypeParam):
     @property
     def kind(self) -> k.TypeKind:
-        return k.TypeKind()
+        return k.type_kind
+
+
+def param(typename: str) -> ParamElemType:
+    return ParamElemType(typename=typename)
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -115,3 +136,7 @@ class WidenElemType(ElemType):
     @property
     def cpp_repr(self) -> str:
         return f"widen_t<{self.base_type.cpp_repr}>"
+
+
+def widen(elem_type: ElemType) -> WidenElemType:
+    return WidenElemType(base_type=elem_type)

@@ -5,37 +5,25 @@ from codegen.param_list import function
 from codegen.typing import elem, lmul, misc, vl, vmask, vreg
 
 
-def non_indexed_ret_type(
-    elem_type: elem.ElemType, ratio: misc.SizeTValue
-) -> vreg.ConcreteVRegType:
-    return vreg.ConcreteVRegType(elem_type=elem_type, ratio=ratio)
-
-
 def non_indexed_load_arguments(
     inst: str, elem_type: elem.ElemType, ratio: misc.SizeTValue
 ) -> function.FunctionTypedParamList:
     assert inst in ["vle", "vleff", "vlse"]
-    ret = function.FunctionTypedParamList(
-        function.TypedParam(
-            type=misc.PtrType(base_type=elem_type, is_const=True), name="rs1"
-        )
+    param_list = function.param_list(
+        [misc.ptr(elem_type, is_const=True)], ["rs1"]
     )
+
     if inst == "vlse":
-        ret += function.FunctionTypedParamList(
-            function.TypedParam(type=misc.PtrdiffTType(), name="rs2")
-        )
-    vl_type = vl.VLType(ratio=ratio)
+        param_list = param_list + (misc.ptrdiff_t, "rs2")
+    vl_type = vl.vl(ratio)
     if inst == "vleff":
-        ret += function.FunctionTypedParamList(
-            function.TypedParam(
-                type=misc.PtrType(base_type=vl_type, is_const=False), name="vl"
-            )
+        param_list = param_list + (
+            misc.ptr(vl_type, is_const=False),
+            "vl",
         )
     else:
-        ret += function.FunctionTypedParamList(
-            function.TypedParam(type=vl_type, name="vl")
-        )
-    return ret
+        param_list = param_list + (vl_type, "vl")
+    return param_list
 
 
 def non_indexed_base_load_function_body(
@@ -83,7 +71,7 @@ def non_indexed_load_base_def_template(
     ) -> Optional[func.Function]:
         assert variant == ""
         return func.for_all_elem_ratio(
-            non_indexed_ret_type,
+            vreg.concrete,
             inst,
             lambda _, elem_type, ratio: non_indexed_load_arguments(
                 inst, elem_type, ratio
@@ -132,7 +120,7 @@ def non_indexed_load_variant_def_template(
     inst: str,
 ) -> Callable[[str, int], Optional[func.Function]]:
     return func.template_elem_ratio_for_all_size(
-        non_indexed_ret_type,
+        vreg.concrete,
         inst,
         lambda variant, elem_type, ratio, _: func.elem_ratio_extend_param_list(
             elem_type,
@@ -150,23 +138,17 @@ def non_indexed_store_arguments(
     inst: str, elem_type: elem.ElemType, ratio: misc.SizeTValue
 ) -> function.FunctionTypedParamList:
     assert inst in ["vse", "vsse"]
-    ret = function.FunctionTypedParamList(
-        function.TypedParam(
-            type=misc.PtrType(base_type=elem_type, is_const=False), name="rs1"
-        )
+    param_list = function.param_list(
+        [misc.ptr(elem_type, is_const=False)], ["rs1"]
     )
     if inst == "vsse":
-        ret += function.FunctionTypedParamList(
-            function.TypedParam(type=misc.PtrdiffTType(), name="rs2")
-        )
-    ret += function.FunctionTypedParamList(
-        function.TypedParam(
-            type=vreg.ConcreteVRegType(elem_type=elem_type, ratio=ratio),
-            name="vs3",
-        ),
-        function.TypedParam(type=vl.VLType(ratio=ratio), name="vl"),
+        param_list = param_list + (misc.ptrdiff_t, "rs2")
+    param_list = (
+        param_list
+        + (vreg.concrete(elem_type, ratio), "vs3")
+        + (vl.vl(ratio), "vl")
     )
-    return ret
+    return param_list
 
 
 def non_indexed_store_function_body(
@@ -189,7 +171,7 @@ def non_indexed_store_def_template(
     inst: str,
 ) -> Callable[[str, int], Optional[func.Function]]:
     return func.template_elem_ratio_for_all_size(
-        lambda _, __: misc.VoidType(),
+        lambda _, __: misc.void,
         inst,
         lambda variant, elem_type, ratio, _: func.elem_ratio_extend_param_list(
             elem_type,
@@ -207,16 +189,11 @@ def non_indexed_store_def_template(
 def vlm_defs(variant: str, ratio: misc.LitSizeTValue) -> func.Function:
     assert variant == ""
     return func.for_all_ratio(
-        lambda ratio: vmask.VMaskType(ratio=ratio),
+        vmask.vmask,
         "vlm",
-        lambda _, ratio: function.FunctionTypedParamList(
-            function.TypedParam(
-                type=misc.PtrType(
-                    base_type=elem.IntType(width=8, signed=False), is_const=True
-                ),
-                name="rs1",
-            ),
-            function.TypedParam(type=vl.VLType(ratio=ratio), name="vl"),
+        lambda _, ratio: function.param_list(
+            [misc.ptr(elem.uint8_t, is_const=True), vl.vl(ratio)],
+            ["rs1", "vl"],
         ),
         lambda _, ratio, param_list: "  return "
         + func.apply_function(f"__riscv_vlm_v_b{ratio}", param_list)
@@ -226,28 +203,21 @@ def vlm_defs(variant: str, ratio: misc.LitSizeTValue) -> func.Function:
 
 def vlxei_defs(inst: str) -> Callable[[str, int], Optional[func.Function]]:
     return func.template_elem_ratio_for_all_size(
-        lambda elem_type, ratio: vreg.ConcreteVRegType(
-            elem_type=elem_type, ratio=ratio
-        ),
+        vreg.concrete,
         inst,
-        lambda variant, elem_type, ratio, width: func.elem_ratio_extend_param_list(
+        lambda variant, elem_type, ratio, width: func.elem_ratio_param_list(
             elem_type,
             ratio,
             variant,
-            function.FunctionTypedParamList(
-                function.TypedParam(
-                    type=misc.PtrType(base_type=elem_type, is_const=True),
-                    name="rs1",
+            [
+                misc.ptr(elem_type, is_const=True),
+                vreg.concrete(
+                    elem.IntType(width=width, signed=False),
+                    ratio,
                 ),
-                function.TypedParam(
-                    type=vreg.ConcreteVRegType(
-                        elem_type=elem.IntType(width=width, signed=False),
-                        ratio=ratio,
-                    ),
-                    name="rs2",
-                ),
-                function.TypedParam(type=vl.VLType(ratio=ratio), name="vl"),
-            ),
+                vl.vl(ratio),
+            ],
+            ["rs1", "rs2", "vl"],
         ),
         lambda variant, elem_type, ratio, width, param_list: (
             "  return "
@@ -265,32 +235,22 @@ def vlxei_defs(inst: str) -> Callable[[str, int], Optional[func.Function]]:
 
 def vsxei_defs(inst: str) -> Callable[[str, int], Optional[func.Function]]:
     return func.template_elem_ratio_for_all_size(
-        lambda _, __: misc.VoidType(),
+        lambda _, __: misc.void,
         inst,
-        lambda variant, elem_type, ratio, width: func.elem_ratio_extend_param_list(
+        lambda variant, elem_type, ratio, width: func.elem_ratio_param_list(
             elem_type,
             ratio,
             variant,
-            function.FunctionTypedParamList(
-                function.TypedParam(
-                    type=misc.PtrType(base_type=elem_type, is_const=False),
-                    name="rs1",
+            [
+                misc.ptr(elem_type, is_const=False),
+                vreg.concrete(
+                    elem.IntType(width=width, signed=False),
+                    ratio,
                 ),
-                function.TypedParam(
-                    type=vreg.ConcreteVRegType(
-                        elem_type=elem.IntType(width=width, signed=False),
-                        ratio=ratio,
-                    ),
-                    name="rs2",
-                ),
-                function.TypedParam(
-                    type=vreg.ConcreteVRegType(
-                        elem_type=elem_type, ratio=ratio
-                    ),
-                    name="vs3",
-                ),
-                function.TypedParam(type=vl.VLType(ratio=ratio), name="vl"),
-            ),
+                vreg.concrete(elem_type, ratio),
+                vl.vl(ratio),
+            ],
+            ["rs1", "rs2", "vs3", "vl"],
             undisturbed_need_dest_arg=False,
         ),
         lambda variant, elem_type, ratio, width, param_list: (

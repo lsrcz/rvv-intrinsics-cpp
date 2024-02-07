@@ -10,3 +10,7 @@ class VLType(base.Type):
     @property
     def cpp_repr(self) -> str:
         return f"vl_t<{self.ratio.cpp_repr}>"
+
+
+def vl(ratio: misc.SizeTValue) -> VLType:
+    return VLType(ratio=ratio)

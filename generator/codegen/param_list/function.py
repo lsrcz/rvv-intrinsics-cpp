@@ -2,13 +2,13 @@ import abc
 from dataclasses import dataclass
 from typing import Sequence, Union, overload
 
-from codegen.param_list import param_list
-from codegen.typing import base as ty
+from codegen.param_list import param_list as plist
+from codegen.typing import base
 
 
 @dataclass(frozen=True, kw_only=True)
 class TypedParam:
-    type: ty.Type
+    type: base.Type
     name: str
 
     @property
@@ -16,7 +16,7 @@ class TypedParam:
         return f"{self.type.cpp_repr} {self.name}"
 
 
-class FunctionParamList(param_list.ParamList, metaclass=abc.ABCMeta):
+class FunctionParamList(plist.ParamList, metaclass=abc.ABCMeta):
     @property
     def _left_bracket(self) -> str:
         return "("
@@ -43,11 +43,18 @@ class FunctionTypedParamList(FunctionParamList):
         )
 
     def __add__(
-        self, other: "FunctionTypedParamList"
+        self,
+        other: Union[
+            "FunctionTypedParamList", tuple[base.Type, str], TypedParam
+        ],
     ) -> "FunctionTypedParamList":
-        return FunctionTypedParamList(
-            *list(self.typed_param_list) + list(other.typed_param_list)
-        )
+        if isinstance(other, FunctionTypedParamList):
+            return FunctionTypedParamList(
+                *list(self.typed_param_list) + list(other.typed_param_list)
+            )
+        if isinstance(other, TypedParam):
+            return self + FunctionTypedParamList(other)
+        return self + TypedParam(type=other[0], name=other[1])
 
     def __len__(self) -> int:
         return len(self.typed_param_list)
@@ -73,6 +80,18 @@ class FunctionTypedParamList(FunctionParamList):
         if not isinstance(other, FunctionTypedParamList):
             return False
         return self.typed_param_list == other.typed_param_list
+
+
+def param_list(
+    type_list: Sequence[base.Type] = tuple(), name_list: Sequence[str] = tuple()
+) -> FunctionTypedParamList:
+    assert len(type_list) == len(name_list)
+    return FunctionTypedParamList(
+        *[
+            TypedParam(type=type, name=name)
+            for type, name in zip(type_list, name_list)
+        ]
+    )
 
 
 class FunctionArgumentList(FunctionParamList):

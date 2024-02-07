@@ -17,6 +17,10 @@ class PtrType(base.Type):
         return f"{quantifier}{self.base_type.cpp_repr} *"
 
 
+def ptr(base_type: base.Type, *, is_const: bool) -> PtrType:
+    return PtrType(base_type=base_type, is_const=is_const)
+
+
 @dataclass(frozen=True, kw_only=True)
 class VoidType(base.Type):
     @property
@@ -24,11 +28,17 @@ class VoidType(base.Type):
         return "void"
 
 
+void = VoidType()
+
+
 @dataclass(frozen=True, kw_only=True)
 class SizeTType(base.Type):
     @property
     def cpp_repr(self) -> str:
         return "size_t"
+
+
+size_t = SizeTType()
 
 
 size_t_kind: base.DataKind = base.DataKind(data_type=SizeTType())
@@ -46,6 +56,10 @@ class LitSizeTValue(SizeTValue):
     @property
     def cpp_repr(self) -> str:
         return str(self.value)
+
+
+def lit_size_t(value: int) -> LitSizeTValue:
+    return LitSizeTValue(value=value)
 
 
 ALL_RATIO: list[LitSizeTValue] = [
@@ -66,8 +80,15 @@ class ParamSizeTValue(SizeTValue, base.TypeParam):
         return size_t_kind
 
 
+def param_size_t(typename: str) -> ParamSizeTValue:
+    return ParamSizeTValue(typename=typename)
+
+
 @dataclass(frozen=True, kw_only=True)
 class PtrdiffTType(base.Type):
     @property
     def cpp_repr(self) -> str:
         return "ptrdiff_t"
+
+
+ptrdiff_t = PtrdiffTType()

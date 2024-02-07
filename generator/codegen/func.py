@@ -94,7 +94,7 @@ def template_ratio(
     ] = lambda ratio: tuple(),
 ) -> Callable[[str], Function]:
     def inner(variant: str) -> Function:
-        ratio = misc.ParamSizeTValue(typename="kRatio")
+        ratio = misc.param_size_t("kRatio")
         param_list = function_param_list(variant, ratio)
         return Function(
             ret_type(ratio),
@@ -167,10 +167,12 @@ def for_all_elem_ratio(
         ]
     ] = None,
 ) -> Callable[[str, elem.RawElemType, misc.LitSizeTValue], Optional[Function]]:
-    if feature_guards is None:
-        feature_guards = lambda elem_type, ratio: guarded.elem_ratio_guard(
-            elem_type, ratio, need_zvfh
-        )
+    def final_feature_guards(
+        elem_type: elem.RawElemType, ratio: misc.LitSizeTValue
+    ):
+        if feature_guards is not None:
+            return feature_guards(elem_type, ratio)
+        return guarded.elem_ratio_guard(elem_type, ratio, need_zvfh)
 
     def inner(
         variant: str, elem_type: elem.RawElemType, ratio: misc.LitSizeTValue
@@ -187,7 +189,7 @@ def for_all_elem_ratio(
             function_body(variant, elem_type, ratio, param_list),
             template_param_list=template_param_list,
             require_clauses=require_clauses,
-            feature_guards=feature_guards(elem_type, ratio),
+            feature_guards=final_feature_guards(elem_type, ratio),
         )
 
     return inner
@@ -201,36 +203,40 @@ def elem_ratio_extend_param_list(
     undisturbed_need_dest_arg: bool = True,
     comparing: bool = False,
 ) -> function.FunctionTypedParamList:
-    return (
-        function.FunctionTypedParamList(
-            *(
-                [
-                    function.TypedParam(
-                        type=vmask.VMaskType(ratio=ratio), name="vm"
-                    )
-                ]
-                if "m" in variant
-                else []
-            )
-            + (
-                [
-                    function.TypedParam(
-                        type=(
-                            vmask.VMaskType(ratio=ratio)
-                            if comparing
-                            else vreg.ConcreteVRegType(
-                                elem_type=(elem_type),
-                                ratio=ratio,
-                            )
-                        ),
-                        name="vd",
-                    )
-                ]
-                if variant not in ["", "m"] and undisturbed_need_dest_arg
-                else []
-            )
+    extended_param_list = function.param_list()
+    if "m" in variant:
+        extended_param_list = extended_param_list + (
+            vmask.vmask(ratio=ratio),
+            "vm",
         )
-        + param_list
+    if variant not in ["", "m"] and undisturbed_need_dest_arg:
+        extended_param_list = extended_param_list + (
+            (
+                vmask.vmask(ratio=ratio)
+                if comparing
+                else vreg.concrete(elem_type, ratio)
+            ),
+            "vd",
+        )
+    return extended_param_list + param_list
+
+
+def elem_ratio_param_list(
+    elem_type: elem.ElemType,
+    ratio: misc.SizeTValue,
+    variant: str,
+    type_list: Sequence[base.Type],
+    name_list: Sequence[str],
+    undisturbed_need_dest_arg: bool = True,
+    comparing: bool = False,
+) -> function.FunctionTypedParamList:
+    return elem_ratio_extend_param_list(
+        elem_type,
+        ratio,
+        variant,
+        function.param_list(type_list, name_list),
+        undisturbed_need_dest_arg,
+        comparing,
     )
 
 
@@ -266,8 +272,8 @@ def template_elem_ratio_for_all_size(
         [elem.ParamElemType, misc.ParamSizeTValue], Sequence[guarded.Guard]
     ] = lambda elem_type, ratio: tuple(),
 ) -> Callable[[str, int], Optional[Function]]:
-    elem_type = elem.ParamElemType(typename="E")
-    ratio = misc.ParamSizeTValue(typename="kRatio")
+    elem_type = elem.param("E")
+    ratio = misc.param_size_t("kRatio")
 
     def inner(variant: str, width: int) -> Optional[Function]:
         param_list = function_param_list(variant, elem_type, ratio, width)
@@ -314,8 +320,8 @@ def template_elem_ratio(
         [elem.ParamElemType, misc.ParamSizeTValue], Sequence[guarded.Guard]
     ] = lambda _, __: tuple(),
 ) -> Callable[[str], Function]:
-    elem_type = elem.ParamElemType(typename="E")
-    ratio = misc.ParamSizeTValue(typename="kRatio")
+    elem_type = elem.param("E")
+    ratio = misc.param_size_t("kRatio")
 
     def inner(variant: str) -> Function:
         param_list = function_param_list(variant, elem_type, ratio)
@@ -340,33 +346,36 @@ def vreg_ratio_extend_param_list(
     undisturbed_need_dest_arg: bool = True,
     comparing: bool = False,
 ) -> function.FunctionTypedParamList:
-    return (
-        function.FunctionTypedParamList(
-            *(
-                [
-                    function.TypedParam(
-                        type=vmask.VMaskType(ratio=ratio), name="vm"
-                    )
-                ]
-                if "m" in variant
-                else []
-            )
-            + (
-                [
-                    function.TypedParam(
-                        type=(
-                            vmask.VMaskType(ratio=ratio)
-                            if comparing
-                            else vreg_type
-                        ),
-                        name="vd",
-                    )
-                ]
-                if variant not in ["", "m"] and undisturbed_need_dest_arg
-                else []
-            )
+    extended_param_list = function.param_list()
+    if "m" in variant:
+        extended_param_list = extended_param_list + (
+            vmask.vmask(ratio=ratio),
+            "vm",
         )
-        + param_list
+    if variant not in ["", "m"] and undisturbed_need_dest_arg:
+        extended_param_list = extended_param_list + (
+            (vmask.vmask(ratio=ratio) if comparing else vreg_type),
+            "vd",
+        )
+    return extended_param_list + param_list
+
+
+def vreg_ratio_param_list(
+    vreg_type: vreg.VRegType,
+    ratio: misc.SizeTValue,
+    variant: str,
+    type_list: Sequence[base.Type],
+    name_list: Sequence[str],
+    undisturbed_need_dest_arg: bool = True,
+    comparing: bool = False,
+) -> function.FunctionTypedParamList:
+    return vreg_ratio_extend_param_list(
+        vreg_type,
+        ratio,
+        variant,
+        function.param_list(type_list, name_list),
+        undisturbed_need_dest_arg,
+        comparing,
     )
 
 
@@ -400,8 +409,8 @@ def template_vreg_ratio(
         [vreg.ParamVRegType, misc.ParamSizeTValue], Sequence[guarded.Guard]
     ] = lambda _, __: tuple(),
 ) -> Callable[[str], Function]:
-    vreg_type = vreg.ParamVRegType(typename="V")
-    ratio = misc.ParamSizeTValue(typename="kRatio")
+    vreg_type = vreg.param("V")
+    ratio = misc.param_size_t("kRatio")
 
     def inner(variant: str) -> Function:
         param_list = function_param_list(variant, vreg_type, ratio)

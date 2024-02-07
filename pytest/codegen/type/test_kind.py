@@ -2,4 +2,4 @@ from codegen.typing import kind
 
 
 def test_type_kind() -> None:
-    assert kind.TypeKind().cpp_repr == "typename"
+    assert kind.type_kind.cpp_repr == "typename"

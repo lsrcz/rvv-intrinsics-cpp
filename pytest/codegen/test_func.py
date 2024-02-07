@@ -12,10 +12,8 @@ def test_apply_function_typed_param_list() -> None:
         func.apply_function(
             "func",
             function.FunctionTypedParamList(
-                function.TypedParam(type=misc.SizeTType(), name="param1"),
-                function.TypedParam(
-                    type=elem.FloatType(width=16), name="param2"
-                ),
+                function.TypedParam(type=misc.size_t, name="param1"),
+                function.TypedParam(type=elem.float16_t, name="param2"),
             ),
         )
         == "func(param1, param2)"
@@ -47,20 +45,18 @@ def test_rv_postfix() -> None:
     assert func.rv_postfix("tumu", overloaded=True) == "_tumu"
 
 
-ret_type = elem.IntType(width=32, signed=True)
+ret_type = elem.int32_t
 func_name = "func"
 function_param_list = function.FunctionTypedParamList(
-    function.TypedParam(type=elem.ParamElemType(typename="E"), name="param1"),
-    function.TypedParam(type=elem.FloatType(width=16), name="param2"),
+    function.TypedParam(type=elem.param("E"), name="param1"),
+    function.TypedParam(type=elem.float16_t, name="param2"),
 )
 function_body = "  return 0;"
-template_param_list = template.TemplateTypeParamList(
-    elem.ParamElemType(typename="E")
-)
+template_param_list = template.TemplateTypeParamList(elem.param("E"))
 single_require_clauses: list[str] = ["sizeof<E> == 4"]
 multiple_require_clauses: list[str] = ["sizeof<E> == 4", "some_concept<E>"]
 feature_guards: list[guarded.Guard] = guarded.elem_guard(
-    elem.FloatType(width=16), need_zvfh=False
+    elem.float16_t, need_zvfh=False
 )
 
 
@@ -191,24 +187,20 @@ int32_t func(E param1, float16_t param2) {
     )
 
 
-elem_type = elem.ParamElemType(typename="E")
-ratio = misc.ParamSizeTValue(typename="kRatio")
+elem_type = elem.param("E")
+ratio = misc.param_size_t("kRatio")
 
 base_param_list = function.FunctionTypedParamList(
-    function.TypedParam(type=elem.ParamElemType(typename="E"), name="param1"),
-    function.TypedParam(
-        type=misc.ParamSizeTValue(typename="kRatio"), name="param2"
-    ),
+    function.TypedParam(type=elem.param("E"), name="param1"),
+    function.TypedParam(type=misc.param_size_t("kRatio"), name="param2"),
 )
 
 mask_extra = function.FunctionTypedParamList(
-    function.TypedParam(type=vmask.VMaskType(ratio=ratio), name="vm")
+    function.TypedParam(type=vmask.vmask(ratio), name="vm")
 )
 
 dest_extra = function.FunctionTypedParamList(
-    function.TypedParam(
-        type=vreg.ConcreteVRegType(elem_type=elem_type, ratio=ratio), name="vd"
-    )
+    function.TypedParam(type=vreg.concrete(elem_type, ratio), name="vd")
 )
 
 
@@ -302,7 +294,7 @@ def test_elem_ratio_extend_param_list(
         )
 
 
-vreg_type = vreg.ParamVRegType(typename="V")
+vreg_type = vreg.param("V")
 
 vreg_base_param_list = function.FunctionTypedParamList(
     function.TypedParam(type=vreg_type, name="param1"),

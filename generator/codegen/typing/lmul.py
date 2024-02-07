@@ -59,14 +59,18 @@ class LitLMulValue(LMulValue):
         return self.lmul.qualified_enum_value
 
 
+def lit(lmul: int) -> LitLMulValue:
+    return LitLMulValue(lmul=LMul(lmul=lmul))
+
+
 ALL_LMUL: Sequence[LitLMulValue] = [
-    LitLMulValue(lmul=LMul(lmul=3)),
-    LitLMulValue(lmul=LMul(lmul=2)),
-    LitLMulValue(lmul=LMul(lmul=1)),
-    LitLMulValue(lmul=LMul(lmul=0)),
-    LitLMulValue(lmul=LMul(lmul=-1)),
-    LitLMulValue(lmul=LMul(lmul=-2)),
-    LitLMulValue(lmul=LMul(lmul=-3)),
+    lit(3),
+    lit(2),
+    lit(1),
+    lit(0),
+    lit(-1),
+    lit(-2),
+    lit(-3),
 ]
 
 
@@ -75,3 +79,7 @@ class ParamLMulValueType(LMulValue, base.TypeParam):
     @property
     def kind(self) -> base.DataKind:
         return base.DataKind(data_type=LMulType())
+
+
+def param(typename: str) -> ParamLMulValueType:
+    return ParamLMulValueType(typename=typename)

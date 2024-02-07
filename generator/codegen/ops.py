@@ -33,9 +33,7 @@ def elem_require_clauses(
     if widening:
         ret.append(constraints.widenable_type(elem_type))
         ret.append(
-            constraints.is_compatible_elem_ratio(
-                elem.WidenElemType(base_type=elem_type), ratio
-            )
+            constraints.is_compatible_elem_ratio(elem.widen(elem_type), ratio)
         )
     return ret
 
@@ -69,23 +67,19 @@ def vreg_require_clauses(
     if widening is True:
         ret.append(constraints.widenable_type(vreg_type))
         ret.append(
-            constraints.is_compatible_vreg_ratio(
-                vreg.WidenVRegType(base_type=vreg_type), ratio
-            )
+            constraints.is_compatible_vreg_ratio(vreg.widen(vreg_type), ratio)
         )
     elif widening in [2, 4, 8]:
         ret.append(constraints.widenable_n_type(widening, vreg_type))
         ret.append(
             constraints.is_compatible_vreg_ratio(
-                vreg.WidenNVRegType(n=widening, base_type=vreg_type), ratio
+                vreg.widen_n(widening, vreg_type), ratio
             )
         )
     elif narrowing:
         ret.append(constraints.narrowable_type(vreg_type))
         ret.append(
-            constraints.is_compatible_vreg_ratio(
-                vreg.NarrowVRegType(base_type=vreg_type), ratio
-            )
+            constraints.is_compatible_vreg_ratio(vreg.narrow(vreg_type), ratio)
         )
     return ret
 
@@ -113,44 +107,34 @@ def binary_op_template_on_elem(
     ) -> base.Type:
         match op_variant:
             case "use_and_produce_carry" | "comparing":
-                return vmask.VMaskType(ratio=ratio)
+                return vmask.vmask(ratio)
             case _:
-                return vreg.ConcreteVRegType(elem_type=elem_type, ratio=ratio)
+                return vreg.concrete(elem_type, ratio)
 
     def function_param_list(
         variant: str, elem_type: elem.ParamElemType, ratio: misc.ParamSizeTValue
     ) -> function.FunctionTypedParamList:
-        ret: list[function.TypedParam] = []
-        ret.append(
-            function.TypedParam(
-                type=vreg.ConcreteVRegType(elem_type=elem_type, ratio=ratio),
-                name="vs2",
-            )
+
+        param_list = function.param_list(
+            [
+                vreg.concrete(elem_type, ratio),
+                elem_type,
+            ],
+            ["vs2", "rs1"],
         )
-        ret.append(
-            function.TypedParam(
-                type=elem_type,
-                name="rs1",
-            )
-        )
+
         match op_variant:
             case "use_carry" | "use_and_produce_carry":
-                ret.append(
-                    function.TypedParam(
-                        type=vmask.VMaskType(ratio=ratio), name="v0"
-                    )
-                )
+                param_list = param_list + (vmask.vmask(ratio), "v0")
             case _:
                 pass
-        ret.append(
-            function.TypedParam(type=vl.VLType(ratio=ratio), name="vl"),
-        )
+        param_list = param_list + (vl.vl(ratio), "vl")
 
         return func.elem_ratio_extend_param_list(
             elem_type,
             ratio,
             variant,
-            function.FunctionTypedParamList(*ret),
+            param_list,
             comparing=op_variant == "comparing",
         )
 
@@ -209,62 +193,44 @@ def binary_op_template_on_vreg(
     ) -> base.Type:
         match op_variant:
             case "use_and_produce_carry" | "comparing":
-                return vmask.VMaskType(ratio=ratio)
+                return vmask.vmask(ratio)
             case _:
                 return vreg_type
 
     def function_param_list(
         variant: str, vreg_type: vreg.ParamVRegType, ratio: misc.ParamSizeTValue
     ) -> function.FunctionTypedParamList:
-        ret: list[function.TypedParam] = []
-        ret.append(
-            function.TypedParam(
-                type=vreg_type,
-                name="vs2",
-            )
-        )
+        param_list = function.param_list([vreg_type], ["vs2"])
 
         match op_variant:
             case "shifting":
-                ret.append(
-                    function.TypedParam(
-                        type=vreg.ToUnsignedVRegType(base_type=vreg_type),
-                        name="vs1",
-                    )
+                param_list = param_list + (
+                    vreg.to_unsigned(vreg_type),
+                    "vs1",
                 )
             case "shifting_scalar":
-                ret.append(
-                    function.TypedParam(
-                        type=misc.SizeTType(),
-                        name="rs1",
-                    )
+                param_list = param_list + (
+                    misc.size_t,
+                    "rs1",
                 )
             case _:
-                ret.append(
-                    function.TypedParam(
-                        type=vreg_type,
-                        name="vs1",
-                    )
+                param_list = param_list + (
+                    vreg_type,
+                    "vs1",
                 )
 
         match op_variant:
             case "use_carry" | "use_and_produce_carry":
-                ret.append(
-                    function.TypedParam(
-                        type=vmask.VMaskType(ratio=ratio), name="v0"
-                    )
-                )
+                param_list = param_list + (vmask.vmask(ratio), "v0")
             case _:
                 pass
-        ret.append(
-            function.TypedParam(type=vl.VLType(ratio=ratio), name="vl"),
-        )
+        param_list = param_list + (vl.vl(ratio), "vl")
 
         return func.vreg_ratio_extend_param_list(
             vreg_type,
             ratio,
             variant,
-            function.FunctionTypedParamList(*ret),
+            param_list,
             comparing=op_variant == "comparing",
         )
 
@@ -293,17 +259,12 @@ def v_op(
     return func.template_vreg_ratio(
         lambda vreg_type, ratio: vreg_type,
         inst,
-        lambda variant, vreg_type, ratio: func.vreg_ratio_extend_param_list(
+        lambda variant, vreg_type, ratio: func.vreg_ratio_param_list(
             vreg_type,
             ratio,
             variant,
-            function.FunctionTypedParamList(
-                function.TypedParam(
-                    type=vreg_type,
-                    name="vs",
-                ),
-                function.TypedParam(type=vl.VLType(ratio=ratio), name="vl"),
-            ),
+            [vreg_type, vl.vl(ratio)],
+            ["vs", "vl"],
         ),
         lambda variant, vreg_type, ratio, param_list: (
             "  return "

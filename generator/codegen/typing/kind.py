@@ -15,3 +15,6 @@ class TypeKind(Kind):
     @property
     def cpp_repr(self) -> str:
         return "typename"
+
+
+type_kind = TypeKind()

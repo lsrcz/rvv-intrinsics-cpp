@@ -6,7 +6,7 @@ def elem_ratio_to_lmul(
 ) -> lmul.LitLMulValue:
     log_element_width: int = elem_type.element_width.bit_length()
     log_ratio: int = ratio.value.bit_length()
-    return lmul.LitLMulValue(lmul=lmul.LMul(lmul=log_element_width - log_ratio))
+    return lmul.lit(log_element_width - log_ratio)
 
 
 def elem_lmul_to_ratio(

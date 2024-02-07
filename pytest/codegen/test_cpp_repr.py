@@ -7,4 +7,4 @@ def test_cpp_repr_str() -> None:
 
 
 def test_cpp_repr_field() -> None:
-    assert cpp_repr.to_cpp_repr(misc.SizeTType()) == "size_t"
+    assert cpp_repr.to_cpp_repr(misc.size_t) == "size_t"
