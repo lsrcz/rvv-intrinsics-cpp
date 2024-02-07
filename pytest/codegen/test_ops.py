@@ -161,3 +161,44 @@ V vsra(vmask_t<kRatio> vm, V vd, V vs2, size_t rs1, vl_t<kRatio> vl) {
   return __riscv_vsra_tum(vm, vd, vs2, rs1, vl);
 }"""
     )
+
+
+def test_vmseq_vx() -> None:
+    f = ops.binary_op_template_on_elem("vmseq", "int", op_variant="comparing")
+    assert (
+        f("").cpp_repr
+        == """template <typename E, size_t kRatio>
+  requires is_supported_rvv_integral<E> && is_compatible_elem_ratio<E, kRatio>
+RVV_ALWAYS_INLINE
+vmask_t<kRatio> vmseq(vreg_t<E, kRatio> vs2, E rs1, vl_t<kRatio> vl) {
+  return __riscv_vmseq(vs2, rs1, vl);
+}"""
+    )
+
+
+def test_vmseq_vv_tum() -> None:
+    f = ops.binary_op_template_on_vreg("vmseq", "int", op_variant="comparing")
+    assert (
+        f("tum").cpp_repr
+        == """template <typename V, size_t kRatio>
+  requires is_supported_integral_vreg<V> && is_compatible_vreg_ratio<V, kRatio>
+RVV_ALWAYS_INLINE
+vmask_t<kRatio> vmseq(vmask_t<kRatio> vm, vmask_t<kRatio> vd, V vs2, V vs1, vl_t<kRatio> vl) {
+  return __riscv_vmseq_tum(vm, vd, vs2, vs1, vl);
+}"""
+    )
+
+
+def test_vmsltu_vv_tum() -> None:
+    f = ops.binary_op_template_on_elem(
+        "vmsltu", "unsigned", op_variant="comparing"
+    )
+    assert (
+        f("").cpp_repr
+        == """template <typename E, size_t kRatio>
+  requires is_supported_rvv_unsigned<E> && is_compatible_elem_ratio<E, kRatio>
+RVV_ALWAYS_INLINE
+vmask_t<kRatio> vmsltu(vreg_t<E, kRatio> vs2, E rs1, vl_t<kRatio> vl) {
+  return __riscv_vmsltu(vs2, rs1, vl);
+}"""
+    )

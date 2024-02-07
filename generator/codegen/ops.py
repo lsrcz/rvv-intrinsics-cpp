@@ -91,23 +91,28 @@ def vreg_require_clauses(
 
 
 def binary_op_template_on_elem(
-    inst: str,
+    inst: str | tuple[str, str],
     allowed_type_category: str,
     *,
     op_variant: str = "",
 ) -> Callable[[str], func.Function]:
-    assert op_variant in ["", "use_carry", "use_and_produce_carry"]
+    assert op_variant in ["", "use_carry", "use_and_produce_carry", "comparing"]
     match op_variant:
         case "use_carry" | "use_and_produce_carry":
             assert allowed_type_category in ["int", "signed", "unsigned"]
         case _:
             pass
+    if isinstance(inst, str):
+        rvv_inst = f"__riscv_{inst}"
+    else:
+        rvv_inst = inst[1]
+        inst = inst[0]
 
     def ret_type(
         elem_type: elem.ParamElemType, ratio: misc.ParamSizeTValue
     ) -> base.Type:
         match op_variant:
-            case "use_and_produce_carry":
+            case "use_and_produce_carry" | "comparing":
                 return vmask.VMaskType(ratio=ratio)
             case _:
                 return vreg.ConcreteVRegType(elem_type=elem_type, ratio=ratio)
@@ -142,7 +147,11 @@ def binary_op_template_on_elem(
         )
 
         return func.elem_ratio_extend_param_list(
-            elem_type, ratio, variant, function.FunctionTypedParamList(*ret)
+            elem_type,
+            ratio,
+            variant,
+            function.FunctionTypedParamList(*ret),
+            comparing=op_variant == "comparing",
         )
 
     return func.template_elem_ratio(
@@ -152,7 +161,7 @@ def binary_op_template_on_elem(
         lambda variant, elem_type, ratio, param_list: (
             "  return "
             + func.apply_function(
-                f"__riscv_{inst}" + func.rv_postfix(variant, overloaded=True),
+                rvv_inst + func.rv_postfix(variant, overloaded=True),
                 param_list,
             )
             + ";"
@@ -164,7 +173,7 @@ def binary_op_template_on_elem(
 
 
 def binary_op_template_on_vreg(
-    inst: str,
+    inst: str | tuple[str, str],
     allowed_type_category: str,
     *,
     op_variant: str = "",
@@ -175,6 +184,7 @@ def binary_op_template_on_vreg(
         "use_and_produce_carry",
         "shifting",
         "shifting_scalar",
+        "comparing",
     ]
 
     match op_variant:
@@ -188,11 +198,17 @@ def binary_op_template_on_vreg(
         case _:
             pass
 
+    if isinstance(inst, str):
+        rvv_inst = f"__riscv_{inst}"
+    else:
+        rvv_inst = inst[1]
+        inst = inst[0]
+
     def ret_type(
         vreg_type: vreg.ParamVRegType, ratio: misc.ParamSizeTValue
     ) -> base.Type:
         match op_variant:
-            case "use_and_produce_carry":
+            case "use_and_produce_carry" | "comparing":
                 return vmask.VMaskType(ratio=ratio)
             case _:
                 return vreg_type
@@ -245,7 +261,11 @@ def binary_op_template_on_vreg(
         )
 
         return func.vreg_ratio_extend_param_list(
-            vreg_type, ratio, variant, function.FunctionTypedParamList(*ret)
+            vreg_type,
+            ratio,
+            variant,
+            function.FunctionTypedParamList(*ret),
+            comparing=op_variant == "comparing",
         )
 
     return func.template_vreg_ratio(
@@ -255,7 +275,7 @@ def binary_op_template_on_vreg(
         lambda variant, vreg_type, ratio, param_list: (
             "  return "
             + func.apply_function(
-                f"__riscv_{inst}" + func.rv_postfix(variant, overloaded=True),
+                rvv_inst + func.rv_postfix(variant, overloaded=True),
                 param_list,
             )
             + ";"

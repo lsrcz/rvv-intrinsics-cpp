@@ -199,6 +199,7 @@ def elem_ratio_extend_param_list(
     variant: str,
     param_list: function.FunctionTypedParamList,
     undisturbed_need_dest_arg: bool = True,
+    comparing: bool = False,
 ) -> function.FunctionTypedParamList:
     return (
         function.FunctionTypedParamList(
@@ -214,8 +215,13 @@ def elem_ratio_extend_param_list(
             + (
                 [
                     function.TypedParam(
-                        type=vreg.ConcreteVRegType(
-                            elem_type=elem_type, ratio=ratio
+                        type=(
+                            vmask.VMaskType(ratio=ratio)
+                            if comparing
+                            else vreg.ConcreteVRegType(
+                                elem_type=(elem_type),
+                                ratio=ratio,
+                            )
                         ),
                         name="vd",
                     )
@@ -332,6 +338,7 @@ def vreg_ratio_extend_param_list(
     variant: str,
     param_list: function.FunctionTypedParamList,
     undisturbed_need_dest_arg: bool = True,
+    comparing: bool = False,
 ) -> function.FunctionTypedParamList:
     return (
         function.FunctionTypedParamList(
@@ -347,7 +354,11 @@ def vreg_ratio_extend_param_list(
             + (
                 [
                     function.TypedParam(
-                        type=vreg_type,
+                        type=(
+                            vmask.VMaskType(ratio=ratio)
+                            if comparing
+                            else vreg_type
+                        ),
                         name="vd",
                     )
                 ]

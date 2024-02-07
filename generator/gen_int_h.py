@@ -291,6 +291,24 @@ def vv_shifting_op(
     )
 
 
+def vx_comparing_op(
+    inst: str,
+    allowed_type_category: str,
+) -> Callable[[str], func.Function]:
+    return ops.binary_op_template_on_elem(
+        inst, allowed_type_category, op_variant="comparing"
+    )
+
+
+def vv_comparing_op(
+    inst: str,
+    allowed_type_category: str,
+) -> Callable[[str], func.Function]:
+    return ops.binary_op_template_on_vreg(
+        inst, allowed_type_category, op_variant="comparing"
+    )
+
+
 def vx_shifting_op(
     inst: str,
     allowed_type_category: str,
@@ -454,6 +472,25 @@ rvv_int_header = header.Header(
                         ),
                         "// 3.10. Vector Integer Narrowing Intrinsics",
                         header.WithVariants(vncvt),
+                        "// 3.11. Vector Integer Narrowing Intrinsics",
+                        header.CrossProduct(
+                            bin_part,
+                            ["vmseq", "vmsne"],
+                            ["int"],
+                            [vv_comparing_op, vx_comparing_op],
+                        ),
+                        header.CrossProduct(
+                            bin_part,
+                            ["vmslt", "vmsle", "vmsgt", "vmsge"],
+                            ["signed"],
+                            [vv_comparing_op, vx_comparing_op],
+                        ),
+                        header.CrossProduct(
+                            bin_part,
+                            ["vmsltu", "vmsleu", "vmsgtu", "vmsgeu"],
+                            ["unsigned"],
+                            [vv_comparing_op, vx_comparing_op],
+                        ),
                     ]
                 )
             ],
