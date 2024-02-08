@@ -2,94 +2,83 @@ from typing import Callable
 
 from codegen import func, header, main, ops
 from codegen.param_list import function
-from codegen.typing import elem, misc, vl, vreg
+from codegen.typing import base, misc, vl, vreg
 
 
-def widening_vx_or_wx_op(
-    inst: str, is_vx: bool, signed: bool
+def binary_widening_op(
+    inst: str, arg_variant: str, signed: bool
 ) -> Callable[[str], func.Function]:
-    return func.template_elem_ratio(
-        lambda elem_type, ratio: vreg.concrete(elem.widen(elem_type), ratio),
-        inst + ("" if signed else "u"),
-        lambda variant, elem_type, ratio: func.elem_ratio_param_list(
-            elem.widen(elem_type),
-            ratio,
-            variant,
-            [
-                vreg.concrete(
-                    (elem_type if is_vx else elem.widen(elem_type)),
-                    ratio,
-                ),
-                elem_type,
-                vl.vl(ratio),
-            ],
-            ["vs2", "rs1", "vl"],
-        ),
-        lambda variant, elem_type, ratio, param_list: (
-            "  return "
-            + func.apply_function(
-                f"__riscv_{inst}"
-                + ("" if signed else "u")
-                + ("_vx" if is_vx else "_wx")
-                + func.rvv_postfix(variant, overloaded=True),
-                param_list,
-            )
-            + ";"
-        ),
-        require_clauses=lambda elem_type, ratio: ops.elem_require_clauses(
-            "signed" if signed else "unsigned", elem_type, ratio, widening=True
-        ),
-    )
+    assert arg_variant in ["vx", "wx", "vv", "wv"]
 
+    def ret_type(
+        vreg_type: vreg.ParamVRegType, _ratio: misc.ParamSizeTValue
+    ) -> vreg.VRegType:
+        if arg_variant in ["wx", "wv"]:
+            return vreg_type
+        return vreg.widen(vreg_type)
 
-def widening_vv_or_wv_op(
-    inst: str, is_vv: bool, signed: bool
-) -> Callable[[str], func.Function]:
+    def arg2(vreg_type: vreg.ParamVRegType) -> base.Type:
+        match arg_variant:
+            case "vx":
+                return vreg.get_elem(vreg_type)
+            case "vv":
+                return vreg_type
+            case "wx":
+                return vreg.get_elem(vreg.narrow(vreg_type))
+            case "wv":
+                return vreg.narrow(vreg_type)
+            case _:
+                assert False
+
     return func.template_vreg_ratio(
-        lambda vreg_type, ratio: vreg.widen(vreg_type),
+        ret_type,
         inst + ("" if signed else "u"),
         lambda variant, vreg_type, ratio: func.vreg_ratio_param_list(
-            vreg.widen(vreg_type),
+            ret_type(vreg_type, ratio),
             ratio,
             variant,
             [
-                vreg_type if is_vv else vreg.widen(vreg_type),
                 vreg_type,
+                arg2(vreg_type),
                 vl.vl(ratio),
             ],
-            ["vs2", "vs1", "vl"],
+            ["vs2", "vs1" if arg_variant in ["vv", "wv"] else "rs1", "vl"],
         ),
         lambda variant, elem_type, ratio, param_list: (
             "  return "
             + func.apply_function(
                 f"__riscv_{inst}"
-                + ("" if signed else "u")
-                + ("_vv" if is_vv else "_wv")
+                + ("_" if signed else "u_")
+                + arg_variant
                 + func.rvv_postfix(variant, overloaded=True),
                 param_list,
             )
             + ";"
         ),
         require_clauses=lambda vreg_type, ratio: ops.vreg_require_clauses(
-            "signed" if signed else "unsigned", vreg_type, ratio, widening=True
+            "signed" if signed else "unsigned",
+            vreg_type,
+            ratio,
+            widening=arg_variant in ["vv", "vx"],
+            narrowing=arg_variant in ["wv", "wx"],
         ),
     )
 
 
 def widening_vx_op(inst: str, signed: bool) -> Callable[[str], func.Function]:
-    return widening_vx_or_wx_op(inst, True, signed)
+    return binary_widening_op(inst, "vx", signed)
 
 
 def widening_wx_op(inst: str, signed: bool) -> Callable[[str], func.Function]:
-    return widening_vx_or_wx_op(inst, False, signed)
+    return binary_widening_op(inst, "wx", signed)
 
 
 def widening_vv_op(inst: str, signed: bool) -> Callable[[str], func.Function]:
-    return widening_vv_or_wv_op(inst, True, signed)
+    return binary_widening_op(inst, "vv", signed)
 
 
 def widening_wv_op(inst: str, signed: bool) -> Callable[[str], func.Function]:
-    return widening_vv_or_wv_op(inst, False, signed)
+    return binary_widening_op(inst, "wv", signed)
 
 
 def widening_op(inst: str, signed: bool) -> Callable[[str], func.Function]:
@@ -121,36 +110,34 @@ def widening_op(inst: str, signed: bool) -> Callable[[str], func.Function]:
 
 
 def narrowing_shift_op(
-    inst: str, *, op_variant: str = ""
+    inst: str, *, arg_variant: str
 ) -> Callable[[str], func.Function]:
     assert inst in ["vnsra", "vnsrl"]
-    assert op_variant in ["", "scalar"]
+    assert arg_variant in ["wv", "wx"]
 
     def function_param_list(
         variant: str, vreg_type: vreg.ParamVRegType, ratio: misc.ParamSizeTValue
     ) -> function.FunctionTypedParamList:
-        param_list = function.param_list([vreg_type], ["vs2"])
+        def arg2_type(vreg_type: vreg.ParamVRegType) -> base.Type:
+            match arg_variant:
+                case "wv":
+                    if inst == "vnsra":
+                        return vreg.narrow(vreg.to_unsigned(vreg_type))
+                    else:
+                        return vreg.narrow(vreg_type)
+                case "wx":
+                    return misc.size_t
+                case _:
+                    assert False
 
-        match op_variant:
-            case "":
-                if inst == "vnsra":
-                    param_list = param_list + (
-                        vreg.narrow(vreg.to_unsigned(vreg_type)),
-                        "vs1",
-                    )
-                else:
-                    param_list = param_list + (
-                        vreg.narrow(vreg_type),
-                        "vs1",
-                    )
-            case "scalar":
-                param_list = param_list + (misc.size_t, "rs1")
-            case _:
-                pass
-        param_list = param_list + (vl.vl(ratio), "vl")
+        arg2_name = "vs1" if arg_variant in ["wv"] else "rs1"
 
-        return func.vreg_ratio_extend_param_list(
-            vreg.narrow(vreg_type), ratio, variant, param_list
+        return func.vreg_ratio_param_list(
+            vreg.narrow(vreg_type),
+            ratio,
+            variant,
+            [vreg_type, arg2_type(vreg_type), vl.vl(ratio)],
+            ["vs2", arg2_name, "vl"],
         )
 
     return func.template_vreg_ratio(
@@ -181,11 +168,12 @@ def extending_op(
         return func.template_vreg_ratio(
             lambda vreg_type, ratio: vreg.widen_n(n, vreg_type),
             f"{inst}{n}",
-            lambda variant, vreg_type, ratio: func.vreg_ratio_extend_param_list(
+            lambda variant, vreg_type, ratio: func.vreg_ratio_param_list(
                 vreg.widen_n(n, vreg_type),
                 ratio,
                 variant,
-                function.param_list([vreg_type, vl.vl(ratio)], ["vs2", "vl"]),
+                [vreg_type, vl.vl(ratio)],
+                ["vs2", "vl"],
             ),
             lambda variant, elem_type, ratio, param_list: (
                 "  return "
@@ -230,12 +218,26 @@ def vncvt(variant: str) -> func.Function:
     )(variant)
 
 
+def simple_vx_op(
+    inst: str,
+    allowed_type_category: str,
+) -> Callable[[str], func.Function]:
+    return ops.binary_op(inst, allowed_type_category, "vx")
+
+
+def simple_vv_op(
+    inst: str,
+    allowed_type_category: str,
+) -> Callable[[str], func.Function]:
+    return ops.binary_op(inst, allowed_type_category, "vv")
+
+
 def vx_shifting_op(
     inst: str,
     allowed_type_category: str,
 ) -> Callable[[str], func.Function]:
-    return ops.binary_op_template_on_vreg(
-        inst, allowed_type_category, op_variant="shifting_scalar"
+    return ops.binary_op(
+        inst, allowed_type_category, "vx", op_variant="shifting"
     )
 
 
@@ -243,8 +245,8 @@ def vv_shifting_op(
     inst: str,
     allowed_type_category: str,
 ) -> Callable[[str], func.Function]:
-    return ops.binary_op_template_on_vreg(
-        inst, allowed_type_category, op_variant="shifting"
+    return ops.binary_op(
+        inst, allowed_type_category, "vv", op_variant="shifting"
     )
 
 
@@ -252,9 +254,10 @@ def vx_comparing_op(
     inst: str,
     allowed_type_category: str,
 ) -> Callable[[str], func.Function]:
-    return ops.binary_op_template_on_elem(
+    return ops.binary_op(
         inst + ("u" if allowed_type_category == "unsigned" else ""),
         allowed_type_category,
+        arg_variant="vx",
         op_variant="comparing",
     )
 
@@ -263,52 +266,46 @@ def vv_comparing_op(
     inst: str,
     allowed_type_category: str,
 ) -> Callable[[str], func.Function]:
-    return ops.binary_op_template_on_vreg(
+    return ops.binary_op(
         inst + ("u" if allowed_type_category == "unsigned" else ""),
         allowed_type_category,
+        "vv",
         op_variant="comparing",
     )
 
 
 def add_sub_carry_vvm_op(inst: str) -> Callable[[str], func.Function]:
-    return ops.binary_op_template_on_vreg(inst, "int", op_variant="use_carry")
+    return ops.binary_op(inst, "int", "vv", op_variant="use_carry")
 
 
 def add_sub_carry_vxm_op(inst: str) -> Callable[[str], func.Function]:
-    return ops.binary_op_template_on_elem(inst, "int", op_variant="use_carry")
+    return ops.binary_op(inst, "int", "vx", op_variant="use_carry")
 
 
 def carry_out_vvm_op(inst: str) -> Callable[[str], func.Function]:
-    return ops.binary_op_template_on_vreg(
-        inst, "int", op_variant="use_and_produce_carry"
-    )
+    return ops.binary_op(inst, "int", "vv", op_variant="use_and_produce_carry")
 
 
 def carry_out_vxm_op(inst: str) -> Callable[[str], func.Function]:
-    return ops.binary_op_template_on_elem(
-        inst, "int", op_variant="use_and_produce_carry"
-    )
+    return ops.binary_op(inst, "int", "vx", op_variant="use_and_produce_carry")
 
 
 def carry_out_vv_op(inst: str) -> Callable[[str], func.Function]:
-    return ops.binary_op_template_on_vreg(
-        inst, "int", op_variant="produce_carry"
-    )
+    return ops.binary_op(inst, "int", "vv", op_variant="produce_carry")
 
 
 def carry_out_vx_op(inst: str) -> Callable[[str], func.Function]:
-    return ops.binary_op_template_on_elem(
-        inst, "int", op_variant="produce_carry"
-    )
+    return ops.binary_op(inst, "int", "vx", op_variant="produce_carry")
 
 
 def vx_min_max_op(
     inst: str,
     allowed_type_category: str,
 ) -> Callable[[str], func.Function]:
-    return ops.binary_op_template_on_elem(
+    return ops.binary_op(
         inst + ("u" if allowed_type_category == "unsigned" else ""),
         allowed_type_category,
+        "vx",
     )
 
 
@@ -316,9 +313,10 @@ def vv_min_max_op(
     inst: str,
     allowed_type_category: str,
 ) -> Callable[[str], func.Function]:
-    return ops.binary_op_template_on_vreg(
+    return ops.binary_op(
         inst + ("u" if allowed_type_category == "unsigned" else ""),
         allowed_type_category,
+        "vv",
     )
 
 
@@ -359,15 +357,12 @@ rvv_int_header = header.Header(
                             bin_part,
                             ["vadd", "vsub"],
                             ["int"],
-                            [
-                                ops.binary_op_template_on_vreg,
-                                ops.binary_op_template_on_elem,
-                            ],
+                            [simple_vx_op, simple_vv_op],
                         ),
                         header.WithVariants(
-                            ops.binary_op_template_on_elem("vrsub", "int")
+                            ops.binary_op("vrsub", "int", "vx")
                         ),
-                        header.WithVariants(ops.v_op("vneg", "int")),
+                        header.WithVariants(ops.unary_op("vneg", "int")),
                         "// 3.2. Vector Widening Integer Add/Subtract Intrinsics",
                         header.CrossProduct(
                             widening_part,
@@ -413,13 +408,10 @@ rvv_int_header = header.Header(
                             bin_part,
                             ["vand", "vor", "vxor"],
                             ["int"],
-                            [
-                                ops.binary_op_template_on_vreg,
-                                ops.binary_op_template_on_elem,
-                            ],
+                            [simple_vx_op, simple_vv_op],
                         ),
                         "// 3.7. Vector Bitwise Unary Logical Intrinsics",
-                        header.WithVariants(ops.v_op("vnot", "int")),
+                        header.WithVariants(ops.unary_op("vnot", "int")),
                         "// 3.8. Vector Single-Width Bit Shift Intrinsics",
                         header.CrossProduct(
                             bin_part,
@@ -434,13 +426,17 @@ rvv_int_header = header.Header(
                             [vv_shifting_op, vx_shifting_op],
                         ),
                         "// 3.9. Vector Narrowing Integer Right Shift Intrinsics",
-                        header.WithVariants(narrowing_shift_op("vnsra")),
                         header.WithVariants(
-                            narrowing_shift_op("vnsra", op_variant="scalar")
+                            narrowing_shift_op("vnsra", arg_variant="wv")
                         ),
-                        header.WithVariants(narrowing_shift_op("vnsrl")),
                         header.WithVariants(
-                            narrowing_shift_op("vnsrl", op_variant="scalar")
+                            narrowing_shift_op("vnsra", arg_variant="wx")
+                        ),
+                        header.WithVariants(
+                            narrowing_shift_op("vnsrl", arg_variant="wv")
+                        ),
+                        header.WithVariants(
+                            narrowing_shift_op("vnsrl", arg_variant="wx")
                         ),
                         "// 3.10. Vector Integer Narrowing Intrinsics",
                         header.WithVariants(vncvt),

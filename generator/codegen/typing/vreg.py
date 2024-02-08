@@ -99,3 +99,16 @@ class ToUnsignedVRegType(VRegType):
 
 def to_unsigned(vreg_type: VRegType) -> ToUnsignedVRegType:
     return ToUnsignedVRegType(base_type=vreg_type)
+
+
+@dataclass(frozen=True, kw_only=True)
+class VRegElemType(elem.ElemType):
+    base_type: VRegType
+
+    @property
+    def cpp_repr(self) -> str:
+        return f"elem_t<{self.base_type.cpp_repr}>"
+
+
+def get_elem(base_type: VRegType) -> VRegElemType:
+    return VRegElemType(base_type=base_type)
