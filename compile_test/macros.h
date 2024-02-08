@@ -63,6 +63,11 @@
   OP_TEST(name, rvv_name, mask_type, ret_type, __VA_ARGS__)       \
   OP_TEST_TU(name, rvv_name, mask_type, ret_type, __VA_ARGS__)
 
+#define OP_TEST_NO_TAIL(name, rvv_name, mask_type, ret_type, ...) \
+  OP_TEST(name, rvv_name, mask_type, ret_type, __VA_ARGS__)       \
+  OP_TEST_M(name, rvv_name, mask_type, ret_type, __VA_ARGS__)     \
+  OP_TEST_MU(name, rvv_name, mask_type, ret_type, __VA_ARGS__)
+
 #define LONG_TYPE_NAME_i8 int8
 #define LONG_TYPE_NAME_i16 int16
 #define LONG_TYPE_NAME_i32 int32
@@ -138,5 +143,36 @@
 
 #define WIDEN_VREG_NAME_N(n, short_name, lmul) \
   VREG_NAME(WIDEN_SHORT_NAME_N(n, short_name), WIDEN_LMUL_N(n, lmul))
+
+#define TO_UNSIGNED_i8 u8
+#define TO_UNSIGNED_i16 u16
+#define TO_UNSIGNED_i32 u32
+#define TO_UNSIGNED_i64 u64
+#define TO_UNSIGNED_u8 u8
+#define TO_UNSIGNED_u16 u16
+#define TO_UNSIGNED_u32 u32
+#define TO_UNSIGNED_u64 u64
+
+#define TO_UNSIGNED0(lmul) TO_UNSIGNED_##lmul
+#define TO_UNSIGNED(...) TO_UNSIGNED0(__VA_ARGS__)
+
+#define VV_OP_TEST(name, ratio, short_name, lmul)                              \
+  OP_TEST_ALL(name##_vv_##short_name##lmul, name, rvv::vmask_t<ratio>,         \
+              VREG_NAME(short_name, lmul), (VREG_NAME(short_name, lmul), vs2), \
+              (VREG_NAME(short_name, lmul), vs1), (rvv::vl_t<ratio>, vl));
+
+#define VX_OP_TEST(name, ratio, short_name, lmul)                              \
+  OP_TEST_ALL(name##_vx_##short_name##lmul, name, rvv::vmask_t<ratio>,         \
+              VREG_NAME(short_name, lmul), (VREG_NAME(short_name, lmul), vs2), \
+              (C_TYPE_NAME(short_name), rs1), (rvv::vl_t<ratio>, vl));
+
+#define BIN_OP_TEST(name, ratio, short_name, lmul) \
+  VV_OP_TEST(name, ratio, short_name, lmul)        \
+  VX_OP_TEST(name, ratio, short_name, lmul)
+
+#define UNARY_OP_TEST(name, ratio, short_name, lmul)                       \
+  OP_TEST(name##_vx_##short_name##lmul, name, rvv::vmask_t<ratio>,         \
+          VREG_NAME(short_name, lmul), (VREG_NAME(short_name, lmul), vs2), \
+          (rvv::vl_t<ratio>, vl));
 
 #endif  // MACROS_H_

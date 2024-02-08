@@ -6,7 +6,7 @@
 #include <rvv/policy/tu/int.h>
 #include <rvv/policy/tumu/int.h>
 
-BIN_OP_TEST(vadd, 8, i8, m1);
-BIN_OP_TEST(vsub, 4, u8, m2);
-VX_OP_TEST(vrsub, 4, i16, m4);
-UNARY_OP_TEST(vneg, 16, i8, mf2);
+BIN_OP_TEST(vand, 8, i8, m1);
+BIN_OP_TEST(vor, 4, u8, m2);
+BIN_OP_TEST(vxor, 16, u32, m2);
+UNARY_OP_TEST(vnot, 8, i8, m1);
