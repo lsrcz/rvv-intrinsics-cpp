@@ -230,39 +230,6 @@ def fma_vv_op(
     )
 
 
-def vwmacc_allowed_type(inst: str) -> str:
-    if inst == "vwmaccu" or inst == "vwmaccsu":
-        return "unsigned"
-    else:
-        return "signed"
-
-
-def vwmacc_vx_op(
-    inst: str,
-) -> Callable[[str], func.Function]:
-    return ops.op(
-        inst,
-        vwmacc_allowed_type(inst),
-        "w",
-        ["x", "v"],
-        names=["rs1", "vs2"],
-        have_dest_arg=True,
-    )
-
-
-def vwmacc_vv_op(
-    inst: str,
-) -> Callable[[str], func.Function]:
-    return ops.op(
-        inst,
-        vwmacc_allowed_type(inst),
-        "w",
-        ["v", "v"],
-        names=["vs1", "vs2"],
-        have_dest_arg=True,
-    )
-
-
 def bin_part(
     op: str,
     allowed_type_category: str,
@@ -439,6 +406,70 @@ rvv_int_header = header.Header(
                             inferred_type_part,
                             ["vmacc", "vmadd", "vnmsac", "vnmsub"],
                             [fma_vv_op, fma_vx_op],
+                        ),
+                        "// 3.17. Vector Widening Integer Multiply-Add Intrinsics",
+                        header.WithVariants(
+                            ops.op(
+                                "vwmacc",
+                                "signed",
+                                "w",
+                                ["x", "v"],
+                                have_dest_arg=True,
+                            )
+                        ),
+                        header.WithVariants(
+                            ops.op(
+                                "vwmacc",
+                                "signed",
+                                "w",
+                                ["v", "v"],
+                                have_dest_arg=True,
+                            )
+                        ),
+                        header.WithVariants(
+                            ops.op(
+                                "vwmaccu",
+                                "unsigned",
+                                "w",
+                                ["x", "v"],
+                                have_dest_arg=True,
+                            )
+                        ),
+                        header.WithVariants(
+                            ops.op(
+                                "vwmaccu",
+                                "unsigned",
+                                "w",
+                                ["v", "v"],
+                                have_dest_arg=True,
+                            )
+                        ),
+                        header.WithVariants(
+                            ops.op(
+                                "vwmaccsu",
+                                "unsigned",
+                                "ws",
+                                ["es", "v"],
+                                have_dest_arg=True,
+                            )
+                        ),
+                        header.WithVariants(
+                            ops.op(
+                                "vwmaccsu",
+                                "signed",
+                                "w",
+                                ["v", "u"],
+                                have_dest_arg=True,
+                            )
+                        ),
+                        header.WithVariants(
+                            ops.op(
+                                "vwmaccus",
+                                "signed",
+                                "w",
+                                ["eu", "v"],
+                                have_dest_arg=True,
+                            )
                         ),
                     ]
                 )

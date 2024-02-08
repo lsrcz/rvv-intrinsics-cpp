@@ -59,6 +59,8 @@ def parse_type(
             return vreg_type
         case "w":
             return vreg.widen(vreg_type)
+        case "ws":
+            return vreg.widen(vreg.to_signed(vreg_type))
         case "2":
             return vreg.widen_n(2, vreg_type)
         case "4":
@@ -95,7 +97,7 @@ def parse_name(
     name_num: str = "",
 ) -> str:
     match c:
-        case "v" | "w" | "n" | "u" | "nu" | "ns":
+        case "v" | "w" | "ws" | "n" | "u" | "nu" | "ns":
             return f"vs{name_num}"
         case "size" | "x" | "en" | "eu" | "es":
             return f"rs{name_num}"
@@ -131,7 +133,6 @@ def op(
     have_dest_arg: bool = False,
     names: Sequence[str] = tuple(),
 ) -> Callable[[str], func.Function]:
-    assert len(ret_type_spec) == 1
     if isinstance(inst, str):
         rvv_inst = f"__riscv_{inst}"
     else:
