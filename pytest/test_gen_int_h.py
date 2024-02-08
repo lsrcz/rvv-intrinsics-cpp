@@ -184,7 +184,7 @@ widen_n_t<8, V> vzext8(vmask_t<kRatio> vm, widen_n_t<8, V> vd, V vs2, vl_t<kRati
 
 
 def test_vsbc_vv_tu() -> None:
-    f = gen_int_h.add_sub_carry_vvm_op("vsbc")
+    f = gen_int_h.vvm_v_op("vsbc")
     assert (
         f("tu").cpp_repr
         == """template <typename V, size_t kRatio>
@@ -197,7 +197,7 @@ V vsbc(V vd, V vs2, V vs1, vmask_t<kRatio> v0, vl_t<kRatio> vl) {
 
 
 def test_vadc_vxm_tu() -> None:
-    f = gen_int_h.add_sub_carry_vxm_op("vadc")
+    f = gen_int_h.vxm_v_op("vadc")
     assert (
         f("tu").cpp_repr
         == """template <typename V, size_t kRatio>

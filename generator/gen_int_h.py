@@ -89,11 +89,11 @@ def extending_op(inst: str) -> Callable[[str, int], func.Function]:
     return inner
 
 
-def add_sub_carry_vvm_op(inst: str) -> Callable[[str], func.Function]:
+def vvm_v_op(inst: str) -> Callable[[str], func.Function]:
     return ops.op(inst, "int", "v", ["v", "v", "m"])
 
 
-def add_sub_carry_vxm_op(inst: str) -> Callable[[str], func.Function]:
+def vxm_v_op(inst: str) -> Callable[[str], func.Function]:
     return ops.op(inst, "int", "v", ["v", "x", "m"])
 
 
@@ -299,7 +299,7 @@ rvv_int_header = header.Header(
                         header.CrossProduct(
                             inferred_type_part,
                             ["vadc", "vsbc"],
-                            [add_sub_carry_vvm_op, add_sub_carry_vxm_op],
+                            [vvm_v_op, vxm_v_op],
                             allowed_variants={"", "tu"},
                         ),
                         header.CrossProduct(
@@ -470,6 +470,13 @@ rvv_int_header = header.Header(
                                 ["eu", "v"],
                                 have_dest_arg=True,
                             )
+                        ),
+                        "// 3.18. Vector Integer Merge Intrinsics",
+                        header.CrossProduct(
+                            inferred_type_part,
+                            ["vmerge"],
+                            [vvm_v_op, vxm_v_op],
+                            allowed_variants={"", "tu"},
                         ),
                     ]
                 )

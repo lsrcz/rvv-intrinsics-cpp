@@ -248,4 +248,17 @@
   FMA_VV_OP_TEST(name, ratio, short_name, lmul)    \
   FMA_VX_OP_TEST(name, ratio, short_name, lmul)
 
+#define VXM_V_TEST(name, ratio, short_name, lmul)                            \
+  OP_TEST_NO_MASK(name##_vxm_##short_name##lmul, name, rvv::vmask_t<ratio>,  \
+                  VREG_NAME(short_name, lmul),                               \
+                  (VREG_NAME(short_name, lmul), vs2),                        \
+                  (C_TYPE_NAME(short_name), rs1), (rvv::vmask_t<ratio>, v0), \
+                  (rvv::vl_t<ratio>, vl));
+#define VVM_V_TEST(name, ratio, short_name, lmul)                           \
+  OP_TEST_NO_MASK(name##_vxm_##short_name##lmul, name, rvv::vmask_t<ratio>, \
+                  VREG_NAME(short_name, lmul),                              \
+                  (VREG_NAME(short_name, lmul), vs2),                       \
+                  (VREG_NAME(short_name, lmul), vs1),                       \
+                  (rvv::vmask_t<ratio>, v0), (rvv::vl_t<ratio>, vl));
+
 #endif  // MACROS_H_
