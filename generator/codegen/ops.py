@@ -77,6 +77,8 @@ def parse_type(
             return vreg.get_elem(vreg_type)
         case "y":
             return vreg.get_elem(vreg.narrow(vreg_type))
+        case "a":
+            return vreg.get_elem(vreg.to_unsigned(vreg_type))
         case "m":
             return vmask.vmask(ratio)
         case _:
@@ -91,7 +93,7 @@ def parse_name(
     match c:
         case "v" | "w" | "n" | "u" | "z":
             return f"vs{name_num}"
-        case "s" | "x" | "y":
+        case "s" | "x" | "y" | "a":
             return f"rs{name_num}"
         case "m":
             return f"v{name_num}"

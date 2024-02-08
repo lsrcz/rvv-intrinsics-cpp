@@ -346,6 +346,27 @@ rvv_int_header = header.Header(
                                 vx_min_max_op,
                             ],
                         ),
+                        "// 3.13. Vector Single-Width Integer Multiply Intrinsics",
+                        header.WithVariants(simple_vv_op("vmul", "int")),
+                        header.WithVariants(simple_vx_op("vmul", "int")),
+                        header.WithVariants(
+                            ops.op("vmulh", "signed", "v", "vv")
+                        ),
+                        header.WithVariants(
+                            ops.op("vmulh", "signed", "v", "vx")
+                        ),
+                        header.WithVariants(
+                            ops.op("vmulhu", "unsigned", "v", "vv")
+                        ),
+                        header.WithVariants(
+                            ops.op("vmulhu", "unsigned", "v", "vx")
+                        ),
+                        header.WithVariants(
+                            ops.op("vmulhsu", "signed", "v", "vu")
+                        ),
+                        header.WithVariants(
+                            ops.op("vmulhsu", "signed", "v", "va")
+                        ),
                     ]
                 )
             ],

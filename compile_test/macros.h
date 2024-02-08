@@ -92,7 +92,8 @@
 #define C_TYPE_NAME_f16 rvv::float16_t
 #define C_TYPE_NAME_f32 rvv::float32_t
 #define C_TYPE_NAME_f64 rvv::float64_t
-#define C_TYPE_NAME(short_name) C_TYPE_NAME_##short_name
+#define C_TYPE_NAME0(short_name) C_TYPE_NAME_##short_name
+#define C_TYPE_NAME(...) C_TYPE_NAME0(__VA_ARGS__)
 
 #define CONCAT(a, b) a##b
 
@@ -155,6 +156,9 @@
 
 #define TO_UNSIGNED0(lmul) TO_UNSIGNED_##lmul
 #define TO_UNSIGNED(...) TO_UNSIGNED0(__VA_ARGS__)
+
+#define UNSIGNED_VREG_NAME(short_name, lmul) \
+  VREG_NAME(TO_UNSIGNED(short_name), lmul)
 
 #define VV_OP_TEST(name, ratio, short_name, lmul)                              \
   OP_TEST_ALL(name##_vv_##short_name##lmul, name, rvv::vmask_t<ratio>,         \
