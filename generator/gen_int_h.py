@@ -230,6 +230,15 @@ def vncvt(variant: str) -> func.Function:
     )(variant)
 
 
+def vx_shifting_op(
+    inst: str,
+    allowed_type_category: str,
+) -> Callable[[str], func.Function]:
+    return ops.binary_op_template_on_vreg(
+        inst, allowed_type_category, op_variant="shifting_scalar"
+    )
+
+
 def vv_shifting_op(
     inst: str,
     allowed_type_category: str,
@@ -258,15 +267,6 @@ def vv_comparing_op(
         inst + ("u" if allowed_type_category == "unsigned" else ""),
         allowed_type_category,
         op_variant="comparing",
-    )
-
-
-def vx_shifting_op(
-    inst: str,
-    allowed_type_category: str,
-) -> Callable[[str], func.Function]:
-    return ops.binary_op_template_on_vreg(
-        inst, allowed_type_category, op_variant="shifting_scalar"
     )
 
 
@@ -299,6 +299,26 @@ def carry_out_vv_op(inst: str) -> Callable[[str], func.Function]:
 def carry_out_vx_op(inst: str) -> Callable[[str], func.Function]:
     return ops.binary_op_template_on_elem(
         inst, "int", op_variant="produce_carry"
+    )
+
+
+def vx_min_max_op(
+    inst: str,
+    allowed_type_category: str,
+) -> Callable[[str], func.Function]:
+    return ops.binary_op_template_on_elem(
+        inst + ("u" if allowed_type_category == "unsigned" else ""),
+        allowed_type_category,
+    )
+
+
+def vv_min_max_op(
+    inst: str,
+    allowed_type_category: str,
+) -> Callable[[str], func.Function]:
+    return ops.binary_op_template_on_vreg(
+        inst + ("u" if allowed_type_category == "unsigned" else ""),
+        allowed_type_category,
     )
 
 
@@ -436,6 +456,16 @@ rvv_int_header = header.Header(
                             ["vmslt", "vmsle", "vmsgt", "vmsge"],
                             ["signed", "unsigned"],
                             [vv_comparing_op, vx_comparing_op],
+                        ),
+                        "// 3.12. Vector Integer Compare Intrinsics",
+                        header.CrossProduct(
+                            bin_part,
+                            ["vmax", "vmin"],
+                            ["signed", "unsigned"],
+                            [
+                                vv_min_max_op,
+                                vx_min_max_op,
+                            ],
                         ),
                     ]
                 )
