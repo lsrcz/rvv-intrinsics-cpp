@@ -190,10 +190,9 @@ def comparing_vv_op(
     )
 
 
-def vx_min_max_op(
+def sign_aware_vx_op(
     inst: str,
 ) -> Callable[[str], func.Function]:
-    assert inst in ["vmax", "vmin", "vmaxu", "vminu"]
     return ops.op(
         inst,
         "unsigned" if inst.endswith("u") else "signed",
@@ -202,10 +201,9 @@ def vx_min_max_op(
     )
 
 
-def vv_min_max_op(
+def sign_aware_vv_op(
     inst: str,
 ) -> Callable[[str], func.Function]:
-    assert inst in ["vmax", "vmin", "vmaxu", "vminu"]
     return ops.op(
         inst,
         "unsigned" if inst.endswith("u") else "signed",
@@ -342,30 +340,48 @@ rvv_int_header = header.Header(
                             inferred_type_part,
                             ["vmax", "vmin", "vmaxu", "vminu"],
                             [
-                                vv_min_max_op,
-                                vx_min_max_op,
+                                sign_aware_vv_op,
+                                sign_aware_vx_op,
                             ],
                         ),
                         "// 3.13. Vector Single-Width Integer Multiply Intrinsics",
                         header.WithVariants(simple_vv_op("vmul", "int")),
                         header.WithVariants(simple_vx_op("vmul", "int")),
-                        header.WithVariants(
-                            ops.op("vmulh", "signed", "v", "vv")
-                        ),
-                        header.WithVariants(
-                            ops.op("vmulh", "signed", "v", "vx")
-                        ),
-                        header.WithVariants(
-                            ops.op("vmulhu", "unsigned", "v", "vv")
-                        ),
-                        header.WithVariants(
-                            ops.op("vmulhu", "unsigned", "v", "vx")
+                        header.CrossProduct(
+                            inferred_type_part,
+                            ["vmulh", "vmulhu"],
+                            [sign_aware_vv_op, sign_aware_vx_op],
                         ),
                         header.WithVariants(
                             ops.op("vmulhsu", "signed", "v", "vu")
                         ),
                         header.WithVariants(
                             ops.op("vmulhsu", "signed", "v", "va")
+                        ),
+                        "// 3.14. Vector Integer Divide Intrinsics",
+                        header.CrossProduct(
+                            inferred_type_part,
+                            ["vdiv", "vdivu", "vrem", "vremu"],
+                            [sign_aware_vv_op, sign_aware_vx_op],
+                        ),
+                        "// 3.15. Vector Widening Integer Multiply Intrinsics",
+                        header.WithVariants(
+                            ops.op("vwmul", "signed", "w", "vv")
+                        ),
+                        header.WithVariants(
+                            ops.op("vwmul", "signed", "w", "vx")
+                        ),
+                        header.WithVariants(
+                            ops.op("vwmulu", "unsigned", "w", "vv")
+                        ),
+                        header.WithVariants(
+                            ops.op("vwmulu", "unsigned", "w", "vx")
+                        ),
+                        header.WithVariants(
+                            ops.op("vwmulsu", "signed", "w", "vu")
+                        ),
+                        header.WithVariants(
+                            ops.op("vwmulsu", "signed", "w", "va")
                         ),
                     ]
                 )

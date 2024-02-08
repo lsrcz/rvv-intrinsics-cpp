@@ -429,7 +429,7 @@ vmask_t<kRatio> vmsgt(V vs2, V vs1, vl_t<kRatio> vl) {
 
 
 def test_vmin_vv() -> None:
-    f = gen_int_h.vv_min_max_op("vmin")
+    f = gen_int_h.sign_aware_vv_op("vmin")
     assert (
         f("").cpp_repr
         == """template <typename V, size_t kRatio>
@@ -442,7 +442,7 @@ V vmin(V vs2, V vs1, vl_t<kRatio> vl) {
 
 
 def test_vmaxu_vx_tum() -> None:
-    f = gen_int_h.vx_min_max_op("vmaxu")
+    f = gen_int_h.sign_aware_vx_op("vmaxu")
     assert (
         f("tum").cpp_repr
         == """template <typename V, size_t kRatio>
