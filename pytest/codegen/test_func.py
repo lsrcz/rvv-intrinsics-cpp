@@ -376,7 +376,7 @@ def test_vreg_ratio_extend_param_list(
     if undisturbed_need_dest_arg is None:
         assert (
             func.vreg_ratio_extend_param_list(
-                vreg_type=vreg_type,
+                dest_type=vreg_type,
                 ratio=ratio,
                 variant=variant,
                 param_list=base_param_list,
@@ -386,7 +386,7 @@ def test_vreg_ratio_extend_param_list(
     else:
         assert (
             func.vreg_ratio_extend_param_list(
-                vreg_type=vreg_type,
+                dest_type=vreg_type,
                 ratio=ratio,
                 variant=variant,
                 param_list=base_param_list,

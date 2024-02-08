@@ -339,12 +339,11 @@ def template_elem_ratio(
 
 
 def vreg_ratio_extend_param_list(
-    vreg_type: vreg.VRegType,
+    dest_type: base.Type,
     ratio: misc.SizeTValue,
     variant: str,
     param_list: function.FunctionTypedParamList,
     undisturbed_need_dest_arg: bool = True,
-    comparing: bool = False,
 ) -> function.FunctionTypedParamList:
     extended_param_list = function.param_list()
     if "m" in variant:
@@ -354,28 +353,26 @@ def vreg_ratio_extend_param_list(
         )
     if variant not in ["", "m"] and undisturbed_need_dest_arg:
         extended_param_list = extended_param_list + (
-            (vmask.vmask(ratio=ratio) if comparing else vreg_type),
+            dest_type,
             "vd",
         )
     return extended_param_list + param_list
 
 
 def vreg_ratio_param_list(
-    vreg_type: vreg.VRegType,
+    dest_type: base.Type,
     ratio: misc.SizeTValue,
     variant: str,
     type_list: Sequence[base.Type],
     name_list: Sequence[str],
     undisturbed_need_dest_arg: bool = True,
-    comparing: bool = False,
 ) -> function.FunctionTypedParamList:
     return vreg_ratio_extend_param_list(
-        vreg_type,
+        dest_type,
         ratio,
         variant,
         function.param_list(type_list, name_list),
         undisturbed_need_dest_arg,
-        comparing,
     )
 
 
