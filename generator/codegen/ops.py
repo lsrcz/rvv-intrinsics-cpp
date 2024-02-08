@@ -90,10 +90,16 @@ def binary_op_template_on_elem(
     *,
     op_variant: str = "",
 ) -> Callable[[str], func.Function]:
-    assert op_variant in ["", "use_carry", "use_and_produce_carry", "comparing"]
+    assert op_variant in [
+        "",
+        "use_carry",
+        "use_and_produce_carry",
+        "produce_carry",
+        "comparing",
+    ]
     match op_variant:
-        case "use_carry" | "use_and_produce_carry":
-            assert allowed_type_category in ["int", "signed", "unsigned"]
+        case "use_carry" | "use_and_produce_carry" | "produce_carry":
+            assert allowed_type_category in ["int"]
         case _:
             pass
     if isinstance(inst, str):
@@ -106,7 +112,7 @@ def binary_op_template_on_elem(
         elem_type: elem.ParamElemType, ratio: misc.ParamSizeTValue
     ) -> base.Type:
         match op_variant:
-            case "use_and_produce_carry" | "comparing":
+            case "use_and_produce_carry" | "produce_carry" | "comparing":
                 return vmask.vmask(ratio)
             case _:
                 return vreg.concrete(elem_type, ratio)
@@ -114,6 +120,13 @@ def binary_op_template_on_elem(
     def function_param_list(
         variant: str, elem_type: elem.ParamElemType, ratio: misc.ParamSizeTValue
     ) -> function.FunctionTypedParamList:
+        if op_variant == "use_carry":
+            assert variant in ["", "tu"]
+        if (
+            op_variant == "use_and_produce_carry"
+            or op_variant == "produce_carry"
+        ):
+            assert variant == ""
 
         param_list = function.param_list(
             [
@@ -166,18 +179,16 @@ def binary_op_template_on_vreg(
         "",
         "use_carry",
         "use_and_produce_carry",
+        "produce_carry",
         "shifting",
         "shifting_scalar",
         "comparing",
     ]
 
     match op_variant:
-        case (
-            "use_carry"
-            | "use_and_produce_carry"
-            | "shifting"
-            | "shifting_scalar"
-        ):
+        case "use_carry" | "use_and_produce_carry" | "produce_carry":
+            assert allowed_type_category in ["int"]
+        case "shifting" | "shifting_scalar":
             assert allowed_type_category in ["int", "signed", "unsigned"]
         case _:
             pass
@@ -192,7 +203,7 @@ def binary_op_template_on_vreg(
         vreg_type: vreg.ParamVRegType, ratio: misc.ParamSizeTValue
     ) -> base.Type:
         match op_variant:
-            case "use_and_produce_carry" | "comparing":
+            case "use_and_produce_carry" | "comparing" | "produce_carry":
                 return vmask.vmask(ratio)
             case _:
                 return vreg_type
@@ -200,6 +211,14 @@ def binary_op_template_on_vreg(
     def function_param_list(
         variant: str, vreg_type: vreg.ParamVRegType, ratio: misc.ParamSizeTValue
     ) -> function.FunctionTypedParamList:
+        if op_variant == "use_carry":
+            assert variant in ["", "tu"]
+        if (
+            op_variant == "use_and_produce_carry"
+            or op_variant == "produce_carry"
+        ):
+            assert variant == ""
+
         param_list = function.param_list([vreg_type], ["vs2"])
 
         match op_variant:

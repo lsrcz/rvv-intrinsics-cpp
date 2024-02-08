@@ -270,6 +270,38 @@ def vx_shifting_op(
     )
 
 
+def add_sub_carry_vvm_op(inst: str) -> Callable[[str], func.Function]:
+    return ops.binary_op_template_on_vreg(inst, "int", op_variant="use_carry")
+
+
+def add_sub_carry_vxm_op(inst: str) -> Callable[[str], func.Function]:
+    return ops.binary_op_template_on_elem(inst, "int", op_variant="use_carry")
+
+
+def carry_out_vvm_op(inst: str) -> Callable[[str], func.Function]:
+    return ops.binary_op_template_on_vreg(
+        inst, "int", op_variant="use_and_produce_carry"
+    )
+
+
+def carry_out_vxm_op(inst: str) -> Callable[[str], func.Function]:
+    return ops.binary_op_template_on_elem(
+        inst, "int", op_variant="use_and_produce_carry"
+    )
+
+
+def carry_out_vv_op(inst: str) -> Callable[[str], func.Function]:
+    return ops.binary_op_template_on_vreg(
+        inst, "int", op_variant="produce_carry"
+    )
+
+
+def carry_out_vx_op(inst: str) -> Callable[[str], func.Function]:
+    return ops.binary_op_template_on_elem(
+        inst, "int", op_variant="produce_carry"
+    )
+
+
 def bin_part(
     op: str,
     allowed_type_category: str,
@@ -284,6 +316,13 @@ def widening_part(
     f: Callable[[str, bool], Callable[[str], func.Function]],
 ) -> header.HeaderPart:
     return header.WithVariants(f(op, signed))
+
+
+def carrying_part(
+    op: str,
+    f: Callable[[str], Callable[[str], func.Function]],
+) -> header.HeaderPart:
+    return header.WithVariants(f(op))
 
 
 rvv_int_header = header.Header(
@@ -332,60 +371,21 @@ rvv_int_header = header.Header(
                             extending_op("vzext", False), [2, 4, 8]
                         ),
                         "// 3.5. Vector Integer Add-with-Carry and Subtract-with-Borrow Intrinsics",
-                        header.WithVariants(
-                            ops.binary_op_template_on_elem(
-                                "vadc", "int", op_variant="use_carry"
-                            ),
+                        header.CrossProduct(
+                            carrying_part,
+                            ["vadc", "vsbc"],
+                            [add_sub_carry_vvm_op, add_sub_carry_vxm_op],
                             allowed_variants={"", "tu"},
                         ),
-                        header.WithVariants(
-                            ops.binary_op_template_on_vreg(
-                                "vadc", "int", op_variant="use_carry"
-                            ),
-                            allowed_variants={"", "tu"},
-                        ),
-                        header.WithVariants(
-                            ops.binary_op_template_on_elem(
-                                "vmadc",
-                                "int",
-                                op_variant="use_and_produce_carry",
-                            ),
-                            allowed_variants={""},
-                        ),
-                        header.WithVariants(
-                            ops.binary_op_template_on_vreg(
-                                "vmadc",
-                                "int",
-                                op_variant="use_and_produce_carry",
-                            ),
-                            allowed_variants={""},
-                        ),
-                        header.WithVariants(
-                            ops.binary_op_template_on_elem(
-                                "vsbc", "int", op_variant="use_carry"
-                            ),
-                            allowed_variants={"", "tu"},
-                        ),
-                        header.WithVariants(
-                            ops.binary_op_template_on_vreg(
-                                "vsbc", "int", op_variant="use_carry"
-                            ),
-                            allowed_variants={"", "tu"},
-                        ),
-                        header.WithVariants(
-                            ops.binary_op_template_on_elem(
-                                "vmsbc",
-                                "int",
-                                op_variant="use_and_produce_carry",
-                            ),
-                            allowed_variants={""},
-                        ),
-                        header.WithVariants(
-                            ops.binary_op_template_on_vreg(
-                                "vmsbc",
-                                "int",
-                                op_variant="use_and_produce_carry",
-                            ),
+                        header.CrossProduct(
+                            carrying_part,
+                            ["vmadc", "vmsbc"],
+                            [
+                                carry_out_vvm_op,
+                                carry_out_vxm_op,
+                                carry_out_vv_op,
+                                carry_out_vx_op,
+                            ],
                             allowed_variants={""},
                         ),
                         "// 3.6. Vector Bitwise Binary Logical Intrinsics",

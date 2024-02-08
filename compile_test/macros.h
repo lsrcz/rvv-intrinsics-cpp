@@ -59,6 +59,10 @@
   OP_TEST_MU(name, rvv_name, mask_type, ret_type, __VA_ARGS__)  \
   OP_TEST_TUMU(name, rvv_name, mask_type, ret_type, __VA_ARGS__)
 
+#define OP_TEST_NO_MASK(name, rvv_name, mask_type, ret_type, ...) \
+  OP_TEST(name, rvv_name, mask_type, ret_type, __VA_ARGS__)       \
+  OP_TEST_TU(name, rvv_name, mask_type, ret_type, __VA_ARGS__)
+
 #define LONG_TYPE_NAME_i8 int8
 #define LONG_TYPE_NAME_i16 int16
 #define LONG_TYPE_NAME_i32 int32

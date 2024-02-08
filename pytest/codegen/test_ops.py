@@ -79,58 +79,58 @@ V vneg(vmask_t<kRatio> vm, V vd, V vs, vl_t<kRatio> vl) {
     )
 
 
-def test_vadc_vx() -> None:
+def test_vadc_vx_tu() -> None:
     f = ops.binary_op_template_on_elem("vadc", "int", op_variant="use_carry")
-    assert (
-        f("").cpp_repr
-        == """template <typename E, size_t kRatio>
-  requires is_supported_rvv_integral<E> && is_compatible_elem_ratio<E, kRatio>
-RVV_ALWAYS_INLINE
-vreg_t<E, kRatio> vadc(vreg_t<E, kRatio> vs2, E rs1, vmask_t<kRatio> v0, vl_t<kRatio> vl) {
-  return __riscv_vadc(vs2, rs1, v0, vl);
-}"""
-    )
-
-
-def test_vmadc_vx_tum() -> None:
-    f = ops.binary_op_template_on_elem(
-        "vmadd", "int", op_variant="use_and_produce_carry"
-    )
     assert (
         f("tu").cpp_repr
         == """template <typename E, size_t kRatio>
   requires is_supported_rvv_integral<E> && is_compatible_elem_ratio<E, kRatio>
 RVV_ALWAYS_INLINE
-vmask_t<kRatio> vmadd(vreg_t<E, kRatio> vd, vreg_t<E, kRatio> vs2, E rs1, vmask_t<kRatio> v0, vl_t<kRatio> vl) {
-  return __riscv_vmadd_tu(vd, vs2, rs1, v0, vl);
+vreg_t<E, kRatio> vadc(vreg_t<E, kRatio> vd, vreg_t<E, kRatio> vs2, E rs1, vmask_t<kRatio> v0, vl_t<kRatio> vl) {
+  return __riscv_vadc_tu(vd, vs2, rs1, v0, vl);
 }"""
     )
 
 
-def test_vsbc_vv() -> None:
-    f = ops.binary_op_template_on_vreg("vsbc", "int", op_variant="use_carry")
+def test_vmadc_vx() -> None:
+    f = ops.binary_op_template_on_elem(
+        "vmadc", "int", op_variant="use_and_produce_carry"
+    )
     assert (
         f("").cpp_repr
+        == """template <typename E, size_t kRatio>
+  requires is_supported_rvv_integral<E> && is_compatible_elem_ratio<E, kRatio>
+RVV_ALWAYS_INLINE
+vmask_t<kRatio> vmadc(vreg_t<E, kRatio> vs2, E rs1, vmask_t<kRatio> v0, vl_t<kRatio> vl) {
+  return __riscv_vmadc(vs2, rs1, v0, vl);
+}"""
+    )
+
+
+def test_vsbc_vv_tu() -> None:
+    f = ops.binary_op_template_on_vreg("vsbc", "int", op_variant="use_carry")
+    assert (
+        f("tu").cpp_repr
         == """template <typename V, size_t kRatio>
   requires is_supported_integral_vreg<V> && is_compatible_vreg_ratio<V, kRatio>
 RVV_ALWAYS_INLINE
-V vsbc(V vs2, V vs1, vmask_t<kRatio> v0, vl_t<kRatio> vl) {
-  return __riscv_vsbc(vs2, vs1, v0, vl);
+V vsbc(V vd, V vs2, V vs1, vmask_t<kRatio> v0, vl_t<kRatio> vl) {
+  return __riscv_vsbc_tu(vd, vs2, vs1, v0, vl);
 }"""
     )
 
 
-def test_vmsbc_vv_tum() -> None:
+def test_vmsbc_vv() -> None:
     f = ops.binary_op_template_on_vreg(
         "vmadd", "int", op_variant="use_and_produce_carry"
     )
     assert (
-        f("tu").cpp_repr
+        f("").cpp_repr
         == """template <typename V, size_t kRatio>
   requires is_supported_integral_vreg<V> && is_compatible_vreg_ratio<V, kRatio>
 RVV_ALWAYS_INLINE
-vmask_t<kRatio> vmadd(V vd, V vs2, V vs1, vmask_t<kRatio> v0, vl_t<kRatio> vl) {
-  return __riscv_vmadd_tu(vd, vs2, vs1, v0, vl);
+vmask_t<kRatio> vmadd(V vs2, V vs1, vmask_t<kRatio> v0, vl_t<kRatio> vl) {
+  return __riscv_vmadd(vs2, vs1, v0, vl);
 }"""
     )
 
