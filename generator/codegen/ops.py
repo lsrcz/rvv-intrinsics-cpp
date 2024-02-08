@@ -69,16 +69,20 @@ def parse_type(
             return vreg.narrow(vreg_type)
         case "u":
             return vreg.to_unsigned(vreg_type)
-        case "z":
+        case "nu":
             return vreg.narrow(vreg.to_unsigned(vreg_type))
-        case "s":
+        case "ns":
+            return vreg.narrow(vreg.to_signed(vreg_type))
+        case "size":
             return misc.size_t
         case "x":
             return vreg.get_elem(vreg_type)
-        case "y":
+        case "en":
             return vreg.get_elem(vreg.narrow(vreg_type))
-        case "a":
+        case "eu":
             return vreg.get_elem(vreg.to_unsigned(vreg_type))
+        case "es":
+            return vreg.get_elem(vreg.to_signed(vreg_type))
         case "m":
             return vmask.vmask(ratio)
         case _:
@@ -91,9 +95,9 @@ def parse_name(
     name_num: str = "",
 ) -> str:
     match c:
-        case "v" | "w" | "n" | "u" | "z":
+        case "v" | "w" | "n" | "u" | "nu" | "ns":
             return f"vs{name_num}"
-        case "s" | "x" | "y" | "a":
+        case "size" | "x" | "en" | "eu" | "es":
             return f"rs{name_num}"
         case "m":
             return f"v{name_num}"
@@ -104,7 +108,7 @@ def parse_name(
 def parse_type_list(
     vreg_type: vreg.VRegType,
     ratio: misc.SizeTValue,
-    arg_type_spec: str,
+    arg_type_spec: list[str],
     *,
     names: Sequence[str] = tuple(),
     name_nums: str = "",
@@ -122,7 +126,7 @@ def op(
     inst: str | tuple[str, str],
     allowed_type_category: str,
     ret_type_spec: str,
-    arg_type_spec: str,
+    arg_type_spec: list[str],
     *,
     have_dest_arg: bool = False,
     names: Sequence[str] = tuple(),
@@ -183,7 +187,7 @@ def op(
             vreg_type,
             ratio,
             narrowing="n" in arg_type_spec
-            or "y" in arg_type_spec
+            or "en" in arg_type_spec
             or "n" == ret_type_spec,
             widening=widening,
         ),

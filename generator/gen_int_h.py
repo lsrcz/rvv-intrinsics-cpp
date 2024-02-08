@@ -7,20 +7,20 @@ def simple_vx_op(
     inst: str,
     allowed_type_category: str,
 ) -> Callable[[str], func.Function]:
-    return ops.op(inst, allowed_type_category, "v", "vx")
+    return ops.op(inst, allowed_type_category, "v", ["v", "x"])
 
 
 def simple_vv_op(
     inst: str,
     allowed_type_category: str,
 ) -> Callable[[str], func.Function]:
-    return ops.op(inst, allowed_type_category, "v", "vv")
+    return ops.op(inst, allowed_type_category, "v", ["v", "v"])
 
 
 def simple_v_op(
     inst: str, allowed_type_category: str
 ) -> Callable[[str], func.Function]:
-    return ops.op(inst, allowed_type_category, "v", "v", names=["vs"])
+    return ops.op(inst, allowed_type_category, "v", ["v"], names=["vs"])
 
 
 def widening_vx_op(inst: str, signed: bool) -> Callable[[str], func.Function]:
@@ -29,7 +29,7 @@ def widening_vx_op(inst: str, signed: bool) -> Callable[[str], func.Function]:
         (inst_with_sign, f"__riscv_{inst_with_sign}_vx"),
         "signed" if signed else "unsigned",
         "w",
-        "vx",
+        ["v", "x"],
     )
 
 
@@ -39,7 +39,7 @@ def widening_wx_op(inst: str, signed: bool) -> Callable[[str], func.Function]:
         (inst_with_sign, f"__riscv_{inst_with_sign}_wx"),
         "signed" if signed else "unsigned",
         "v",
-        "vy",
+        ["v", "en"],
     )
 
 
@@ -49,7 +49,7 @@ def widening_vv_op(inst: str, signed: bool) -> Callable[[str], func.Function]:
         (inst_with_sign, f"__riscv_{inst_with_sign}_vv"),
         "signed" if signed else "unsigned",
         "w",
-        "vv",
+        ["v", "v"],
     )
 
 
@@ -59,7 +59,7 @@ def widening_wv_op(inst: str, signed: bool) -> Callable[[str], func.Function]:
         (inst_with_sign, f"__riscv_{inst_with_sign}_wv"),
         "signed" if signed else "unsigned",
         "v",
-        "vn",
+        ["v", "n"],
     )
 
 
@@ -69,7 +69,7 @@ def widening_op(inst: str, signed: bool) -> Callable[[str], func.Function]:
         (inst_with_sign, f"__riscv_{inst_with_sign}_x"),
         "signed" if signed else "unsigned",
         "w",
-        "v",
+        ["v"],
     )
 
 
@@ -83,34 +83,34 @@ def extending_op(inst: str) -> Callable[[str, int], func.Function]:
     def inner(variant: str, n: int) -> func.Function:
         assert n in [2, 4, 8]
         return ops.op(
-            (f"{inst}{n}", f"__riscv_{inst}_vf{n}"), sign, f"{n}", "v"
+            (f"{inst}{n}", f"__riscv_{inst}_vf{n}"), sign, f"{n}", ["v"]
         )(variant)
 
     return inner
 
 
 def add_sub_carry_vvm_op(inst: str) -> Callable[[str], func.Function]:
-    return ops.op(inst, "int", "v", "vvm")
+    return ops.op(inst, "int", "v", ["v", "v", "m"])
 
 
 def add_sub_carry_vxm_op(inst: str) -> Callable[[str], func.Function]:
-    return ops.op(inst, "int", "v", "vxm")
+    return ops.op(inst, "int", "v", ["v", "x", "m"])
 
 
 def carry_out_vvm_op(inst: str) -> Callable[[str], func.Function]:
-    return ops.op(inst, "int", "m", "vvm")
+    return ops.op(inst, "int", "m", ["v", "v", "m"])
 
 
 def carry_out_vxm_op(inst: str) -> Callable[[str], func.Function]:
-    return ops.op(inst, "int", "m", "vxm")
+    return ops.op(inst, "int", "m", ["v", "x", "m"])
 
 
 def carry_out_vv_op(inst: str) -> Callable[[str], func.Function]:
-    return ops.op(inst, "int", "m", "vv")
+    return ops.op(inst, "int", "m", ["v", "v"])
 
 
 def carry_out_vx_op(inst: str) -> Callable[[str], func.Function]:
-    return ops.op(inst, "int", "m", "vx")
+    return ops.op(inst, "int", "m", ["v", "x"])
 
 
 def shifting_type_category(inst: str) -> str:
@@ -128,13 +128,13 @@ def shifting_type_category(inst: str) -> str:
 def shifting_vx_op(
     inst: str,
 ) -> Callable[[str], func.Function]:
-    return ops.op(inst, shifting_type_category(inst), "v", "vs")
+    return ops.op(inst, shifting_type_category(inst), "v", ["v", "size"])
 
 
 def shifting_vv_op(
     inst: str,
 ) -> Callable[[str], func.Function]:
-    return ops.op(inst, shifting_type_category(inst), "v", "vu")
+    return ops.op(inst, shifting_type_category(inst), "v", ["v", "u"])
 
 
 def narrowing_shift_wv_op(inst: str) -> Callable[[str], func.Function]:
@@ -143,17 +143,19 @@ def narrowing_shift_wv_op(inst: str) -> Callable[[str], func.Function]:
         inst,
         "unsigned" if inst == "vnsrl" else "signed",
         "n",
-        "vz" if inst == "vnsra" else "vn",
+        ["v", "nu"] if inst == "vnsra" else ["v", "n"],
     )
 
 
 def narrowing_shift_wx_op(inst: str) -> Callable[[str], func.Function]:
     assert inst in ["vnsra", "vnsrl"]
-    return ops.op(inst, "unsigned" if inst == "vnsrl" else "signed", "n", "vs")
+    return ops.op(
+        inst, "unsigned" if inst == "vnsrl" else "signed", "n", ["v", "size"]
+    )
 
 
 def vncvt(variant: str) -> func.Function:
-    return ops.op(("vncvt", "__riscv_vncvt_x"), "int", "n", "v")(variant)
+    return ops.op(("vncvt", "__riscv_vncvt_x"), "int", "n", ["v"])(variant)
 
 
 def comparing_type_category(inst: str) -> str:
@@ -175,7 +177,7 @@ def comparing_vx_op(
         inst,
         comparing_type_category(inst),
         "m",
-        "vx",
+        ["v", "x"],
     )
 
 
@@ -186,7 +188,7 @@ def comparing_vv_op(
         inst,
         comparing_type_category(inst),
         "m",
-        "vv",
+        ["v", "v"],
     )
 
 
@@ -197,7 +199,7 @@ def sign_aware_vx_op(
         inst,
         "unsigned" if inst.endswith("u") else "signed",
         "v",
-        "vx",
+        ["v", "x"],
     )
 
 
@@ -208,7 +210,7 @@ def sign_aware_vv_op(
         inst,
         "unsigned" if inst.endswith("u") else "signed",
         "v",
-        "vv",
+        ["v", "v"],
     )
 
 
@@ -216,7 +218,7 @@ def fma_vx_op(
     inst: str,
 ) -> Callable[[str], func.Function]:
     return ops.op(
-        inst, "int", "v", "xv", names=["rs1", "vs2"], have_dest_arg=True
+        inst, "int", "v", ["x", "v"], names=["rs1", "vs2"], have_dest_arg=True
     )
 
 
@@ -224,7 +226,40 @@ def fma_vv_op(
     inst: str,
 ) -> Callable[[str], func.Function]:
     return ops.op(
-        inst, "int", "v", "vv", names=["vs1", "vs2"], have_dest_arg=True
+        inst, "int", "v", ["v", "v"], names=["vs1", "vs2"], have_dest_arg=True
+    )
+
+
+def vwmacc_allowed_type(inst: str) -> str:
+    if inst == "vwmaccu" or inst == "vwmaccsu":
+        return "unsigned"
+    else:
+        return "signed"
+
+
+def vwmacc_vx_op(
+    inst: str,
+) -> Callable[[str], func.Function]:
+    return ops.op(
+        inst,
+        vwmacc_allowed_type(inst),
+        "w",
+        ["x", "v"],
+        names=["rs1", "vs2"],
+        have_dest_arg=True,
+    )
+
+
+def vwmacc_vv_op(
+    inst: str,
+) -> Callable[[str], func.Function]:
+    return ops.op(
+        inst,
+        vwmacc_allowed_type(inst),
+        "w",
+        ["v", "v"],
+        names=["vs1", "vs2"],
+        have_dest_arg=True,
     )
 
 
@@ -269,7 +304,7 @@ rvv_int_header = header.Header(
                         ),
                         header.WithVariants(simple_vx_op("vrsub", "int")),
                         header.WithVariants(
-                            ops.op("vneg", "int", "v", "v", names=["vs"])
+                            ops.op("vneg", "int", "v", ["v"], names=["vs"])
                         ),
                         "// 3.2. Vector Widening Integer Add/Subtract Intrinsics",
                         header.CrossProduct(
@@ -369,10 +404,10 @@ rvv_int_header = header.Header(
                             [sign_aware_vv_op, sign_aware_vx_op],
                         ),
                         header.WithVariants(
-                            ops.op("vmulhsu", "signed", "v", "vu")
+                            ops.op("vmulhsu", "signed", "v", ["v", "u"])
                         ),
                         header.WithVariants(
-                            ops.op("vmulhsu", "signed", "v", "va")
+                            ops.op("vmulhsu", "signed", "v", ["v", "eu"])
                         ),
                         "// 3.14. Vector Integer Divide Intrinsics",
                         header.CrossProduct(
@@ -382,22 +417,22 @@ rvv_int_header = header.Header(
                         ),
                         "// 3.15. Vector Widening Integer Multiply Intrinsics",
                         header.WithVariants(
-                            ops.op("vwmul", "signed", "w", "vv")
+                            ops.op("vwmul", "signed", "w", ["v", "v"])
                         ),
                         header.WithVariants(
-                            ops.op("vwmul", "signed", "w", "vx")
+                            ops.op("vwmul", "signed", "w", ["v", "x"])
                         ),
                         header.WithVariants(
-                            ops.op("vwmulu", "unsigned", "w", "vv")
+                            ops.op("vwmulu", "unsigned", "w", ["v", "v"])
                         ),
                         header.WithVariants(
-                            ops.op("vwmulu", "unsigned", "w", "vx")
+                            ops.op("vwmulu", "unsigned", "w", ["v", "x"])
                         ),
                         header.WithVariants(
-                            ops.op("vwmulsu", "signed", "w", "vu")
+                            ops.op("vwmulsu", "signed", "w", ["v", "u"])
                         ),
                         header.WithVariants(
-                            ops.op("vwmulsu", "signed", "w", "va")
+                            ops.op("vwmulsu", "signed", "w", ["v", "eu"])
                         ),
                         "// 3.16. Vector Single-Width Integer Multiply-Add Intrinsics",
                         header.CrossProduct(
