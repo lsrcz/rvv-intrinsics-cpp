@@ -29,7 +29,7 @@ using IsSupportedLMulTestTypes =
 TYPED_TEST_SUITE(IsSupportedLMulTest, IsSupportedLMulTestTypes);
 
 TYPED_TEST(IsSupportedLMulTest, is_supported_lmul) {
-  EXPECT_EQ((rvv::is_supported_lmul<TypeParam::kLMul>), TypeParam::kExpected);
+  EXPECT_EQ((rvv::SupportedLMul<TypeParam::kLMul>), TypeParam::kExpected);
 }
 
 template <typename Config>
@@ -109,8 +109,8 @@ using IsCompatibleElemRatioTestConfigs = ::testing::Types<
 TYPED_TEST_SUITE(IsCompatibleElemRatioTest, IsCompatibleElemRatioTestConfigs);
 
 TYPED_TEST(IsCompatibleElemRatioTest, is_compatible_elem_ratio) {
-  EXPECT_EQ((rvv::is_compatible_elem_ratio<typename TypeParam::ElemType,
-                                           TypeParam::kRatio>),
+  EXPECT_EQ((rvv::CompatibleElemRatio<typename TypeParam::ElemType,
+                                      TypeParam::kRatio>),
             TypeParam::kExpected);
 }
 
@@ -151,9 +151,9 @@ using IsCompatibleElemLMulTestTypes = ::testing::Types<
 TYPED_TEST_SUITE(IsCompatibleElemLMulTest, IsCompatibleElemLMulTestTypes);
 
 TYPED_TEST(IsCompatibleElemLMulTest, is_compatible_elem_lmul) {
-  EXPECT_EQ((rvv::is_compatible_elem_lmul<typename TypeParam::ElemType,
-                                          TypeParam::kLMul>),
-            TypeParam::kExpected);
+  EXPECT_EQ(
+      (rvv::CompatibleElemLMul<typename TypeParam::ElemType, TypeParam::kLMul>),
+      TypeParam::kExpected);
 }
 
 template <typename Config>
@@ -427,35 +427,34 @@ using IsVRegConfigs = ::testing::Types<
 TYPED_TEST_SUITE(IsVRegTest, IsVRegConfigs);
 
 TYPED_TEST(IsVRegTest, is_vreg) {
-  EXPECT_EQ((rvv::is_vreg<typename TypeParam::T>),
+  EXPECT_EQ((rvv::IsVReg<typename TypeParam::T>),
             !!(TypeParam::kSpec & SupportedVReg::kIsVReg));
 }
 
 TYPED_TEST(IsVRegTest, is_supported_integral_vreg) {
-  EXPECT_EQ((rvv::is_supported_integral_vreg<typename TypeParam::T>),
+  EXPECT_EQ((rvv::SupportedIntegralVReg<typename TypeParam::T>),
             !!(TypeParam::kSpec & SupportedVReg::kIsSupportedIntegralVReg));
 }
 
 TYPED_TEST(IsVRegTest, is_supported_floating_point_vreg) {
   EXPECT_EQ(
-      (rvv::is_supported_floating_point_vreg<typename TypeParam::T, false>),
+      (rvv::SupportedFloatingPointVReg<typename TypeParam::T, false>),
       !!(TypeParam::kSpec & SupportedVReg::kIsSupportedFloatingPointVReg));
 }
 
 TYPED_TEST(IsVRegTest, is_supported_floating_point_vreg_with_zvfh) {
-  EXPECT_EQ(
-      (rvv::is_supported_floating_point_vreg<typename TypeParam::T, true>),
-      !!(TypeParam::kSpec &
-         SupportedVReg::kIsSupportedFloatingPointVRegWithZvfh));
+  EXPECT_EQ((rvv::SupportedFloatingPointVReg<typename TypeParam::T, true>),
+            !!(TypeParam::kSpec &
+               SupportedVReg::kIsSupportedFloatingPointVRegWithZvfh));
 }
 
 TYPED_TEST(IsVRegTest, is_supported_signed_vreg) {
-  EXPECT_EQ((rvv::is_supported_signed_vreg<typename TypeParam::T>),
+  EXPECT_EQ((rvv::SupportedSignedVReg<typename TypeParam::T>),
             !!(TypeParam::kSpec & SupportedVReg::kIsSupportedSignedVReg));
 }
 
 TYPED_TEST(IsVRegTest, is_supported_unsigned_vreg) {
-  EXPECT_EQ((rvv::is_supported_unsigned_vreg<typename TypeParam::T>),
+  EXPECT_EQ((rvv::SupportedUnsignedVReg<typename TypeParam::T>),
             !!(TypeParam::kSpec & SupportedVReg::kIsSupportedUnsignedVReg));
 }
 
@@ -504,7 +503,7 @@ TYPED_TEST_SUITE(IsCompatibleVRegRatioTest, IsCompatibleVRegRatioConfigs);
 
 TYPED_TEST(IsCompatibleVRegRatioTest, is_compatible_vreg_ratio) {
   EXPECT_EQ(
-      (rvv::is_compatible_vreg_ratio<typename TypeParam::T, TypeParam::kRatio>),
+      (rvv::CompatibleVRegRatio<typename TypeParam::T, TypeParam::kRatio>),
       TypeParam::kExpected);
 }
 
@@ -550,8 +549,8 @@ TYPED_TEST_SUITE(WideningTest, WideningConfigs);
 
 TYPED_TEST(WideningTest, widening) {
   EXPECT_TRUE(
-      (rvv::widenable<typename TypeParam::Narrow> == TypeParam::kWidenable));
-  if constexpr (rvv::widenable<typename TypeParam::Narrow>) {
+      (rvv::Widenable<typename TypeParam::Narrow> == TypeParam::kWidenable));
+  if constexpr (rvv::Widenable<typename TypeParam::Narrow>) {
     EXPECT_TRUE((std::is_same_v<rvv::widen_t<typename TypeParam::Narrow>,
                                 typename TypeParam::Wide>));
   }
@@ -593,8 +592,8 @@ TYPED_TEST_SUITE(NarrowingTest, NarrowingConfigs);
 
 TYPED_TEST(NarrowingTest, narrowing) {
   EXPECT_TRUE(
-      (rvv::narrowable<typename TypeParam::Wide> == TypeParam::kNarrowable));
-  if constexpr (rvv::narrowable<typename TypeParam::Wide>) {
+      (rvv::Narrowable<typename TypeParam::Wide> == TypeParam::kNarrowable));
+  if constexpr (rvv::Narrowable<typename TypeParam::Wide>) {
     EXPECT_TRUE((std::is_same_v<rvv::narrow_t<typename TypeParam::Wide>,
                                 typename TypeParam::Narrow>));
   }
@@ -663,9 +662,9 @@ using WideningNConfigs =
 TYPED_TEST_SUITE(WideningNTest, WideningNConfigs);
 
 TYPED_TEST(WideningNTest, widening_n) {
-  EXPECT_TRUE((rvv::widenable_n<TypeParam::kN, typename TypeParam::Narrow> ==
+  EXPECT_TRUE((rvv::WidenableN<TypeParam::kN, typename TypeParam::Narrow> ==
                TypeParam::kWidenable));
-  if constexpr (rvv::widenable_n<TypeParam::kN, typename TypeParam::Narrow>) {
+  if constexpr (rvv::WidenableN<TypeParam::kN, typename TypeParam::Narrow>) {
     EXPECT_TRUE((std::is_same_v<
                  rvv::widen_n_t<TypeParam::kN, typename TypeParam::Narrow>,
                  typename TypeParam::Wide>));

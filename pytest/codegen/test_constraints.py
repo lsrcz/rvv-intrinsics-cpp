@@ -2,40 +2,40 @@ from codegen import constraints
 from codegen.typing import elem, lmul, misc, vreg
 
 
-def test_is_supported_ratio() -> None:
+def test_supported_ratio() -> None:
     assert (
-        constraints.is_supported_ratio(misc.param_size_t("kRatio"))
-        == "is_supported_ratio<kRatio>"
+        constraints.supported_ratio(misc.param_size_t("kRatio"))
+        == "SupportedRatio<kRatio>"
     )
 
 
-def test_is_compatible_elem_ratio() -> None:
+def test_compatible_elem_ratio() -> None:
     assert (
-        constraints.is_compatible_elem_ratio(
+        constraints.compatible_elem_ratio(
             elem.param("E"),
             misc.param_size_t("kRatio"),
         )
-        == "is_compatible_elem_ratio<E, kRatio>"
+        == "CompatibleElemRatio<E, kRatio>"
     )
 
 
-def test_is_compatible_vreg_ratio() -> None:
+def test_compatible_vreg_ratio() -> None:
     assert (
-        constraints.is_compatible_vreg_ratio(
+        constraints.compatible_vreg_ratio(
             vreg.param("V"),
             misc.param_size_t("kRatio"),
         )
-        == "is_compatible_vreg_ratio<V, kRatio>"
+        == "CompatibleVRegRatio<V, kRatio>"
     )
 
 
-def test_is_compatible_elem_lmul() -> None:
+def test_compatible_elem_lmul() -> None:
     assert (
-        constraints.is_compatible_elem_lmul(
+        constraints.compatible_elem_lmul(
             elem.param("E"),
             lmul.param("kLMul"),
         )
-        == "is_compatible_elem_lmul<E, kLMul>"
+        == "CompatibleElemLMul<E, kLMul>"
     )
 
 
@@ -43,75 +43,77 @@ def test_has_width() -> None:
     assert constraints.has_width(elem.param("E"), 32) == "(sizeof(E) == 4)"
 
 
-def test_is_supported_rvv_integral() -> None:
+def test_supported_integral_element() -> None:
     assert (
-        constraints.is_supported_rvv_integral(elem.param("E"))
-        == "is_supported_rvv_integral<E>"
+        constraints.supported_integral_element(elem.param("E"))
+        == "SupportedIntegralElement<E>"
     )
 
 
-def test_is_supported_rvv_signed() -> None:
+def test_supported_signed_element() -> None:
     assert (
-        constraints.is_supported_rvv_signed(elem.param("E"))
-        == "is_supported_rvv_signed<E>"
+        constraints.supported_signed_element(elem.param("E"))
+        == "SupportedSignedElement<E>"
     )
 
 
-def test_is_supported_rvv_unsigned() -> None:
+def test_supported_unsigned_element() -> None:
     assert (
-        constraints.is_supported_rvv_unsigned(elem.param("E"))
-        == "is_supported_rvv_unsigned<E>"
+        constraints.supported_unsigned_element(elem.param("E"))
+        == "SupportedUnsignedElement<E>"
     )
 
 
-def test_is_supported_rvv_floating_point() -> None:
+def test_supported_floating_point_element() -> None:
     assert (
-        constraints.is_supported_rvv_floating_point(elem.param("E"), True)
-        == "is_supported_rvv_floating_point<E, true>"
+        constraints.supported_floating_point_element(elem.param("E"), True)
+        == "SupportedFloatingPointElement<E, true>"
     )
     assert (
-        constraints.is_supported_rvv_floating_point(elem.param("E"), False)
-        == "is_supported_rvv_floating_point<E, false>"
-    )
-
-
-def test_is_supported_integral_vreg() -> None:
-    assert (
-        constraints.is_supported_integral_vreg(vreg.param("V"))
-        == "is_supported_integral_vreg<V>"
+        constraints.supported_floating_point_element(elem.param("E"), False)
+        == "SupportedFloatingPointElement<E, false>"
     )
 
 
-def test_is_supported_signed_vreg() -> None:
+def test_supported_integral_vreg() -> None:
     assert (
-        constraints.is_supported_signed_vreg(vreg.param("V"))
-        == "is_supported_signed_vreg<V>"
+        constraints.supported_integral_vreg(vreg.param("V"))
+        == "SupportedIntegralVReg<V>"
     )
 
 
-def test_is_supported_unsigned_vreg() -> None:
+def test_supported_signed_vreg() -> None:
     assert (
-        constraints.is_supported_unsigned_vreg(vreg.param("V"))
-        == "is_supported_unsigned_vreg<V>"
+        constraints.supported_signed_vreg(vreg.param("V"))
+        == "SupportedSignedVReg<V>"
     )
 
 
-def test_is_supported_floating_point_vreg() -> None:
+def test_supported_unsigned_vreg() -> None:
     assert (
-        constraints.is_supported_floating_point_vreg(vreg.param("V"), True)
-        == "is_supported_floating_point_vreg<V, true>"
-    )
-    assert (
-        constraints.is_supported_floating_point_vreg(vreg.param("V"), False)
-        == "is_supported_floating_point_vreg<V, false>"
+        constraints.supported_unsigned_vreg(vreg.param("V"))
+        == "SupportedUnsignedVReg<V>"
     )
 
 
-def test_widenable_type() -> None:
-    assert constraints.widenable_type(elem.param("E")) == "widenable<E>"
-
-
-def test_widenable_n_type() -> None:
+def test_supported_floating_point_vreg() -> None:
     assert (
-        constraints.widenable_n_type(4, elem.param("E")) == "widenable_n<4, E>"
+        constraints.supported_floating_point_vreg(vreg.param("V"), True)
+        == "SupportedFloatingPointVReg<V, true>"
     )
+    assert (
+        constraints.supported_floating_point_vreg(vreg.param("V"), False)
+        == "SupportedFloatingPointVReg<V, false>"
+    )
+
+
+def test_widenable() -> None:
+    assert constraints.widenable(elem.param("E")) == "Widenable<E>"
+
+
+def test_widenable_n() -> None:
+    assert constraints.widenable_n(4, elem.param("E")) == "WidenableN<4, E>"
+
+
+def test_narrowable() -> None:
+    assert constraints.narrowable(elem.param("E")) == "Narrowable<E>"

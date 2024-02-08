@@ -88,7 +88,7 @@ def template_ratio(
     ] = template.TemplateTypeParamList,
     require_clauses: Callable[
         [misc.ParamSizeTValue], Sequence[str]
-    ] = lambda ratio: [constraints.is_supported_ratio(ratio)],
+    ] = lambda ratio: [constraints.supported_ratio(ratio)],
     feature_guards: Callable[
         [misc.ParamSizeTValue], Sequence[guarded.Guard]
     ] = lambda ratio: tuple(),
@@ -266,7 +266,7 @@ def template_elem_ratio_for_all_size(
         [elem.ParamElemType, misc.ParamSizeTValue, int], Sequence[str]
     ] = lambda elem_type, ratio, width: [
         constraints.has_width(elem_type, width),
-        constraints.is_compatible_elem_ratio(elem_type, ratio),
+        constraints.compatible_elem_ratio(elem_type, ratio),
     ],
     feature_guards: Callable[
         [elem.ParamElemType, misc.ParamSizeTValue], Sequence[guarded.Guard]
@@ -314,7 +314,7 @@ def template_elem_ratio(
     require_clauses: Callable[
         [elem.ParamElemType, misc.ParamSizeTValue], Sequence[str]
     ] = lambda elem_type, ratio: [
-        constraints.is_compatible_elem_ratio(elem_type, ratio),
+        constraints.compatible_elem_ratio(elem_type, ratio),
     ],
     feature_guards: Callable[
         [elem.ParamElemType, misc.ParamSizeTValue], Sequence[guarded.Guard]
@@ -400,7 +400,7 @@ def template_vreg_ratio(
     require_clauses: Callable[
         [vreg.ParamVRegType, misc.ParamSizeTValue], Sequence[str]
     ] = lambda vreg_type, ratio: [
-        constraints.is_compatible_vreg_ratio(vreg_type, ratio),
+        constraints.compatible_vreg_ratio(vreg_type, ratio),
     ],
     feature_guards: Callable[
         [vreg.ParamVRegType, misc.ParamSizeTValue], Sequence[guarded.Guard]

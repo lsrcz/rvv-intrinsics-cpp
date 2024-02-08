@@ -10,37 +10,37 @@
 
 namespace rvv {
 template <typename E, typename... Es>
-concept is_any = (... || std::is_same_v<E, Es>);
+concept AnyOf = (... || std::is_same_v<E, Es>);
 
 #if HAS_FLOAT16
 template <typename E>
-concept is_float16 = std::is_same_v<E, float16_t>;
+concept IsFloat16 = std::is_same_v<E, float16_t>;
 #endif
 
 template <typename E>
-concept is_float32 = std::is_same_v<E, float>;
+concept IsFloat32 = std::is_same_v<E, float>;
 
 template <typename E>
-concept is_float64 = std::is_same_v<E, double>;
+concept IsFloat64 = std::is_same_v<E, double>;
 
 template <typename E>
-concept is_rvv_floating_point =
+concept IsFloatingPoint =
 #if HAS_FLOAT16
-    is_float16<E> ||
+    IsFloat16<E> ||
 #endif
-    is_float32<E> || is_float64<E>;
+    IsFloat32<E> || IsFloat64<E>;
 
 template <typename E>
-concept is_rvv_unsigned = is_any<E, uint8_t, uint16_t, uint32_t, uint64_t>;
+concept IsUnsigned = AnyOf<E, uint8_t, uint16_t, uint32_t, uint64_t>;
 
 template <typename E>
-concept is_rvv_signed = is_any<E, int8_t, int16_t, int32_t, int64_t>;
+concept IsSigned = AnyOf<E, int8_t, int16_t, int32_t, int64_t>;
 
 template <typename E>
-concept is_rvv_integral = is_rvv_signed<E> || is_rvv_unsigned<E>;
+concept IsIntegral = IsSigned<E> || IsUnsigned<E>;
 
 template <typename E, bool kNeedZvfh>
-concept relies_on_unsupported_zvfh =
+concept NeedUnsupportedZvfh =
 #if HAS_ZVFH
     false;
 #elif HAS_ZVFHMIN
@@ -52,7 +52,7 @@ concept relies_on_unsupported_zvfh =
 #endif
 
 template <typename E>
-concept relies_on_unsupported_zve32f =
+concept NeedUnsupportedZve32f =
 #if HAS_ZVE32F
     false;
 #else
@@ -60,7 +60,7 @@ concept relies_on_unsupported_zve32f =
 #endif
 
 template <typename E>
-concept relies_on_unsupported_zve64d =
+concept NeedUnsupportedZve64d =
 #if HAS_ZVE64D
     false;
 #else
@@ -68,46 +68,41 @@ concept relies_on_unsupported_zve64d =
 #endif
 
 template <typename E>
-concept relies_on_unsupported_zve64x =
+concept NeedUnsupportedZve64x =
 #if HAS_ZVE64X
     false;
 #else
-    is_any<E, int64_t, uint64_t>;
+    AnyOf<E, int64_t, uint64_t>;
 #endif
 
 template <typename E>
-concept is_supported_rvv_integral =
-    !relies_on_unsupported_zve64x<E> && is_rvv_integral<E>;
+concept SupportedIntegralElement = !NeedUnsupportedZve64x<E> && IsIntegral<E>;
 
 template <typename E>
-concept is_supported_rvv_signed =
-    is_supported_rvv_integral<E> && is_rvv_signed<E>;
+concept SupportedSignedElement = SupportedIntegralElement<E> && IsSigned<E>;
 
 template <typename E>
-concept is_supported_rvv_unsigned =
-    is_supported_rvv_integral<E> && is_rvv_unsigned<E>;
+concept SupportedUnsignedElement = SupportedIntegralElement<E> && IsUnsigned<E>;
 
 template <typename E, bool kNeedZvfh>
-concept is_supported_rvv_floating_point =
-    !relies_on_unsupported_zvfh<E, kNeedZvfh> &&
-    !relies_on_unsupported_zve32f<E> && !relies_on_unsupported_zve64d<E> &&
-    is_rvv_floating_point<E>;
+concept SupportedFloatingPointElement =
+    !NeedUnsupportedZvfh<E, kNeedZvfh> && !NeedUnsupportedZve32f<E> &&
+    !NeedUnsupportedZve64d<E> && IsFloatingPoint<E>;
 
 template <typename E, bool kNeedZvfh>
-concept is_supported_rvv_elem_type =
-    !relies_on_unsupported_zvfh<E, kNeedZvfh> &&
-    !relies_on_unsupported_zve32f<E> && !relies_on_unsupported_zve64d<E> &&
-    !relies_on_unsupported_zve64x<E> &&
-    (is_rvv_integral<E> || is_rvv_floating_point<E>);
+concept SupportedElement =
+    !NeedUnsupportedZvfh<E, kNeedZvfh> && !NeedUnsupportedZve32f<E> &&
+    !NeedUnsupportedZve64d<E> && !NeedUnsupportedZve64x<E> &&
+    (IsIntegral<E> || IsFloatingPoint<E>);
 
 template <size_t kRatio>
-concept relies_on_unsupported_elen64 = kRatio == 64 && !HAS_ELEN64;
+concept NeedUnsupportedElen64 = kRatio == 64 && !HAS_ELEN64;
 
 template <size_t kRatio>
-concept is_supported_ratio =
+concept SupportedRatio =
     (kRatio == 1 || kRatio == 2 || kRatio == 4 || kRatio == 8 || kRatio == 16 ||
      kRatio == 32 || kRatio == 64) &&
-    !relies_on_unsupported_elen64<kRatio>;
+    !NeedUnsupportedElen64<kRatio>;
 
 }  // namespace rvv
 

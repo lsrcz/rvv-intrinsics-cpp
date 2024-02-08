@@ -57,12 +57,12 @@ rvv_misc_header = header.Header(
                 ),
                 """
 template <typename E, LMul kLMul>
-  requires is_compatible_elem_lmul<E, kLMul>
+  requires CompatibleElemLMul<E, kLMul>
 RVV_ALWAYS_INLINE vl_t<elem_lmul_to_ratio<E, kLMul>> vsetvl(size_t avl) {
   return vsetvl<elem_lmul_to_ratio<E, kLMul>>(avl);
 }
 template <typename E, LMul kLMul>
-  requires is_compatible_elem_lmul<E, kLMul>
+  requires CompatibleElemLMul<E, kLMul>
 RVV_ALWAYS_INLINE vl_t<elem_lmul_to_ratio<E, kLMul>> vsetvlmax() {
   return vsetvlmax<elem_lmul_to_ratio<E, kLMul>>();
 }

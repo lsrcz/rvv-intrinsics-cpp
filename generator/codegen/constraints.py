@@ -1,79 +1,79 @@
 from codegen.typing import base, elem, lmul, misc, vreg
 
 
-def is_supported_ratio(ratio: misc.SizeTValue) -> str:
-    return f"is_supported_ratio<{ratio.cpp_repr}>"
+def supported_ratio(ratio: misc.SizeTValue) -> str:
+    return f"SupportedRatio<{ratio.cpp_repr}>"
 
 
-def is_compatible_elem_ratio(
+def compatible_elem_ratio(
     elem_type: elem.ElemType, ratio: misc.SizeTValue
 ) -> str:
-    return f"is_compatible_elem_ratio<{elem_type.cpp_repr}, {ratio.cpp_repr}>"
+    return f"CompatibleElemRatio<{elem_type.cpp_repr}, {ratio.cpp_repr}>"
 
 
-def is_compatible_vreg_ratio(
+def compatible_vreg_ratio(
     vreg_type: vreg.VRegType, ratio: misc.SizeTValue
 ) -> str:
-    return f"is_compatible_vreg_ratio<{vreg_type.cpp_repr}, {ratio.cpp_repr}>"
+    return f"CompatibleVRegRatio<{vreg_type.cpp_repr}, {ratio.cpp_repr}>"
 
 
-def is_compatible_elem_lmul(elem_type: elem.ElemType, l: lmul.LMulValue) -> str:
-    return f"is_compatible_elem_lmul<{elem_type.cpp_repr}, {l.cpp_repr}>"
+def compatible_elem_lmul(elem_type: elem.ElemType, l: lmul.LMulValue) -> str:
+    return f"CompatibleElemLMul<{elem_type.cpp_repr}, {l.cpp_repr}>"
 
 
 def has_width(elem_type: elem.ElemType, width: int) -> str:
     return f"(sizeof({elem_type.cpp_repr}) == {width // 8})"
 
 
-def is_supported_rvv_integral(elem_type: elem.ElemType) -> str:
-    return f"is_supported_rvv_integral<{elem_type.cpp_repr}>"
+def supported_integral_element(elem_type: elem.ElemType) -> str:
+    return f"SupportedIntegralElement<{elem_type.cpp_repr}>"
 
 
-def is_supported_rvv_signed(elem_type: elem.ElemType) -> str:
-    return f"is_supported_rvv_signed<{elem_type.cpp_repr}>"
+def supported_signed_element(elem_type: elem.ElemType) -> str:
+    return f"SupportedSignedElement<{elem_type.cpp_repr}>"
 
 
-def is_supported_rvv_unsigned(elem_type: elem.ElemType) -> str:
-    return f"is_supported_rvv_unsigned<{elem_type.cpp_repr}>"
+def supported_unsigned_element(elem_type: elem.ElemType) -> str:
+    return f"SupportedUnsignedElement<{elem_type.cpp_repr}>"
 
 
-def is_supported_rvv_floating_point(
+def supported_floating_point_element(
     elem_type: elem.ElemType, need_zvfh: bool
 ) -> str:
     return (
-        f"is_supported_rvv_floating_point<{elem_type.cpp_repr}, "
+        f"SupportedFloatingPointElement<{elem_type.cpp_repr}, "
         + f"{'true' if need_zvfh else 'false'}>"
     )
 
 
-def is_supported_integral_vreg(vreg_type: vreg.VRegType) -> str:
-    return f"is_supported_integral_vreg<{vreg_type.cpp_repr}>"
+def supported_integral_vreg(vreg_type: vreg.VRegType) -> str:
+    return f"SupportedIntegralVReg<{vreg_type.cpp_repr}>"
 
 
-def is_supported_signed_vreg(vreg_type: vreg.VRegType) -> str:
-    return f"is_supported_signed_vreg<{vreg_type.cpp_repr}>"
+def supported_signed_vreg(vreg_type: vreg.VRegType) -> str:
+    return f"SupportedSignedVReg<{vreg_type.cpp_repr}>"
 
 
-def is_supported_unsigned_vreg(vreg_type: vreg.VRegType) -> str:
-    return f"is_supported_unsigned_vreg<{vreg_type.cpp_repr}>"
+def supported_unsigned_vreg(vreg_type: vreg.VRegType) -> str:
+    return f"SupportedUnsignedVReg<{vreg_type.cpp_repr}>"
 
 
-def is_supported_floating_point_vreg(
+def supported_floating_point_vreg(
     vreg_type: vreg.VRegType, need_zvfh: bool
 ) -> str:
     return (
-        f"is_supported_floating_point_vreg<{vreg_type.cpp_repr}, "
+        f"SupportedFloatingPointVReg<{vreg_type.cpp_repr}, "
         + f"{'true' if need_zvfh else 'false'}>"
     )
 
 
-def widenable_type(t: base.Type) -> str:
-    return f"widenable<{t.cpp_repr}>"
+def widenable(t: base.Type) -> str:
+    return f"Widenable<{t.cpp_repr}>"
 
 
-def widenable_n_type(n: int, t: base.Type) -> str:
-    return f"widenable_n<{n}, {t.cpp_repr}>"
+def widenable_n(n: int, t: base.Type) -> str:
+    return f"WidenableN<{n}, {t.cpp_repr}>"
 
 
-def narrowable_type(t: base.Type) -> str:
-    return f"narrowable<{t.cpp_repr}>"
+def narrowable(t: base.Type) -> str:
+    return f"Narrowable<{t.cpp_repr}>"

@@ -8,7 +8,7 @@ class IsAnyTest : public ::testing::Test {};
 template <bool kExpected_, typename E, typename... Es>
 class IsAnyConfig {
  public:
-  static constexpr bool kActual = rvv::is_any<E, Es...>;
+  static constexpr bool kActual = rvv::AnyOf<E, Es...>;
   static constexpr bool kExpected = kExpected_;
 };
 
@@ -131,97 +131,93 @@ using ElemTypeTraitsTestConfigs = ::testing::Types<
 TYPED_TEST_SUITE(ElemTypeTraitsTest, ElemTypeTraitsTestConfigs);
 
 TYPED_TEST(ElemTypeTraitsTest, is_float16) {
-  EXPECT_EQ((rvv::is_float16<typename TypeParam::ElemType>),
+  EXPECT_EQ((rvv::IsFloat16<typename TypeParam::ElemType>),
             !!(TypeParam::kTrait & ElemTypeTraits::kIsFloat16));
 }
 
 TYPED_TEST(ElemTypeTraitsTest, is_float32) {
-  EXPECT_EQ((rvv::is_float32<typename TypeParam::ElemType>),
+  EXPECT_EQ((rvv::IsFloat32<typename TypeParam::ElemType>),
             !!(TypeParam::kTrait & ElemTypeTraits::kIsFloat32));
 }
 
 TYPED_TEST(ElemTypeTraitsTest, is_float64) {
-  EXPECT_EQ((rvv::is_float64<typename TypeParam::ElemType>),
+  EXPECT_EQ((rvv::IsFloat64<typename TypeParam::ElemType>),
             !!(TypeParam::kTrait & ElemTypeTraits::kIsFloat64));
 }
 
 TYPED_TEST(ElemTypeTraitsTest, is_rvv_floating_point) {
-  EXPECT_EQ((rvv::is_rvv_floating_point<typename TypeParam::ElemType>),
+  EXPECT_EQ((rvv::IsFloatingPoint<typename TypeParam::ElemType>),
             !!(TypeParam::kTrait & ElemTypeTraits::kIsRvvFloatingPoint));
 }
 
 TYPED_TEST(ElemTypeTraitsTest, is_rvv_unsigned) {
-  EXPECT_EQ((rvv::is_rvv_unsigned<typename TypeParam::ElemType>),
+  EXPECT_EQ((rvv::IsUnsigned<typename TypeParam::ElemType>),
             !!(TypeParam::kTrait & ElemTypeTraits::kIsRvvUnsigned));
 }
 
 TYPED_TEST(ElemTypeTraitsTest, is_rvv_signed) {
-  EXPECT_EQ((rvv::is_rvv_signed<typename TypeParam::ElemType>),
+  EXPECT_EQ((rvv::IsSigned<typename TypeParam::ElemType>),
             !!(TypeParam::kTrait & ElemTypeTraits::kIsRvvSigned));
 }
 
 TYPED_TEST(ElemTypeTraitsTest, is_rvv_integral) {
-  EXPECT_EQ((rvv::is_rvv_integral<typename TypeParam::ElemType>),
+  EXPECT_EQ((rvv::IsIntegral<typename TypeParam::ElemType>),
             !!(TypeParam::kTrait & ElemTypeTraits::kIsRvvIntegral));
 }
 
 TYPED_TEST(ElemTypeTraitsTest, relies_on_unsupported_zvfh) {
-  EXPECT_EQ(
-      (rvv::relies_on_unsupported_zvfh<typename TypeParam::ElemType, true>),
-      !!(TypeParam::kTrait & ElemTypeTraits::kReliesUnsupportedZvfh));
-  EXPECT_EQ(
-      (rvv::relies_on_unsupported_zvfh<typename TypeParam::ElemType, false>),
-      !!(TypeParam::kTrait & ElemTypeTraits::kReliesUnsupportedZvfhmin));
+  EXPECT_EQ((rvv::NeedUnsupportedZvfh<typename TypeParam::ElemType, true>),
+            !!(TypeParam::kTrait & ElemTypeTraits::kReliesUnsupportedZvfh));
+  EXPECT_EQ((rvv::NeedUnsupportedZvfh<typename TypeParam::ElemType, false>),
+            !!(TypeParam::kTrait & ElemTypeTraits::kReliesUnsupportedZvfhmin));
 }
 
 TYPED_TEST(ElemTypeTraitsTest, relies_on_unsupported_zve32f) {
-  EXPECT_EQ((rvv::relies_on_unsupported_zve32f<typename TypeParam::ElemType>),
+  EXPECT_EQ((rvv::NeedUnsupportedZve32f<typename TypeParam::ElemType>),
             !!(TypeParam::kTrait & ElemTypeTraits::kReliesUnsupportedZve32f));
 }
 
 TYPED_TEST(ElemTypeTraitsTest, relies_on_unsupported_zve64d) {
-  EXPECT_EQ((rvv::relies_on_unsupported_zve64d<typename TypeParam::ElemType>),
+  EXPECT_EQ((rvv::NeedUnsupportedZve64d<typename TypeParam::ElemType>),
             !!(TypeParam::kTrait & ElemTypeTraits::kReliesUnsupportedZve64d));
 }
 
 TYPED_TEST(ElemTypeTraitsTest, relies_on_unsupported_zve64x) {
-  EXPECT_EQ((rvv::relies_on_unsupported_zve64x<typename TypeParam::ElemType>),
+  EXPECT_EQ((rvv::NeedUnsupportedZve64x<typename TypeParam::ElemType>),
             !!(TypeParam::kTrait & ElemTypeTraits::kReliesUnsupportedZve64x));
 }
 
 TYPED_TEST(ElemTypeTraitsTest, is_supported_rvv_elem_type) {
   EXPECT_EQ(
-      (rvv::is_supported_rvv_elem_type<typename TypeParam::ElemType, true>),
+      (rvv::SupportedElement<typename TypeParam::ElemType, true>),
       !!(TypeParam::kTrait & ElemTypeTraits::kIsSupportedRvvElemTypeNeedZvfh));
-  EXPECT_EQ(
-      (rvv::is_supported_rvv_elem_type<typename TypeParam::ElemType, false>),
-      !!(TypeParam::kTrait & ElemTypeTraits::kIsSupportedRvvElemType));
+  EXPECT_EQ((rvv::SupportedElement<typename TypeParam::ElemType, false>),
+            !!(TypeParam::kTrait & ElemTypeTraits::kIsSupportedRvvElemType));
 }
 
 TYPED_TEST(ElemTypeTraitsTest, is_supported_rvv_integral) {
-  EXPECT_EQ((rvv::is_supported_rvv_integral<typename TypeParam::ElemType>),
+  EXPECT_EQ((rvv::SupportedIntegralElement<typename TypeParam::ElemType>),
             !!(TypeParam::kTrait & ElemTypeTraits::kIsSupportedRvvIntegral));
 }
 
 TYPED_TEST(ElemTypeTraitsTest, is_supported_rvv_floating_point) {
-  EXPECT_EQ((rvv::is_supported_rvv_floating_point<typename TypeParam::ElemType,
-                                                  true>),
-            !!(TypeParam::kTrait &
-               ElemTypeTraits::kIsSupportedRvvFloatingPointNeedZvfh));
   EXPECT_EQ(
-      (rvv::is_supported_rvv_floating_point<typename TypeParam::ElemType,
-                                            false>),
+      (rvv::SupportedFloatingPointElement<typename TypeParam::ElemType, true>),
+      !!(TypeParam::kTrait &
+         ElemTypeTraits::kIsSupportedRvvFloatingPointNeedZvfh));
+  EXPECT_EQ(
+      (rvv::SupportedFloatingPointElement<typename TypeParam::ElemType, false>),
       !!(TypeParam::kTrait & ElemTypeTraits::kIsSupportedRvvFloatingPoint));
 }
 
 TYPED_TEST(ElemTypeTraitsTest, is_supported_rvv_signed) {
-  EXPECT_EQ((rvv::is_supported_rvv_signed<typename TypeParam::ElemType>),
+  EXPECT_EQ((rvv::SupportedSignedElement<typename TypeParam::ElemType>),
             !!(TypeParam::kTrait & ElemTypeTraits::kIsRvvIntegral) &&
                 !!(TypeParam::kTrait & ElemTypeTraits::kIsRvvSigned));
 }
 
 TYPED_TEST(ElemTypeTraitsTest, is_supported_rvv_unsigned) {
-  EXPECT_EQ((rvv::is_supported_rvv_unsigned<typename TypeParam::ElemType>),
+  EXPECT_EQ((rvv::SupportedUnsignedElement<typename TypeParam::ElemType>),
             !!(TypeParam::kTrait & ElemTypeTraits::kIsRvvIntegral) &&
                 !!(TypeParam::kTrait & ElemTypeTraits::kIsRvvUnsigned));
 }
@@ -257,11 +253,11 @@ using RatioTypeTraitsTestConfigs = ::testing::Types<
 TYPED_TEST_SUITE(RatioTypeTraitsTest, RatioTypeTraitsTestConfigs);
 
 TYPED_TEST(RatioTypeTraitsTest, is_supported_ratio) {
-  EXPECT_EQ((rvv::is_supported_ratio<TypeParam::kRatio_>),
+  EXPECT_EQ((rvv::SupportedRatio<TypeParam::kRatio_>),
             !!(TypeParam::kTrait & RatioTypeTraits::kIsSupportedRatio));
 }
 
 TYPED_TEST(RatioTypeTraitsTest, relies_on_unsupported_elen) {
-  EXPECT_EQ((rvv::relies_on_unsupported_elen64<TypeParam::kRatio_>),
+  EXPECT_EQ((rvv::NeedUnsupportedElen64<TypeParam::kRatio_>),
             !!(TypeParam::kTrait & RatioTypeTraits::kReliesUnsupportedElen64));
 }

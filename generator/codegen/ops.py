@@ -15,14 +15,14 @@ def vreg_require_clauses(
     ret: list[str] = []
     match allowed_type_category:
         case "int":
-            ret.append(constraints.is_supported_integral_vreg(vreg_type))
+            ret.append(constraints.supported_integral_vreg(vreg_type))
         case "signed":
-            ret.append(constraints.is_supported_signed_vreg(vreg_type))
+            ret.append(constraints.supported_signed_vreg(vreg_type))
         case "unsigned":
-            ret.append(constraints.is_supported_unsigned_vreg(vreg_type))
+            ret.append(constraints.supported_unsigned_vreg(vreg_type))
         case "fp":
             ret.append(
-                constraints.is_supported_floating_point_vreg(vreg_type, True)
+                constraints.supported_floating_point_vreg(vreg_type, True)
             )
         case "all":
             pass
@@ -30,23 +30,23 @@ def vreg_require_clauses(
             raise ValueError(
                 f"Unknown allowed type category: {allowed_type_category}"
             )
-    ret.append(constraints.is_compatible_vreg_ratio(vreg_type, ratio))
+    ret.append(constraints.compatible_vreg_ratio(vreg_type, ratio))
     if widening is True:
-        ret.append(constraints.widenable_type(vreg_type))
+        ret.append(constraints.widenable(vreg_type))
         ret.append(
-            constraints.is_compatible_vreg_ratio(vreg.widen(vreg_type), ratio)
+            constraints.compatible_vreg_ratio(vreg.widen(vreg_type), ratio)
         )
     elif widening in [2, 4, 8]:
-        ret.append(constraints.widenable_n_type(widening, vreg_type))
+        ret.append(constraints.widenable_n(widening, vreg_type))
         ret.append(
-            constraints.is_compatible_vreg_ratio(
+            constraints.compatible_vreg_ratio(
                 vreg.widen_n(widening, vreg_type), ratio
             )
         )
     elif narrowing:
-        ret.append(constraints.narrowable_type(vreg_type))
+        ret.append(constraints.narrowable(vreg_type))
         ret.append(
-            constraints.is_compatible_vreg_ratio(vreg.narrow(vreg_type), ratio)
+            constraints.compatible_vreg_ratio(vreg.narrow(vreg_type), ratio)
         )
     return ret
 

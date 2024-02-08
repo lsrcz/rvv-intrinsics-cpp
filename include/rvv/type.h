@@ -30,31 +30,31 @@ constexpr int log2(int i) {
 }  // namespace internal
 
 template <LMul kLMul>
-concept is_supported_lmul = kLMul >= LMul::kMF8 && kLMul <= LMul::kM8;
+concept SupportedLMul = kLMul >= LMul::kMF8 && kLMul <= LMul::kM8;
 
 template <typename E, size_t kRatio>
-  requires is_supported_rvv_elem_type<E, false> && is_supported_ratio<kRatio>
+  requires SupportedElement<E, false> && SupportedRatio<kRatio>
 constexpr LMul elem_ratio_to_lmul =
     static_cast<LMul>(internal::log2(static_cast<int>(sizeof(E))) -
                       internal::log2(static_cast<int>(kRatio)) + 3);
 
 template <typename E, size_t kRatio>
-concept is_compatible_elem_ratio =
-    is_supported_rvv_elem_type<E, false> && is_supported_ratio<kRatio> &&
-    is_supported_lmul<elem_ratio_to_lmul<E, kRatio>>;
+concept CompatibleElemRatio =
+    SupportedElement<E, false> && SupportedRatio<kRatio> &&
+    SupportedLMul<elem_ratio_to_lmul<E, kRatio>>;
 
 template <typename E, LMul kLMul>
-  requires is_supported_rvv_elem_type<E, false> && is_supported_lmul<kLMul>
+  requires SupportedElement<E, false> && SupportedLMul<kLMul>
 constexpr size_t elem_lmul_to_ratio =
     sizeof(E) * (1 << (3 - static_cast<int>(kLMul)));
 
 template <typename E, LMul kLMul>
-concept is_compatible_elem_lmul =
-    is_supported_rvv_elem_type<E, false> && is_supported_lmul<kLMul> &&
-    is_supported_ratio<elem_lmul_to_ratio<E, kLMul>>;
+concept CompatibleElemLMul =
+    SupportedElement<E, false> && SupportedLMul<kLMul> &&
+    SupportedRatio<elem_lmul_to_ratio<E, kLMul>>;
 
 template <size_t kRatio_>
-  requires is_supported_ratio<kRatio_>
+  requires SupportedRatio<kRatio_>
 struct vl_t {
   size_t vl;
   RVV_ALWAYS_INLINE_CONSTEXPR operator size_t() const { return vl; }
@@ -63,12 +63,12 @@ struct vl_t {
 namespace internal {
 // Specialization generated.
 template <typename E, size_t kRatio>
-  requires is_compatible_elem_ratio<E, kRatio>
+  requires CompatibleElemRatio<E, kRatio>
 struct VReg {};
 
 // Specialization generated.
 template <size_t kRatio>
-  requires is_supported_ratio<kRatio>
+  requires SupportedRatio<kRatio>
 struct VMask {};
 
 // Specialization generated.
@@ -81,11 +81,11 @@ struct GetRatio {};
 }  // namespace internal
 
 template <typename E, size_t kRatio>
-  requires is_compatible_elem_ratio<E, kRatio>
+  requires CompatibleElemRatio<E, kRatio>
 using vreg_t = internal::VReg<E, kRatio>::RegType;
 
 template <size_t kRatio>
-  requires is_supported_ratio<kRatio>
+  requires SupportedRatio<kRatio>
 using vmask_t = internal::VMask<kRatio>::MaskType;
 
 template <typename T>
@@ -101,30 +101,44 @@ template <typename T>
 constexpr LMul lmul = elem_ratio_to_lmul<elem_t<T>, ratio<T>>;
 
 template <typename T>
-concept is_vreg = requires {
+concept IsVReg = requires {
   typename internal::GetElemType<T>::ElemType;
   internal::GetRatio<T>::kRatio;
 };
 
 template <typename T, size_t kRatio>
-concept is_compatible_vreg_ratio = is_vreg<T> && ratio<T> == kRatio &&
-                                   is_compatible_elem_ratio<elem_t<T>, kRatio>;
+concept CompatibleVRegRatio =
+    IsVReg<T> && ratio<T> == kRatio && CompatibleElemRatio<elem_t<T>, kRatio>;
 
 template <typename T>
-concept is_supported_integral_vreg =
-    is_vreg<T> && is_supported_rvv_integral<elem_t<T>>;
+concept SupportedIntegralVReg =
+    IsVReg<T> && SupportedIntegralElement<elem_t<T>>;
 
 template <typename T>
-concept is_supported_signed_vreg =
-    is_vreg<T> && is_supported_rvv_signed<elem_t<T>>;
+concept SupportedSignedVReg = IsVReg<T> && SupportedSignedElement<elem_t<T>>;
 
 template <typename T>
-concept is_supported_unsigned_vreg =
-    is_vreg<T> && is_supported_rvv_unsigned<elem_t<T>>;
+concept SupportedUnsignedVReg =
+    IsVReg<T> && SupportedUnsignedElement<elem_t<T>>;
 
 template <typename T, bool kNeedZvfh>
-concept is_supported_floating_point_vreg =
-    is_vreg<T> && is_supported_rvv_floating_point<elem_t<T>, kNeedZvfh>;
+concept SupportedFloatingPointVReg =
+    IsVReg<T> && SupportedFloatingPointElement<elem_t<T>, kNeedZvfh>;
+
+template <typename T>
+concept SupportedIntegral =
+    SupportedIntegralVReg<T> || SupportedIntegralElement<T>;
+
+template <typename T>
+concept SupportedSigned = SupportedSignedVReg<T> || SupportedSignedElement<T>;
+
+template <typename T>
+concept SupportedUnsigned =
+    SupportedUnsignedVReg<T> || SupportedUnsignedElement<T>;
+
+template <typename T, bool kNeedZvfh>
+concept SupportedFloatingPoint = SupportedFloatingPointVReg<T, kNeedZvfh> ||
+                                 SupportedFloatingPointElement<T, kNeedZvfh>;
 
 namespace internal {
 template <typename E>
@@ -139,10 +153,10 @@ template <typename T>
 using narrow_t = typename internal::NarrowedType<T>::Type;
 
 template <typename T>
-concept widenable = requires { typename internal::WidenedType<T>::Type; };
+concept Widenable = requires { typename internal::WidenedType<T>::Type; };
 
 template <typename T>
-concept narrowable = requires { typename internal::NarrowedType<T>::Type; };
+concept Narrowable = requires { typename internal::NarrowedType<T>::Type; };
 
 namespace internal {
 template <size_t kN>
@@ -151,20 +165,20 @@ struct WidenedNType {};
 template <>
 struct WidenedNType<2> {
   template <typename T>
-    requires widenable<T>
+    requires Widenable<T>
   using Type = widen_t<T>;
 };
 template <>
 struct WidenedNType<4> {
   template <typename T>
-    requires widenable<T> && widenable<widen_t<T>>
+    requires Widenable<T> && Widenable<widen_t<T>>
   using Type = widen_t<widen_t<T>>;
 };
 template <>
 struct WidenedNType<8> {
   template <typename T>
-    requires widenable<T> && widenable<widen_t<T>> &&
-                 widenable<widen_t<widen_t<T>>>
+    requires Widenable<T> && Widenable<widen_t<T>> &&
+                 Widenable<widen_t<widen_t<T>>>
   using Type = widen_t<widen_t<widen_t<T>>>;
 };
 }  // namespace internal
@@ -173,7 +187,7 @@ template <size_t kN, typename T>
 using widen_n_t = typename internal::WidenedNType<kN>::template Type<T>;
 
 template <size_t kN, typename T>
-concept widenable_n =
+concept WidenableN =
     requires { typename internal::WidenedNType<kN>::template Type<T>; };
 
 namespace internal {
@@ -182,12 +196,12 @@ struct ToUnsigned {
   using Type = T;
 };
 template <typename T>
-  requires is_supported_rvv_unsigned<T>
+  requires SupportedSignedElement<T>
 struct ToUnsigned<T> {
   using Type = T;
 };
 template <typename T>
-  requires is_supported_unsigned_vreg<T>
+  requires SupportedSignedVReg<T>
 struct ToUnsigned<T> {
   using Type = T;
 };
@@ -196,12 +210,12 @@ struct ToSigned {
   using Type = T;
 };
 template <typename T>
-  requires is_supported_rvv_signed<T>
+  requires SupportedUnsignedElement<T>
 struct ToSigned<T> {
   using Type = T;
 };
 template <typename T>
-  requires is_supported_signed_vreg<T>
+  requires SupportedSignedVReg<T>
 struct ToSigned<T> {
   using Type = T;
 };

@@ -104,7 +104,7 @@ def test_vle_m_def_8() -> None:
     assert (
         res.cpp_repr
         == """template <typename E, size_t kRatio>
-  requires (sizeof(E) == 1) && is_compatible_elem_ratio<E, kRatio>
+  requires (sizeof(E) == 1) && CompatibleElemRatio<E, kRatio>
 RVV_ALWAYS_INLINE
 vreg_t<E, kRatio> vle(vmask_t<kRatio> vm, const E * rs1, vl_t<kRatio> vl) {
   return __riscv_vle8(vm, rs1, vl);
@@ -120,7 +120,7 @@ def test_vle_tum_def_64() -> None:
     assert (
         res.cpp_repr
         == """template <typename E, size_t kRatio>
-  requires (sizeof(E) == 8) && is_compatible_elem_ratio<E, kRatio>
+  requires (sizeof(E) == 8) && CompatibleElemRatio<E, kRatio>
 RVV_ALWAYS_INLINE
 vreg_t<E, kRatio> vle(vmask_t<kRatio> vm, vreg_t<E, kRatio> vd, const E * rs1, vl_t<kRatio> vl) {
   return __riscv_vle64_tum(vm, vd, rs1, vl);
@@ -136,7 +136,7 @@ def test_vleff_tumu_def_8() -> None:
     assert (
         res.cpp_repr
         == """template <typename E, size_t kRatio>
-  requires (sizeof(E) == 1) && is_compatible_elem_ratio<E, kRatio>
+  requires (sizeof(E) == 1) && CompatibleElemRatio<E, kRatio>
 RVV_ALWAYS_INLINE
 vreg_t<E, kRatio> vleff(vmask_t<kRatio> vm, vreg_t<E, kRatio> vd, const E * rs1, vl_t<kRatio> * vl) {
   return __riscv_vle8ff_tumu(vm, vd, rs1, &vl->vl, vl->vl);
@@ -152,7 +152,7 @@ def test_vse_base_def_8() -> None:
     assert (
         res.cpp_repr
         == """template <typename E, size_t kRatio>
-  requires (sizeof(E) == 1) && is_compatible_elem_ratio<E, kRatio>
+  requires (sizeof(E) == 1) && CompatibleElemRatio<E, kRatio>
 RVV_ALWAYS_INLINE
 void vse(E * rs1, vreg_t<E, kRatio> vs3, vl_t<kRatio> vl) {
   __riscv_vse8(rs1, vs3, vl);
@@ -168,7 +168,7 @@ def test_vsse_m_def_64() -> None:
     assert (
         res.cpp_repr
         == """template <typename E, size_t kRatio>
-  requires (sizeof(E) == 8) && is_compatible_elem_ratio<E, kRatio>
+  requires (sizeof(E) == 8) && CompatibleElemRatio<E, kRatio>
 RVV_ALWAYS_INLINE
 void vsse(vmask_t<kRatio> vm, E * rs1, ptrdiff_t rs2, vreg_t<E, kRatio> vs3, vl_t<kRatio> vl) {
   __riscv_vsse64(vm, rs1, rs2, vs3, vl);
@@ -208,7 +208,7 @@ def test_vloxei_8() -> None:
     assert (
         res.cpp_repr
         == """template <typename E, size_t kRatio>
-  requires is_compatible_elem_ratio<E, kRatio>
+  requires CompatibleElemRatio<E, kRatio>
 RVV_ALWAYS_INLINE
 vreg_t<E, kRatio> vloxei(const E * rs1, vreg_t<uint8_t, kRatio> rs2, vl_t<kRatio> vl) {
   return __riscv_vloxei8(rs1, rs2, vl);
@@ -222,7 +222,7 @@ def test_vluxei_tum_64() -> None:
     assert (
         res.cpp_repr
         == """template <typename E, size_t kRatio>
-  requires is_compatible_elem_ratio<E, kRatio>
+  requires CompatibleElemRatio<E, kRatio>
 RVV_ALWAYS_INLINE
 vreg_t<E, kRatio> vluxei(vmask_t<kRatio> vm, vreg_t<E, kRatio> vd, const E * rs1, vreg_t<uint8_t, kRatio> rs2, vl_t<kRatio> vl) {
   return __riscv_vluxei8_tum(vm, vd, rs1, rs2, vl);
@@ -236,7 +236,7 @@ def test_vsoxei_8() -> None:
     assert (
         res.cpp_repr
         == """template <typename E, size_t kRatio>
-  requires is_compatible_elem_ratio<E, kRatio>
+  requires CompatibleElemRatio<E, kRatio>
 RVV_ALWAYS_INLINE
 void vsoxei(E * rs1, vreg_t<uint8_t, kRatio> rs2, vreg_t<E, kRatio> vs3, vl_t<kRatio> vl) {
   __riscv_vsoxei8(rs1, rs2, vs3, vl);
@@ -250,7 +250,7 @@ def test_vsuxei_m_64() -> None:
     assert (
         res.cpp_repr
         == """template <typename E, size_t kRatio>
-  requires is_compatible_elem_ratio<E, kRatio>
+  requires CompatibleElemRatio<E, kRatio>
 RVV_ALWAYS_INLINE
 void vsuxei(vmask_t<kRatio> vm, E * rs1, vreg_t<uint8_t, kRatio> rs2, vreg_t<E, kRatio> vs3, vl_t<kRatio> vl) {
   __riscv_vsuxei8(vm, rs1, rs2, vs3, vl);

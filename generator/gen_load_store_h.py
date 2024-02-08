@@ -228,7 +228,7 @@ def vlxei_defs(inst: str) -> Callable[[str, int], Optional[func.Function]]:
             + ";"
         ),
         require_clauses=lambda elem_type, ratio, width: [
-            constraints.is_compatible_elem_ratio(elem_type, ratio),
+            constraints.compatible_elem_ratio(elem_type, ratio),
         ],
     )
 
@@ -261,7 +261,7 @@ def vsxei_defs(inst: str) -> Callable[[str, int], Optional[func.Function]]:
             + ";"
         ),
         require_clauses=lambda elem_type, ratio, width: [
-            constraints.is_compatible_elem_ratio(elem_type, ratio),
+            constraints.compatible_elem_ratio(elem_type, ratio),
         ],
     )
 

@@ -5,7 +5,7 @@ def test_vsetvl_decl() -> None:
     assert (
         gen_misc_h.vsetvl_decl("vsetvl", True)("").cpp_repr
         == """template <size_t kRatio>
-  requires is_supported_ratio<kRatio>
+  requires SupportedRatio<kRatio>
 RVV_ALWAYS_INLINE
 vl_t<kRatio> vsetvl(size_t avl);"""
     )
@@ -15,7 +15,7 @@ def test_vsetvl_decl_vlmax() -> None:
     assert (
         gen_misc_h.vsetvl_decl("vsetvlmax", False)("").cpp_repr
         == """template <size_t kRatio>
-  requires is_supported_ratio<kRatio>
+  requires SupportedRatio<kRatio>
 RVV_ALWAYS_INLINE
 vl_t<kRatio> vsetvlmax();"""
     )
