@@ -1,8 +1,8 @@
 from typing import Callable, Sequence
 
-from codegen import constraints, func
+from codegen import constraints, func, header, ops
 from codegen.param_list import function
-from codegen.typing import misc, vl, vmask, vreg, base
+from codegen.typing import base, misc, vl, vmask, vreg
 
 
 def vreg_require_clauses(
@@ -193,3 +193,60 @@ def op(
             widening=widening,
         ),
     )
+
+
+def bin_part(
+    inst: str,
+    allowed_type_category: str,
+    f: Callable[[str, str], Callable[[str], func.Function]],
+) -> header.HeaderPart:
+    return header.WithVariants(f(inst, allowed_type_category))
+
+
+def simple_vx_op(
+    inst: str,
+    allowed_type_category: str,
+) -> Callable[[str], func.Function]:
+    return ops.op(inst, allowed_type_category, "v", ["v", "x"])
+
+
+def simple_vv_op(
+    inst: str,
+    allowed_type_category: str,
+) -> Callable[[str], func.Function]:
+    return ops.op(inst, allowed_type_category, "v", ["v", "v"])
+
+
+def simple_v_op(
+    inst: str, allowed_type_category: str
+) -> Callable[[str], func.Function]:
+    return ops.op(inst, allowed_type_category, "v", ["v"], names=["vs"])
+
+
+def sign_aware_vx_op(
+    inst: str,
+) -> Callable[[str], func.Function]:
+    return ops.op(
+        inst,
+        "unsigned" if inst.endswith("u") else "signed",
+        "v",
+        ["v", "x"],
+    )
+
+
+def sign_aware_vv_op(
+    inst: str,
+) -> Callable[[str], func.Function]:
+    return ops.op(
+        inst,
+        "unsigned" if inst.endswith("u") else "signed",
+        "v",
+        ["v", "v"],
+    )
+
+
+def inferred_type_part(
+    inst: str,
+    f: Callable[[str], Callable[[str], func.Function]],
+) -> header.HeaderPart:
+    return header.WithVariants(f(inst))

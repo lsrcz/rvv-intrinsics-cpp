@@ -3,26 +3,6 @@ from typing import Callable
 from codegen import func, header, main, ops
 
 
-def simple_vx_op(
-    inst: str,
-    allowed_type_category: str,
-) -> Callable[[str], func.Function]:
-    return ops.op(inst, allowed_type_category, "v", ["v", "x"])
-
-
-def simple_vv_op(
-    inst: str,
-    allowed_type_category: str,
-) -> Callable[[str], func.Function]:
-    return ops.op(inst, allowed_type_category, "v", ["v", "v"])
-
-
-def simple_v_op(
-    inst: str, allowed_type_category: str
-) -> Callable[[str], func.Function]:
-    return ops.op(inst, allowed_type_category, "v", ["v"], names=["vs"])
-
-
 def widening_vx_op(inst: str, signed: bool) -> Callable[[str], func.Function]:
     inst_with_sign = inst + ("" if signed else "u")
     return ops.op(
@@ -192,28 +172,6 @@ def comparing_vv_op(
     )
 
 
-def sign_aware_vx_op(
-    inst: str,
-) -> Callable[[str], func.Function]:
-    return ops.op(
-        inst,
-        "unsigned" if inst.endswith("u") else "signed",
-        "v",
-        ["v", "x"],
-    )
-
-
-def sign_aware_vv_op(
-    inst: str,
-) -> Callable[[str], func.Function]:
-    return ops.op(
-        inst,
-        "unsigned" if inst.endswith("u") else "signed",
-        "v",
-        ["v", "v"],
-    )
-
-
 def fma_vx_op(
     inst: str,
 ) -> Callable[[str], func.Function]:
@@ -230,27 +188,12 @@ def fma_vv_op(
     )
 
 
-def bin_part(
-    op: str,
-    allowed_type_category: str,
-    f: Callable[[str, str], Callable[[str], func.Function]],
-) -> header.HeaderPart:
-    return header.WithVariants(f(op, allowed_type_category))
-
-
 def widening_part(
     op: str,
     signed: bool,
     f: Callable[[str, bool], Callable[[str], func.Function]],
 ) -> header.HeaderPart:
     return header.WithVariants(f(op, signed))
-
-
-def inferred_type_part(
-    op: str,
-    f: Callable[[str], Callable[[str], func.Function]],
-) -> header.HeaderPart:
-    return header.WithVariants(f(op))
 
 
 rvv_int_header = header.Header(
@@ -264,12 +207,12 @@ rvv_int_header = header.Header(
                         "// 3. Vector Integer Arithmetic Intrinsics",
                         "// 3.1. Vector Single-Width Integer Add and Substract Intrinsics",
                         header.CrossProduct(
-                            bin_part,
+                            ops.bin_part,
                             ["vadd", "vsub"],
                             ["int"],
-                            [simple_vx_op, simple_vv_op],
+                            [ops.simple_vx_op, ops.simple_vv_op],
                         ),
-                        header.WithVariants(simple_vx_op("vrsub", "int")),
+                        header.WithVariants(ops.simple_vx_op("vrsub", "int")),
                         header.WithVariants(
                             ops.op("vneg", "int", "v", ["v"], names=["vs"])
                         ),
@@ -297,13 +240,13 @@ rvv_int_header = header.Header(
                         ),
                         "// 3.5. Vector Integer Add-with-Carry and Subtract-with-Borrow Intrinsics",
                         header.CrossProduct(
-                            inferred_type_part,
+                            ops.inferred_type_part,
                             ["vadc", "vsbc"],
                             [vvm_v_op, vxm_v_op],
                             allowed_variants={"", "tu"},
                         ),
                         header.CrossProduct(
-                            inferred_type_part,
+                            ops.inferred_type_part,
                             ["vmadc", "vmsbc"],
                             [
                                 carry_out_vvm_op,
@@ -315,22 +258,22 @@ rvv_int_header = header.Header(
                         ),
                         "// 3.6. Vector Bitwise Binary Logical Intrinsics",
                         header.CrossProduct(
-                            bin_part,
+                            ops.bin_part,
                             ["vand", "vor", "vxor"],
                             ["int"],
-                            [simple_vx_op, simple_vv_op],
+                            [ops.simple_vx_op, ops.simple_vv_op],
                         ),
                         "// 3.7. Vector Bitwise Unary Logical Intrinsics",
-                        header.WithVariants(simple_v_op("vnot", "int")),
+                        header.WithVariants(ops.simple_v_op("vnot", "int")),
                         "// 3.8. Vector Single-Width Bit Shift Intrinsics",
                         header.CrossProduct(
-                            inferred_type_part,
+                            ops.inferred_type_part,
                             ["vsll", "vsra", "vsrl"],
                             [shifting_vv_op, shifting_vx_op],
                         ),
                         "// 3.9. Vector Narrowing Integer Right Shift Intrinsics",
                         header.CrossProduct(
-                            inferred_type_part,
+                            ops.inferred_type_part,
                             ["vnsra", "vnsrl"],
                             [narrowing_shift_wv_op, narrowing_shift_wx_op],
                         ),
@@ -338,7 +281,7 @@ rvv_int_header = header.Header(
                         header.WithVariants(vncvt),
                         "// 3.11. Vector Integer Compare Intrinsics",
                         header.CrossProduct(
-                            inferred_type_part,
+                            ops.inferred_type_part,
                             [
                                 "vmseq",
                                 "vmsne",
@@ -355,20 +298,20 @@ rvv_int_header = header.Header(
                         ),
                         "// 3.12. Vector Integer Compare Intrinsics",
                         header.CrossProduct(
-                            inferred_type_part,
+                            ops.inferred_type_part,
                             ["vmax", "vmin", "vmaxu", "vminu"],
                             [
-                                sign_aware_vv_op,
-                                sign_aware_vx_op,
+                                ops.sign_aware_vv_op,
+                                ops.sign_aware_vx_op,
                             ],
                         ),
                         "// 3.13. Vector Single-Width Integer Multiply Intrinsics",
-                        header.WithVariants(simple_vv_op("vmul", "int")),
-                        header.WithVariants(simple_vx_op("vmul", "int")),
+                        header.WithVariants(ops.simple_vv_op("vmul", "int")),
+                        header.WithVariants(ops.simple_vx_op("vmul", "int")),
                         header.CrossProduct(
-                            inferred_type_part,
+                            ops.inferred_type_part,
                             ["vmulh", "vmulhu"],
-                            [sign_aware_vv_op, sign_aware_vx_op],
+                            [ops.sign_aware_vv_op, ops.sign_aware_vx_op],
                         ),
                         header.WithVariants(
                             ops.op("vmulhsu", "signed", "v", ["v", "u"])
@@ -378,9 +321,9 @@ rvv_int_header = header.Header(
                         ),
                         "// 3.14. Vector Integer Divide Intrinsics",
                         header.CrossProduct(
-                            inferred_type_part,
+                            ops.inferred_type_part,
                             ["vdiv", "vdivu", "vrem", "vremu"],
-                            [sign_aware_vv_op, sign_aware_vx_op],
+                            [ops.sign_aware_vv_op, ops.sign_aware_vx_op],
                         ),
                         "// 3.15. Vector Widening Integer Multiply Intrinsics",
                         header.WithVariants(
@@ -403,7 +346,7 @@ rvv_int_header = header.Header(
                         ),
                         "// 3.16. Vector Single-Width Integer Multiply-Add Intrinsics",
                         header.CrossProduct(
-                            inferred_type_part,
+                            ops.inferred_type_part,
                             ["vmacc", "vmadd", "vnmsac", "vnmsub"],
                             [fma_vv_op, fma_vx_op],
                         ),
@@ -473,7 +416,7 @@ rvv_int_header = header.Header(
                         ),
                         "// 3.18. Vector Integer Merge Intrinsics",
                         header.CrossProduct(
-                            inferred_type_part,
+                            ops.inferred_type_part,
                             ["vmerge"],
                             [vvm_v_op, vxm_v_op],
                             allowed_variants={"", "tu"},
