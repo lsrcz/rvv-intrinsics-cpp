@@ -205,4 +205,47 @@
   WIDENING_WV_OP_TEST(name, ratio, short_name, lmul)    \
   WIDENING_WX_OP_TEST(name, ratio, short_name, lmul)
 
+#define FMA_OP_TEST_TU(name, rvv_name, mask_type, ret_type, ...)    \
+  ret_type name##_tu(FOR_EACH_LIST(ARG_PAIR, __VA_ARGS__)) {        \
+    return rvv::tu::rvv_name(FOR_EACH_LIST(ARG_NAME, __VA_ARGS__)); \
+  }
+#define FMA_OP_TEST_TUM(name, rvv_name, mask_type, ret_type, ...)           \
+  ret_type name##_tum(mask_type vm, FOR_EACH_LIST(ARG_PAIR, __VA_ARGS__)) { \
+    return rvv::tu::rvv_name(vm, FOR_EACH_LIST(ARG_NAME, __VA_ARGS__));     \
+  }
+#define FMA_OP_TEST_MU(name, rvv_name, mask_type, ret_type, ...)           \
+  ret_type name##_mu(mask_type vm, FOR_EACH_LIST(ARG_PAIR, __VA_ARGS__)) { \
+    return rvv::mu::rvv_name(vm, FOR_EACH_LIST(ARG_NAME, __VA_ARGS__));    \
+  }
+#define FMA_OP_TEST_TUMU(name, rvv_name, mask_type, ret_type, ...)           \
+  ret_type name##_tumu(mask_type vm, FOR_EACH_LIST(ARG_PAIR, __VA_ARGS__)) { \
+    return rvv::tumu::rvv_name(vm, FOR_EACH_LIST(ARG_NAME, __VA_ARGS__));    \
+  }
+
+#define FMA_OP_TEST_ALL(name, rvv_name, mask_type, ret_type, ...)   \
+  OP_TEST(name, rvv_name, mask_type, ret_type, __VA_ARGS__)         \
+  OP_TEST_M(name, rvv_name, mask_type, ret_type, __VA_ARGS__)       \
+  FMA_OP_TEST_TU(name, rvv_name, mask_type, ret_type, __VA_ARGS__)  \
+  FMA_OP_TEST_TUM(name, rvv_name, mask_type, ret_type, __VA_ARGS__) \
+  FMA_OP_TEST_MU(name, rvv_name, mask_type, ret_type, __VA_ARGS__)  \
+  FMA_OP_TEST_TUMU(name, rvv_name, mask_type, ret_type, __VA_ARGS__)
+
+#define FMA_VV_OP_TEST(name, ratio, short_name, lmul)                      \
+  FMA_OP_TEST_ALL(name##_vv_##short_name##lmul, name, rvv::vmask_t<ratio>, \
+                  VREG_NAME(short_name, lmul),                             \
+                  (VREG_NAME(short_name, lmul), vd),                       \
+                  (VREG_NAME(short_name, lmul), vs2),                      \
+                  (VREG_NAME(short_name, lmul), vs1), (rvv::vl_t<ratio>, vl));
+
+#define FMA_VX_OP_TEST(name, ratio, short_name, lmul)                      \
+  FMA_OP_TEST_ALL(name##_vx_##short_name##lmul, name, rvv::vmask_t<ratio>, \
+                  VREG_NAME(short_name, lmul),                             \
+                  (VREG_NAME(short_name, lmul), vd),                       \
+                  (C_TYPE_NAME(short_name), rs1),                          \
+                  (VREG_NAME(short_name, lmul), vs2), (rvv::vl_t<ratio>, vl));
+
+#define FMA_OP_TEST(name, ratio, short_name, lmul) \
+  FMA_VV_OP_TEST(name, ratio, short_name, lmul)    \
+  FMA_VX_OP_TEST(name, ratio, short_name, lmul)
+
 #endif  // MACROS_H_

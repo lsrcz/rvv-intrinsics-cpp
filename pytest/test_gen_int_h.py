@@ -452,3 +452,55 @@ V vmaxu(vmask_t<kRatio> vm, V vd, V vs2, elem_t<V> rs1, vl_t<kRatio> vl) {
   return __riscv_vmaxu_tum(vm, vd, vs2, rs1, vl);
 }"""
     )
+
+
+def test_vmacc_vx() -> None:
+    f = gen_int_h.fma_vx_op("vmacc")
+    assert (
+        f("").cpp_repr
+        == """template <typename V, size_t kRatio>
+  requires is_supported_integral_vreg<V> && is_compatible_vreg_ratio<V, kRatio>
+RVV_ALWAYS_INLINE
+V vmacc(V vd, elem_t<V> rs1, V vs2, vl_t<kRatio> vl) {
+  return __riscv_vmacc(vd, rs1, vs2, vl);
+}"""
+    )
+
+
+def test_vmadd_vx_tum() -> None:
+    f = gen_int_h.fma_vx_op("vmadd")
+    assert (
+        f("tum").cpp_repr
+        == """template <typename V, size_t kRatio>
+  requires is_supported_integral_vreg<V> && is_compatible_vreg_ratio<V, kRatio>
+RVV_ALWAYS_INLINE
+V vmadd(vmask_t<kRatio> vm, V vd, elem_t<V> rs1, V vs2, vl_t<kRatio> vl) {
+  return __riscv_vmadd_tum(vm, vd, rs1, vs2, vl);
+}"""
+    )
+
+
+def test_vnmsac_vv_m() -> None:
+    f = gen_int_h.fma_vv_op("vnmsac")
+    assert (
+        f("m").cpp_repr
+        == """template <typename V, size_t kRatio>
+  requires is_supported_integral_vreg<V> && is_compatible_vreg_ratio<V, kRatio>
+RVV_ALWAYS_INLINE
+V vnmsac(vmask_t<kRatio> vm, V vd, V vs1, V vs2, vl_t<kRatio> vl) {
+  return __riscv_vnmsac(vm, vd, vs1, vs2, vl);
+}"""
+    )
+
+
+def test_vnmsub_vv_tumu() -> None:
+    f = gen_int_h.fma_vv_op("vnmsub")
+    assert (
+        f("tumu").cpp_repr
+        == """template <typename V, size_t kRatio>
+  requires is_supported_integral_vreg<V> && is_compatible_vreg_ratio<V, kRatio>
+RVV_ALWAYS_INLINE
+V vnmsub(vmask_t<kRatio> vm, V vd, V vs1, V vs2, vl_t<kRatio> vl) {
+  return __riscv_vnmsub_tumu(vm, vd, vs1, vs2, vl);
+}"""
+    )

@@ -124,6 +124,7 @@ def op(
     ret_type_spec: str,
     arg_type_spec: str,
     *,
+    have_dest_arg: bool = False,
     names: Sequence[str] = tuple(),
 ) -> Callable[[str], func.Function]:
     assert len(ret_type_spec) == 1
@@ -146,11 +147,17 @@ def op(
             names=names,
             name_nums="210" if len(names) == 0 else "",
         ) + (vl.vl(ratio), "vl")
+        dest_type = ret_type(vreg_type, ratio)
         return func.vreg_ratio_extend_param_list(
-            ret_type(vreg_type, ratio),
+            dest_type,
             ratio,
             variant,
-            base_list,
+            (
+                function.param_list([dest_type], ["vd"]) + base_list
+                if have_dest_arg
+                else base_list
+            ),
+            undisturbed_need_dest_arg=not have_dest_arg,
         )
 
     if "w" in arg_type_spec or "w" == ret_type_spec:

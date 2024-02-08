@@ -212,6 +212,22 @@ def sign_aware_vv_op(
     )
 
 
+def fma_vx_op(
+    inst: str,
+) -> Callable[[str], func.Function]:
+    return ops.op(
+        inst, "int", "v", "xv", names=["rs1", "vs2"], have_dest_arg=True
+    )
+
+
+def fma_vv_op(
+    inst: str,
+) -> Callable[[str], func.Function]:
+    return ops.op(
+        inst, "int", "v", "vv", names=["vs1", "vs2"], have_dest_arg=True
+    )
+
+
 def bin_part(
     op: str,
     allowed_type_category: str,
@@ -382,6 +398,12 @@ rvv_int_header = header.Header(
                         ),
                         header.WithVariants(
                             ops.op("vwmulsu", "signed", "w", "va")
+                        ),
+                        "// 3.16. Vector Single-Width Integer Multiply-Add Intrinsics",
+                        header.CrossProduct(
+                            inferred_type_part,
+                            ["vmacc", "vmadd", "vnmsac", "vnmsub"],
+                            [fma_vv_op, fma_vx_op],
                         ),
                     ]
                 )
