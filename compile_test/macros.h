@@ -174,10 +174,15 @@
   VV_OP_TEST(name, ratio, short_name, lmul)        \
   VX_OP_TEST(name, ratio, short_name, lmul)
 
-#define UNARY_OP_TEST(name, ratio, short_name, lmul)                       \
-  OP_TEST(name##_vx_##short_name##lmul, name, rvv::vmask_t<ratio>,         \
-          VREG_NAME(short_name, lmul), (VREG_NAME(short_name, lmul), vs2), \
-          (rvv::vl_t<ratio>, vl));
+#define UNARY_OP_TEST(name, ratio, short_name, lmul)                           \
+  OP_TEST_ALL(name##_vx_##short_name##lmul, name, rvv::vmask_t<ratio>,         \
+              VREG_NAME(short_name, lmul), (VREG_NAME(short_name, lmul), vs2), \
+              (rvv::vl_t<ratio>, vl));
+
+#define UNARY_OP_TEST_NO_MASK(name, ratio, short_name, lmul)               \
+  OP_TEST_NO_MASK(name##_vx_##short_name##lmul, name, rvv::vmask_t<ratio>, \
+                  VREG_NAME(short_name, lmul),                             \
+                  (VREG_NAME(short_name, lmul), vs2), (rvv::vl_t<ratio>, vl));
 
 #define WIDENING_VV_OP_TEST(name, ratio, short_name, lmul)             \
   OP_TEST_ALL(name##_vv_##short_name##lmul, name, rvv::vmask_t<ratio>, \

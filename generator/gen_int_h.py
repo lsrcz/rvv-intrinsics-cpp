@@ -478,6 +478,17 @@ rvv_int_header = header.Header(
                             [vvm_v_op, vxm_v_op],
                             allowed_variants={"", "tu"},
                         ),
+                        "// 3.19. Vector Integer Move Intrinsics",
+                        header.WithVariants(
+                            ops.op(
+                                ("vmv", "__riscv_vmv_v"),
+                                "int",
+                                "v",
+                                ["v"],
+                                names=["vs1"],
+                            ),
+                            allowed_variants={"", "tu"},
+                        ),
                     ]
                 )
             ],
