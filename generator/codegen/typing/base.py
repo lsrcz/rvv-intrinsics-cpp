@@ -1,5 +1,6 @@
 import abc
 from dataclasses import dataclass
+from typing import Optional
 
 from codegen.typing import kind as k
 
@@ -27,6 +28,7 @@ class DataKind(k.Kind):
 @dataclass(frozen=True, kw_only=True)
 class TypeParam(Type):
     typename: str
+    default_value: Optional[str] = None
 
     @property
     def cpp_repr(self) -> str:

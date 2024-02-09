@@ -117,3 +117,28 @@ class ParamVXRMValue(base.TypeParam, base.Type):
 
 def param_vxrm(typename: str) -> ParamVXRMValue:
     return ParamVXRMValue(typename=typename)
+
+
+@dataclass(frozen=True, kw_only=True)
+class FRMType(base.Type):
+    @property
+    def cpp_repr(self) -> str:
+        return "FRM"
+
+
+frm = FRMType()
+
+
+@dataclass(frozen=True, kw_only=True)
+class ParamFRMValue(base.TypeParam, base.Type):
+    @property
+    def kind(self) -> base.DataKind:
+        return base.DataKind(data_type=FRMType())
+
+    @property
+    def cpp_repr(self) -> str:
+        return self.typename
+
+
+def param_frm(typename: str) -> ParamFRMValue:
+    return ParamFRMValue(typename=typename)

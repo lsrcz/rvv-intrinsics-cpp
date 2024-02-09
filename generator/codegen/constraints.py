@@ -81,3 +81,7 @@ def narrowable(t: base.Type) -> str:
 
 def supported_vxrm(vxrm: base.Type) -> str:
     return f"SupportedVXRM<{vxrm.cpp_repr}>"
+
+
+def supported_frm(frm: base.Type) -> str:
+    return f"SupportedFRM<{frm.cpp_repr}>"

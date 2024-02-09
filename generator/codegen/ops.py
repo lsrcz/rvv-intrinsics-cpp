@@ -391,6 +391,7 @@ def callable_class_op(
     *,
     requires_clauses: Sequence[str] = tuple(),
     names: Sequence[Sequence[str]] = tuple(),
+    have_dest_arg: bool = False,
 ) -> Callable[[str], func_obj.CallableClass]:
     assert num > 0
     if isinstance(inst, str):
@@ -425,6 +426,7 @@ def callable_class_op(
                     rvv_inst + func.rvv_postfix(variant, overloaded=True),
                     param_list,
                 ),
+                have_dest_arg=have_dest_arg,
             ),
         )
 

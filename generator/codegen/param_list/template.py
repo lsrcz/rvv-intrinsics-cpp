@@ -64,7 +64,11 @@ class TemplateTypeParamList(TemplateParamList):
     def _cpp_repr_without_brackets(self) -> str:
         return ", ".join(
             [
-                f"{type_param.kind.cpp_repr} {type_param.typename}"
+                (
+                    f"{type_param.kind.cpp_repr} {type_param.typename} = {type_param.default_value}"
+                    if type_param.default_value
+                    else f"{type_param.kind.cpp_repr} {type_param.typename}"
+                )
                 for type_param in self.type_param_list
             ]
         )

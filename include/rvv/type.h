@@ -237,6 +237,17 @@ enum class VXRM {
 template <VXRM kVXRM>
 concept SupportedVXRM = kVXRM >= VXRM::kRNU && kVXRM <= VXRM::kROD;
 
+enum class FRM {
+  kImplicit = 0,
+  kRNE = 1,
+  kRTZ = 2,
+  kRDN = 3,
+  kRUP = 4,
+  kRMM = 5,
+};
+template <FRM kFRM>
+concept SupportedFRM = kFRM >= FRM::kImplicit && kFRM <= FRM::kRMM;
+
 }  // namespace rvv
 
 #include <rvv/type.inc>

@@ -7,11 +7,11 @@
 #include <rvv/policy/tumu/fp.h>
 
 #if HAS_ZVE32F && HAS_ZVE64D
-BASE_WIDENING_OP_TEST(OP_TEST_ALL, vfwadd, vfwadd, 8, f32, m4);
-BASE_WIDENING_OP_TEST(OP_TEST_ALL, vfwsub, vfwsub, 16, f32, m2);
+FP_TEST(BASE_WIDENING_OP_TEST, OP_TEST_ALL, vfwadd, 8, f32, m4);
+FP_TEST(BASE_WIDENING_OP_TEST, OP_TEST_ALL, vfwsub, 16, f32, m2);
 #endif
 
 #if HAS_ZVFHMIN && HAS_ZVE32F
-BASE_WIDENING_OP_TEST(OP_TEST_ALL, vfwadd, vfwadd, 4, f16, m4);
-BASE_WIDENING_OP_TEST(OP_TEST_ALL, vfwsub, vfwsub, 8, f16, m2);
+FP_TEST(BASE_WIDENING_OP_TEST, OP_TEST_ALL, vfwadd, 4, f16, m4);
+FP_TEST(BASE_WIDENING_OP_TEST, OP_TEST_ALL, vfwsub, 8, f16, m2);
 #endif

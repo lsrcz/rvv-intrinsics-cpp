@@ -1,52 +1,140 @@
-from typing import Callable
-from codegen import header, main, ops, func
+from typing import Callable, Sequence
+
+from codegen import func, header, main, ops, constraints, func_obj
+from codegen.param_list import function, template
+from codegen.typing import misc
 
 
-def widening_vf_op(
-    inst: str, need_suffix: bool = True
-) -> Callable[[str], func.Function]:
-    return ops.op(
-        (inst, f"__riscv_{inst}_vf") if need_suffix else inst,
+def fp_body(rvv_inst: str, param_list: function.FunctionTypedParamList) -> str:
+    augmented_param_list: Callable[[str], function.FunctionArgumentList] = (
+        lambda frm: param_list[0:-1].forward
+        + function.FunctionArgumentList(frm)
+        + param_list[-1:].forward
+    )
+    function_application: Callable[[str], str] = (
+        lambda frm: func.apply_function(rvv_inst, augmented_param_list(frm))
+    )
+    return f"""  if constexpr (kFRM == FRM::kImplicit) {{
+    return {func.apply_function(rvv_inst, param_list)};
+  }} if constexpr (kFRM == FRM::kRNE) {{
+    return {function_application("__RISCV_FRM_RNE")};
+  }} else if constexpr (kFRM == FRM::kRTZ) {{
+    return {function_application("__RISCV_FRM_RTZ")};
+  }} else if constexpr (kFRM == FRM::kRDN) {{
+    return {function_application("__RISCV_FRM_RDN")};
+  }} else if constexpr (kFRM == FRM::kRUP) {{
+    return {function_application("__RISCV_FRM_RUP")};
+  }} else if constexpr (kFRM == FRM::kRMM) {{
+    return {function_application("__RISCV_FRM_RMM")};
+  }}"""
+
+
+def fp_op(
+    inst: str | tuple[str, str] | tuple[str, Sequence[str]],
+    type_specs: Sequence[ops.TypeSpec],
+    *,
+    have_dest_arg: bool = False,
+) -> Callable[[str], func_obj.CallableClass]:
+    num = len(type_specs)
+    frm = misc.ParamFRMValue(typename="kFRM", default_value="FRM::kImplicit")
+
+    template_param_list = template.TemplateTypeParamList(frm)
+    requires_clauses = [constraints.supported_frm(frm)]
+    return ops.callable_class_op(
+        num,
+        inst,
         "fp",
-        "w",
-        ["v", "e"],
+        template_param_list,
+        type_specs,
+        fp_body,
+        requires_clauses=requires_clauses,
+        have_dest_arg=have_dest_arg,
     )
 
 
-def widening_vf_no_suffix_op(inst: str) -> Callable[[str], func.Function]:
-    return widening_vf_op(inst, False)
-
-
-def widening_wf_op(inst: str) -> Callable[[str], func.Function]:
-    return ops.op(
-        (inst, f"__riscv_{inst}_wf"),
-        "fp",
-        "v",
-        ["v", "en"],
+def fp_vv_and_vx_op(
+    inst: str,
+) -> Callable[[str], func_obj.CallableClass]:
+    return fp_op(
+        inst,
+        [
+            ("v", ["v", "v"]),
+            ("v", ["v", "e"]),
+        ],
     )
 
 
-def widening_vv_op(
-    inst: str, need_suffix: bool = True
-) -> Callable[[str], func.Function]:
-    return ops.op(
-        (inst, f"__riscv_{inst}_vv") if need_suffix else inst,
-        "fp",
-        "w",
-        ["v", "v"],
+def fp_vx_op(
+    inst: str,
+) -> Callable[[str], func_obj.CallableClass]:
+    return fp_op(
+        inst,
+        [
+            ("v", ["v", "e"]),
+        ],
     )
 
 
-def widening_vv_no_suffix_op(inst: str) -> Callable[[str], func.Function]:
-    return widening_vv_op(inst, False)
+def fp_v_op(
+    inst: str,
+) -> Callable[[str], func_obj.CallableClass]:
+    return fp_op(
+        inst,
+        [
+            ("v", ["v"]),
+        ],
+    )
 
 
-def widening_wv_op(inst: str) -> Callable[[str], func.Function]:
-    return ops.op(
-        (inst, f"__riscv_{inst}_wv"),
-        "fp",
-        "v",
-        ["v", "n"],
+def fp_widening_op(inst: str) -> Callable[[str], func_obj.CallableClass]:
+    return fp_op(
+        (
+            inst,
+            [
+                f"__riscv_{inst}_vf",
+                f"__riscv_{inst}_wf",
+                f"__riscv_{inst}_vv",
+                f"__riscv_{inst}_wv",
+            ],
+        ),
+        [
+            ("w", ["v", "e"]),
+            ("v", ["v", "en"]),
+            ("w", ["v", "v"]),
+            ("v", ["v", "n"]),
+        ],
+    )
+
+
+def fp_widening_vv_vf_op(inst: str) -> Callable[[str], func_obj.CallableClass]:
+    return fp_op(
+        inst,
+        [
+            ("w", ["v", "e"]),
+            ("w", ["v", "v"]),
+        ],
+    )
+
+
+def fp_fma_op(inst: str) -> Callable[[str], func_obj.CallableClass]:
+    return fp_op(
+        inst,
+        [
+            ("v", ["v", "v"]),
+            ("v", ["e", "v"]),
+        ],
+        have_dest_arg=True,
+    )
+
+
+def fp_widening_fma_op(inst: str) -> Callable[[str], func_obj.CallableClass]:
+    return fp_op(
+        inst,
+        [
+            ("w", ["v", "v"]),
+            ("w", ["e", "v"]),
+        ],
+        have_dest_arg=True,
     )
 
 
@@ -61,12 +149,15 @@ rvv_fp_header = header.Header(
                         "// 5. Vector Floating-Point Intrinsics",
                         "// 5.1. Vector Single-Width Floating-Point Add/Subtract Intrinsics",
                         header.CrossProduct(
-                            ops.bin_part,
+                            ops.inferred_type_part,
                             ["vfadd", "vfsub"],
-                            ["fp"],
-                            [ops.simple_vx_op, ops.simple_vv_op],
+                            [fp_vv_and_vx_op],
+                            allowed_variants={"", "tu", "mu", "tumu"},
                         ),
-                        header.WithVariants(ops.simple_vx_op("vfrsub", "fp")),
+                        header.WithVariants(
+                            fp_vx_op("vfrsub"),
+                            allowed_variants={"", "tu", "mu", "tumu"},
+                        ),
                         header.WithVariants(
                             ops.op("vfneg", "fp", "v", ["v"], names=["vs"])
                         ),
@@ -74,29 +165,26 @@ rvv_fp_header = header.Header(
                         header.CrossProduct(
                             ops.inferred_type_part,
                             ["vfwadd", "vfwsub"],
-                            [
-                                widening_vv_op,
-                                widening_vf_op,
-                                widening_wv_op,
-                                widening_wf_op,
-                            ],
+                            [fp_widening_op],
+                            allowed_variants={"", "tu", "mu", "tumu"},
                         ),
                         "// 5.3. Vector Single-Width Floating-Point Multiply/Divide Intrinsics",
                         header.CrossProduct(
-                            ops.bin_part,
+                            ops.inferred_type_part,
                             ["vfmul", "vfdiv"],
-                            ["fp"],
-                            [ops.simple_vx_op, ops.simple_vv_op],
+                            [fp_vv_and_vx_op],
+                            allowed_variants={"", "tu", "mu", "tumu"},
                         ),
-                        header.WithVariants(ops.simple_vx_op("vfrdiv", "fp")),
+                        header.WithVariants(
+                            fp_vx_op("vfrdiv"),
+                            allowed_variants={"", "tu", "mu", "tumu"},
+                        ),
                         "// 5.4. Vector Widening Floating-Point Multiply Intrinsics",
                         header.CrossProduct(
                             ops.inferred_type_part,
                             ["vfwmul"],
-                            [
-                                widening_vv_no_suffix_op,
-                                widening_vf_no_suffix_op,
-                            ],
+                            [fp_widening_vv_vf_op],
+                            allowed_variants={"", "tu", "mu", "tumu"},
                         ),
                         "// 5.5. Vector Single-Width Floating-Point Fused Multiply-Add Intrinsics",
                         header.CrossProduct(
@@ -111,7 +199,8 @@ rvv_fp_header = header.Header(
                                 "vfmsub",
                                 "vfnmsub",
                             ],
-                            [ops.fma_vv_op, ops.fma_vx_op],
+                            [fp_fma_op],
+                            allowed_variants={"", "tu", "mu", "tumu"},
                         ),
                         "// 5.6. Vector Widening Floating-Point Fused Multiply-Add Intrinsics",
                         header.CrossProduct(
@@ -122,7 +211,8 @@ rvv_fp_header = header.Header(
                                 "vfwmsac",
                                 "vfwnmsac",
                             ],
-                            [ops.widening_fma_vv_op, ops.widening_fma_vx_op],
+                            [fp_widening_fma_op],
+                            allowed_variants={"", "tu", "mu", "tumu"},
                         ),
                     ]
                 )
