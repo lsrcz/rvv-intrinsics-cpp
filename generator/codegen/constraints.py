@@ -77,3 +77,7 @@ def widenable_n(n: int, t: base.Type) -> str:
 
 def narrowable(t: base.Type) -> str:
     return f"Narrowable<{t.cpp_repr}>"
+
+
+def supported_vxrm(vxrm: base.Type) -> str:
+    return f"SupportedVXRM<{vxrm.cpp_repr}>"

@@ -34,6 +34,7 @@ class Function:
         template_param_list: Optional[template.TemplateTypeParamList] = None,
         require_clauses: Sequence[str] = tuple(),
         feature_guards: Sequence[guarded.Guard] = tuple(),
+        modifier: str = "",
     ) -> None:
         if not template_param_list:
             assert len(require_clauses) == 0
@@ -42,10 +43,11 @@ class Function:
         )
         self.require_clauses: Sequence[str] = require_clauses
         self.ret_type: base.Type = ret_type
-        self.cpp_intrinsics_base_name: str = func_name
+        self.func_name: str = func_name
         self.function_param_list: function.FunctionTypedParamList = (
             function_param_list
         )
+        self.modifier = modifier
         self.function_body: Optional[str] = function_body
         self.feature_guards: Sequence[guarded.Guard] = feature_guards
 
@@ -62,12 +64,17 @@ class Function:
             else "  requires " + " && ".join(self.require_clauses) + "\n"
         )
         declaration: str = f"""RVV_ALWAYS_INLINE
-{self.ret_type.cpp_repr} {self.cpp_intrinsics_base_name}{self.function_param_list.cpp_repr}"""
+{self.ret_type.cpp_repr} {self.func_name}{self.function_param_list.cpp_repr}"""
+        modifier = "" if self.modifier == "" else f" {self.modifier}"
         body_or_semicolon: str = (
             f" {{\n{self.function_body}\n}}" if self.function_body else ";"
         )
         string: str = (
-            template_clause + requires_clause + declaration + body_or_semicolon
+            template_clause
+            + requires_clause
+            + declaration
+            + modifier
+            + body_or_semicolon
         )
         return guarded.Guarded(self.feature_guards, string).cpp_repr
 
@@ -405,6 +412,7 @@ def template_vreg_ratio(
     feature_guards: Callable[
         [vreg.ParamVRegType, misc.ParamSizeTValue], Sequence[guarded.Guard]
     ] = lambda _, __: tuple(),
+    modifier: str = "",
 ) -> Callable[[str], Function]:
     vreg_type = vreg.param("V")
     ratio = misc.param_size_t("kRatio")
@@ -419,6 +427,7 @@ def template_vreg_ratio(
             template_param_list=template_param_list(vreg_type, ratio),
             require_clauses=require_clauses(vreg_type, ratio),
             feature_guards=feature_guards(vreg_type, ratio),
+            modifier=modifier,
         )
 
     return inner

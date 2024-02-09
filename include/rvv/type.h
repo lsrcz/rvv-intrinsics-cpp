@@ -227,6 +227,16 @@ using to_unsigned_t = typename internal::ToUnsigned<T>::Type;
 template <typename T>
 using to_signed_t = typename internal::ToSigned<T>::Type;
 
+enum class VXRM {
+  kRNU = 0,
+  kRNE = 1,
+  kRDN = 2,
+  kROD = 3,
+};
+
+template <VXRM kVXRM>
+concept SupportedVXRM = kVXRM >= VXRM::kRNU && kVXRM <= VXRM::kROD;
+
 }  // namespace rvv
 
 #include <rvv/type.inc>

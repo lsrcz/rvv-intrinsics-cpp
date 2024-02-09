@@ -92,3 +92,28 @@ class PtrdiffTType(base.Type):
 
 
 ptrdiff_t = PtrdiffTType()
+
+
+@dataclass(frozen=True, kw_only=True)
+class VXRMType(base.Type):
+    @property
+    def cpp_repr(self) -> str:
+        return "VXRM"
+
+
+vxrm = VXRMType()
+
+
+@dataclass(frozen=True, kw_only=True)
+class ParamVXRMValue(base.TypeParam, base.Type):
+    @property
+    def kind(self) -> base.DataKind:
+        return base.DataKind(data_type=VXRMType())
+
+    @property
+    def cpp_repr(self) -> str:
+        return self.typename
+
+
+def param_vxrm(typename: str) -> ParamVXRMValue:
+    return ParamVXRMValue(typename=typename)
