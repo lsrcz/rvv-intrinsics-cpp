@@ -64,24 +64,37 @@ def fixed_op(
         "unsigned" if inst.endswith("u") or inst == "vssrl" else "signed"
     )
     vxrm = misc.param_vxrm("kVXRM")
+
+    def dest_type(vreg_type: vreg.VRegType) -> vreg.VRegType:
+        if inst in ["vnclip", "vnclipu"]:
+            return vreg.narrow(vreg_type)
+        return vreg_type
+
+    def arg2_v_type(vreg_type: vreg.VRegType) -> vreg.VRegType:
+        match inst:
+            case "vssra":
+                return vreg.to_unsigned(vreg_type)
+            case "vnclip":
+                return vreg.to_unsigned(vreg.narrow(vreg_type))
+            case "vnclipu":
+                return vreg.narrow(vreg_type)
+            case _:
+                return vreg_type
+
     return with_variant(
         template.TemplateTypeParamList(vxrm),
         inst,
         [
             func.template_vreg_ratio(
-                lambda vreg_type, _: vreg_type,
+                lambda vreg_type, _: dest_type(vreg_type),
                 "operator()",
                 lambda variant, vreg_type, ratio: func.vreg_ratio_param_list(
-                    vreg_type,
+                    dest_type(vreg_type),
                     ratio,
                     variant,
                     [
                         vreg_type,
-                        (
-                            vreg.to_unsigned(vreg_type)
-                            if inst == "vssra"
-                            else vreg_type
-                        ),
+                        arg2_v_type(vreg_type),
                         vl.vl(ratio),
                     ],
                     ["vs2", "vs1", "vl"],
@@ -90,22 +103,25 @@ def fixed_op(
                     fixed_body(variant, inst, param_list)
                 ),
                 require_clauses=lambda vreg_type, ratio: ops.vreg_require_clauses(
-                    allowed_type_category, vreg_type, ratio
+                    allowed_type_category,
+                    vreg_type,
+                    ratio,
+                    narrowing=inst in ["vnclip", "vnclipu"],
                 ),
                 modifier="const",
             ),
             func.template_vreg_ratio(
-                lambda vreg_type, _: vreg_type,
+                lambda vreg_type, _: dest_type(vreg_type),
                 "operator()",
                 lambda variant, vreg_type, ratio: func.vreg_ratio_param_list(
-                    vreg_type,
+                    dest_type(vreg_type),
                     ratio,
                     variant,
                     [
                         vreg_type,
                         (
                             misc.size_t
-                            if inst in ["vssra", "vssrl"]
+                            if inst in ["vssra", "vssrl", "vnclip", "vnclipu"]
                             else vreg.get_elem(vreg_type)
                         ),
                         vl.vl(ratio),
@@ -116,7 +132,10 @@ def fixed_op(
                     fixed_body(variant, inst, param_list)
                 ),
                 require_clauses=lambda vreg_type, ratio: ops.vreg_require_clauses(
-                    allowed_type_category, vreg_type, ratio
+                    allowed_type_category,
+                    vreg_type,
+                    ratio,
+                    narrowing=inst in ["vnclip", "vnclipu"],
                 ),
                 modifier="const",
             ),
@@ -158,6 +177,13 @@ rvv_fixed_header = header.Header(
                         header.CrossProduct(
                             ops.inferred_type_part,
                             ["vssra", "vssrl"],
+                            [fixed_op],
+                            allowed_variants={"", "tu", "mu", "tumu"},
+                        ),
+                        "// 4.5. Vector Narrowing Fixed-Point Clip Intrinsics",
+                        header.CrossProduct(
+                            ops.inferred_type_part,
+                            ["vnclip", "vnclipu"],
                             [fixed_op],
                             allowed_variants={"", "tu", "mu", "tumu"},
                         ),
