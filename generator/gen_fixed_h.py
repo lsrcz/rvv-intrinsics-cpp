@@ -29,7 +29,9 @@ def with_variant(
 
 
 def fixed_body(
-    variant: str, inst: str, param_list: function.FunctionTypedParamList
+    variant: str,
+    inst: str,
+    param_list: function.FunctionTypedParamList,
 ) -> str:
     function_name = f"__riscv_{inst}" + func.rvv_postfix(
         variant, overloaded=True
@@ -55,8 +57,12 @@ def fixed_body(
   }}"""
 
 
-def fixed_op(inst: str) -> Callable[[str], func_obj.CallableClass]:
-    allowed_type_category = "unsigned" if inst.endswith("u") else "signed"
+def fixed_op(
+    inst: str,
+) -> Callable[[str], func_obj.CallableClass]:
+    allowed_type_category = (
+        "unsigned" if inst.endswith("u") or inst == "vssrl" else "signed"
+    )
     vxrm = misc.param_vxrm("kVXRM")
     return with_variant(
         template.TemplateTypeParamList(vxrm),
@@ -69,7 +75,15 @@ def fixed_op(inst: str) -> Callable[[str], func_obj.CallableClass]:
                     vreg_type,
                     ratio,
                     variant,
-                    [vreg_type, vreg_type, vl.vl(ratio)],
+                    [
+                        vreg_type,
+                        (
+                            vreg.to_unsigned(vreg_type)
+                            if inst == "vssra"
+                            else vreg_type
+                        ),
+                        vl.vl(ratio),
+                    ],
                     ["vs2", "vs1", "vl"],
                 ),
                 lambda variant, vreg_type, ratio, param_list: (
@@ -87,7 +101,15 @@ def fixed_op(inst: str) -> Callable[[str], func_obj.CallableClass]:
                     vreg_type,
                     ratio,
                     variant,
-                    [vreg_type, vreg.get_elem(vreg_type), vl.vl(ratio)],
+                    [
+                        vreg_type,
+                        (
+                            misc.size_t
+                            if inst in ["vssra", "vssrl"]
+                            else vreg.get_elem(vreg_type)
+                        ),
+                        vl.vl(ratio),
+                    ],
                     ["vs2", "rs1", "vl"],
                 ),
                 lambda variant, vreg_type, ratio, param_list: (
@@ -118,9 +140,24 @@ rvv_fixed_header = header.Header(
                             ["vsadd", "vssub", "vsaddu", "vssubu"],
                             [ops.sign_aware_vv_op, ops.sign_aware_vx_op],
                         ),
+                        "// 4.2. Vector Single-Width Averaging Add and Subtract Intrinsics",
                         header.CrossProduct(
                             ops.inferred_type_part,
                             ["vaadd", "vaaddu", "vasub", "vasubu"],
+                            [fixed_op],
+                            allowed_variants={"", "tu", "mu", "tumu"},
+                        ),
+                        "// 4.3. Vector Single-Width Fractional Multiply with Rounding and Saturation Intrinsics",
+                        header.CrossProduct(
+                            ops.inferred_type_part,
+                            ["vsmul"],
+                            [fixed_op],
+                            allowed_variants={"", "tu", "mu", "tumu"},
+                        ),
+                        "// 4.4. Vector Single-Width Scaling Shift Intrinsics",
+                        header.CrossProduct(
+                            ops.inferred_type_part,
+                            ["vssra", "vssrl"],
                             [fixed_op],
                             allowed_variants={"", "tu", "mu", "tumu"},
                         ),
