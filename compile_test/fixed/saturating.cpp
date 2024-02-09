@@ -6,7 +6,7 @@
 #include <rvv/policy/tu/fixed.h>
 #include <rvv/policy/tumu/fixed.h>
 
-BIN_OP_TEST(vsadd, 8, i8, m1);
-BIN_OP_TEST(vsaddu, 16, u8, mf2);
-BIN_OP_TEST(vssub, 1, i8, m8);
-BIN_OP_TEST(vssubu, 4, u8, m2);
+BASE_BIN_OP_TEST(OP_TEST_ALL, vsadd, vsadd, 8, i8, m1);
+BASE_BIN_OP_TEST(OP_TEST_ALL, vsaddu, vsaddu, 16, u8, mf2);
+BASE_BIN_OP_TEST(OP_TEST_ALL, vssub, vssub, 1, i8, m8);
+BASE_BIN_OP_TEST(OP_TEST_ALL, vssubu, vssubu, 4, u8, m2);

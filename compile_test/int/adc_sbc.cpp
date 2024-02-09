@@ -6,10 +6,8 @@
 #include <rvv/policy/tu/int.h>
 #include <rvv/policy/tumu/int.h>
 
-VXM_V_TEST(vadc, 2, i16, m8)
-VXM_V_TEST(vsbc, 8, u16, m2)
-VVM_V_TEST(vadc, 2, i16, m8)
-VVM_V_TEST(vsbc, 8, u16, m2)
+BASE_WITH_CARRY_TEST(OP_TEST_NO_MASK, vadc, vadc, 2, i16, m8)
+BASE_WITH_CARRY_TEST(OP_TEST_NO_MASK, vsbc, vsbc, 8, u16, m2)
 
 #define CARRY_OUT_VX_TEST(name, ratio, short_name, lmul)           \
   OP_TEST(name##_vx_##short_name##lmul, name, rvv::vmask_t<ratio>, \

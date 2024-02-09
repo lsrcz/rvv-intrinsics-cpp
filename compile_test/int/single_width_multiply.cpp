@@ -22,8 +22,8 @@
   SU_VV_OP_TEST(name, ratio, short_name, lmul)    \
   SU_VX_OP_TEST(name, ratio, short_name, lmul)
 
-BIN_OP_TEST(vmul, 8, i8, m1);
-BIN_OP_TEST(vmul, 16, u16, m1);
-BIN_OP_TEST(vmulh, 4, i8, m2);
-BIN_OP_TEST(vmulhu, 16, u32, m2);
+BASE_BIN_OP_TEST(OP_TEST_ALL, vmul, vmul, 8, i8, m1);
+BASE_BIN_OP_TEST(OP_TEST_ALL, vmul, vmul, 16, u16, m1);
+BASE_BIN_OP_TEST(OP_TEST_ALL, vmulh, vmulh, 4, i8, m2);
+BASE_BIN_OP_TEST(OP_TEST_ALL, vmulhu, vmulhu, 16, u32, m2);
 SU_OP_TEST(vmulhsu, 4, i16, m4);

@@ -6,16 +6,14 @@
 #include <rvv/policy/tu/int.h>
 #include <rvv/policy/tumu/int.h>
 
+#include "macros/op_test_base.h"
+
 #if HAS_ZVFH && HAS_ZVE32F
-WIDENING_FMA_VV_OP_TEST(vfwmacc, 16, f16, m1);
-WIDENING_FMA_VX_OP_TEST(vfwnmacc, 16, f16, m1);
-WIDENING_FMA_VV_OP_TEST(vfwmsac, 16, f16, m1);
-WIDENING_FMA_VX_OP_TEST(vfwnmsac, 16, f16, m1);
+BASE_WIDENING_FMA_OP_TEST(OP_TEST_ALL_NO_DEST, vfwmsac, vfwmsac, 16, f16, m1);
+BASE_WIDENING_FMA_OP_TEST(OP_TEST_ALL_NO_DEST, vfwnmsac, vfwnmsac, 16, f16, m1);
 #endif
 
 #if HAS_ZVE32F && HAS_ZVE64D
-WIDENING_FMA_VV_OP_TEST(vfwmacc, 32, f32, m1);
-WIDENING_FMA_VX_OP_TEST(vfwnmacc, 32, f32, m1);
-WIDENING_FMA_VV_OP_TEST(vfwmsac, 32, f32, m1);
-WIDENING_FMA_VX_OP_TEST(vfwnmsac, 32, f32, m1);
+BASE_WIDENING_FMA_OP_TEST(OP_TEST_ALL_NO_DEST, vfwmsac, vfwmsac, 32, f32, m1);
+BASE_WIDENING_FMA_OP_TEST(OP_TEST_ALL_NO_DEST, vfwnmsac, vfwnmsac, 32, f32, m1);
 #endif

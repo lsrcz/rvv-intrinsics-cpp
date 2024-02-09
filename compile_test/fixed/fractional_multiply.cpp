@@ -6,4 +6,4 @@
 #include <rvv/policy/tu/fixed.h>
 #include <rvv/policy/tumu/fixed.h>
 
-CALLABLE_BIN_OP_TEST(vsmul_rdn, vsmul<rvv::VXRM::kRDN>, 8, i8, m1);
+BASE_BIN_OP_TEST(OP_TEST_ALL, vsmul_rdn, vsmul<rvv::VXRM::kRDN>, 8, i8, m1);

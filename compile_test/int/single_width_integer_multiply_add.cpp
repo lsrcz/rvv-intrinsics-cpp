@@ -6,7 +6,9 @@
 #include <rvv/policy/tu/int.h>
 #include <rvv/policy/tumu/int.h>
 
-FMA_OP_TEST(vmadd, 4, i8, m2);
-FMA_OP_TEST(vnmsub, 8, i8, m1);
-FMA_OP_TEST(vmadd, 16, u16, m1);
-FMA_OP_TEST(vnmsac, 32, u16, mf2);
+#include "macros/op_test_base.h"
+
+BASE_FMA_OP_TEST(OP_TEST_ALL_NO_DEST, vmadd, vmadd, 4, i8, m2);
+BASE_FMA_OP_TEST(OP_TEST_ALL_NO_DEST, vnmsub, vnmsub, 8, i8, m1);
+BASE_FMA_OP_TEST(OP_TEST_ALL_NO_DEST, vmadd, vmadd, 16, u16, m1);
+BASE_FMA_OP_TEST(OP_TEST_ALL_NO_DEST, vnmsac, vnmsac, 32, u16, mf2);

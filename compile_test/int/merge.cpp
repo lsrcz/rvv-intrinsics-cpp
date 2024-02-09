@@ -6,7 +6,5 @@
 #include <rvv/policy/tu/int.h>
 #include <rvv/policy/tumu/int.h>
 
-VXM_V_TEST(vmerge, 2, i16, m8)
-VXM_V_TEST(vmerge, 8, u16, m2)
-VVM_V_TEST(vmerge, 2, i16, m8)
-VVM_V_TEST(vmerge, 8, u16, m2)
+BASE_WITH_CARRY_TEST(OP_TEST_NO_MASK, vmerge, vmerge, 2, i16, m8)
+BASE_WITH_CARRY_TEST(OP_TEST_NO_MASK, vmerge, vmerge, 8, u16, m2)

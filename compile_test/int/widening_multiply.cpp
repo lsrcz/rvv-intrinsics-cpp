@@ -17,9 +17,9 @@
       WIDEN_VREG_NAME(short_name, lmul), (VREG_NAME(short_name, lmul), vs2), \
       (C_TYPE_NAME(TO_UNSIGNED(short_name)), vs1), (rvv::vl_t<ratio>, vl));
 
-WIDENING_VV_OP_TEST(vwmul, 8, i8, m1);
-WIDENING_VX_OP_TEST(vwmul, 8, i8, m1);
-WIDENING_VV_OP_TEST(vwmulu, 8, u8, m1);
-WIDENING_VX_OP_TEST(vwmulu, 8, u8, m1);
+BASE_WIDENING_VV_OP_TEST(OP_TEST_ALL, vwmul, vwmul, 8, i8, m1);
+BASE_WIDENING_VX_OP_TEST(OP_TEST_ALL, vwmul, vwmul, 8, i8, m1);
+BASE_WIDENING_VV_OP_TEST(OP_TEST_ALL, vwmulu, vwmulu, 8, u8, m1);
+BASE_WIDENING_VX_OP_TEST(OP_TEST_ALL, vwmulu, vwmulu, 8, u8, m1);
 SU_WIDENING_VV_OP_TEST(vwmulsu, 8, i16, m2);
 SU_WIDENING_VX_OP_TEST(vwmulsu, 8, i16, m2);
