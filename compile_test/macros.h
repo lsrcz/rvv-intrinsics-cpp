@@ -76,9 +76,9 @@
 #define LONG_TYPE_NAME_u16 uint16
 #define LONG_TYPE_NAME_u32 uint32
 #define LONG_TYPE_NAME_u64 uint64
-#define LONG_TYPE_NAME_f16 rvv::float16
-#define LONG_TYPE_NAME_f32 rvv::float32
-#define LONG_TYPE_NAME_f64 rvv::float64
+#define LONG_TYPE_NAME_f16 float16
+#define LONG_TYPE_NAME_f32 float32
+#define LONG_TYPE_NAME_f64 float64
 
 #define LONG_TYPE_NAME(short_name) LONG_TYPE_NAME_##short_name
 #define C_TYPE_NAME_i8 int8_t
