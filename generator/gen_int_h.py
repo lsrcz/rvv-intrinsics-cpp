@@ -138,39 +138,6 @@ def vncvt(variant: str) -> func.Function:
     return ops.op(("vncvt", "__riscv_vncvt_x"), "int", "n", ["v"])(variant)
 
 
-def comparing_type_category(inst: str) -> str:
-    match inst:
-        case "vmseq" | "vmsne":
-            return "int"
-        case "vmslt" | "vmsle" | "vmsgt" | "vmsge":
-            return "signed"
-        case "vmsltu" | "vmsleu" | "vmsgtu" | "vmsgeu":
-            return "unsigned"
-        case _:
-            raise ValueError(f"Unknown instruction: {inst}")
-
-
-def comparing_vx_op(
-    inst: str,
-) -> Callable[[str], func.Function]:
-    return ops.op(
-        inst,
-        comparing_type_category(inst),
-        "m",
-        ["v", "e"],
-    )
-
-
-def comparing_vv_op(
-    inst: str,
-) -> Callable[[str], func.Function]:
-    return ops.op(
-        inst,
-        comparing_type_category(inst),
-        "m",
-        ["v", "v"],
-    )
-
 
 def widening_part(
     op: str,
@@ -278,7 +245,7 @@ rvv_int_header = header.Header(
                                 "vmsgtu",
                                 "vmsgeu",
                             ],
-                            [comparing_vv_op, comparing_vx_op],
+                            [ops.comparing_vv_op, ops.comparing_vx_op],
                         ),
                         "// 3.12. Vector Integer Compare Intrinsics",
                         header.CrossProduct(

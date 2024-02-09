@@ -436,3 +436,39 @@ def callable_class_op(
         call_operators,
         requires_clauses=requires_clauses,
     )
+
+
+def comparing_type_category(inst: str) -> str:
+    match inst:
+        case "vmseq" | "vmsne":
+            return "int"
+        case "vmslt" | "vmsle" | "vmsgt" | "vmsge":
+            return "signed"
+        case "vmsltu" | "vmsleu" | "vmsgtu" | "vmsgeu":
+            return "unsigned"
+        case "vmfeq" | "vmfne" | "vmflt" | "vmfle" | "vmfgt" | "vmfge":
+            return "fp"
+        case _:
+            raise ValueError(f"Unknown instruction: {inst}")
+
+
+def comparing_vx_op(
+    inst: str,
+) -> Callable[[str], func.Function]:
+    return ops.op(
+        inst,
+        comparing_type_category(inst),
+        "m",
+        ["v", "e"],
+    )
+
+
+def comparing_vv_op(
+    inst: str,
+) -> Callable[[str], func.Function]:
+    return ops.op(
+        inst,
+        comparing_type_category(inst),
+        "m",
+        ["v", "v"],
+    )

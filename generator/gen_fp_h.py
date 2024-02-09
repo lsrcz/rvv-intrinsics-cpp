@@ -138,6 +138,10 @@ def fp_widening_fma_op(inst: str) -> Callable[[str], func_obj.CallableClass]:
     )
 
 
+def fp_compare_op(inst: str) -> Callable[[str], func_obj.CallableClass]:
+    return fp_op(inst, [("m", ["v", "v"]), ("m", ["v", "e"])])
+
+
 rvv_fp_header = header.Header(
     [
         header.Include("rvv/type.h"),
@@ -244,6 +248,19 @@ rvv_fp_header = header.Header(
                         "// 5.11. Vector Floating-Point Absolute Value Intrinsics",
                         header.WithVariants(
                             ops.simple_v_op("vfabs", "fp"),
+                        ),
+                        "// 5.12. Vector Floating-Point Compare Intrinsics",
+                        header.CrossProduct(
+                            ops.inferred_type_part,
+                            [
+                                "vmfeq",
+                                "vmfne",
+                                "vmflt",
+                                "vmfle",
+                                "vmfgt",
+                                "vmfge",
+                            ],
+                            [ops.comparing_vv_op, ops.comparing_vx_op],
                         ),
                     ]
                 )

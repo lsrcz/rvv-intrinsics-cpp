@@ -184,4 +184,20 @@
   BASE_VXM_V_TEST(macro, name, rvv_name, ratio, short_name, lmul)            \
   BASE_VVM_V_TEST(macro, name, rvv_name, ratio, short_name, lmul)
 
+#define BASE_COMPARE_VV_OP_TEST(macro, name, rvv_name, ratio, short_name, \
+                                lmul)                                     \
+  macro(name##_vv_##short_name##lmul, rvv_name, rvv::vmask_t<ratio>,      \
+        rvv::vmask_t<ratio>, (VREG_NAME(short_name, lmul), vs2),          \
+        (VREG_NAME(short_name, lmul), vs1), (rvv::vl_t<ratio>, vl));
+
+#define BASE_COMPARE_VX_OP_TEST(macro, name, rvv_name, ratio, short_name, \
+                                lmul)                                     \
+  macro(name##_vx_##short_name##lmul, rvv_name, rvv::vmask_t<ratio>,      \
+        rvv::vmask_t<ratio>, (VREG_NAME(short_name, lmul), vs2),          \
+        (C_TYPE_NAME(short_name), rs1), (rvv::vl_t<ratio>, vl));
+
+#define BASE_COMPARE_OP_TEST(macro, name, rvv_name, ratio, short_name, lmul) \
+  BASE_COMPARE_VV_OP_TEST(macro, name, rvv_name, ratio, short_name, lmul)    \
+  BASE_COMPARE_VX_OP_TEST(macro, name, rvv_name, ratio, short_name, lmul)
+
 #endif  // MACROS_OP_TEST_BASE_H_
