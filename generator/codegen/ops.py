@@ -1,7 +1,7 @@
 from typing import Callable, Sequence
 
-from codegen import constraints, func, header, ops
-from codegen.param_list import function
+from codegen import constraints, func, func_obj, header, ops
+from codegen.param_list import function, template
 from codegen.typing import base, misc, vl, vmask, vreg
 
 
@@ -132,6 +132,22 @@ def op(
     *,
     have_dest_arg: bool = False,
     names: Sequence[str] = tuple(),
+    modifier: str = "",
+    function_body: Callable[
+        [
+            str,
+            str,
+            function.FunctionTypedParamList,
+        ],
+        str,
+    ] = lambda variant, rvv_inst, param_list: (
+        "  return "
+        + func.apply_function(
+            rvv_inst + func.rvv_postfix(variant, overloaded=True),
+            param_list,
+        )
+        + ";"
+    ),
 ) -> Callable[[str], func.Function]:
     if isinstance(inst, str):
         rvv_inst = f"__riscv_{inst}"
@@ -175,13 +191,8 @@ def op(
         ret_type,
         inst,
         function_param_list,
-        lambda variant, vreg_type, ratio, param_list: (
-            "  return "
-            + func.apply_function(
-                rvv_inst + func.rvv_postfix(variant, overloaded=True),
-                param_list,
-            )
-            + ";"
+        lambda variant, vreg_type, ratio, param_list: function_body(
+            variant, rvv_inst, param_list
         ),
         require_clauses=lambda vreg_type, ratio: vreg_require_clauses(
             allowed_type_category,
@@ -192,6 +203,7 @@ def op(
             or "n" == ret_type_spec,
             widening=widening,
         ),
+        modifier=modifier,
     )
 
 
@@ -340,3 +352,85 @@ def inferred_type_part(
     f: Callable[[str], Callable[[str], func.Function]],
 ) -> header.HeaderPart:
     return header.WithVariants(f(inst))
+
+
+def callable_class_with_variant(
+    template_param_list: template.TemplateTypeParamList,
+    name: str,
+    call_operators: Sequence[Callable[[str], func.Function]],
+    *,
+    requires_clauses: Sequence[str] = tuple(),
+) -> Callable[[str], func_obj.CallableClass]:
+    def inner(variant: str) -> func_obj.CallableClass:
+        assert variant in ["", "tu", "mu", "tumu"]
+        all_call_operators = list(map(lambda op: op(variant), call_operators))
+        if variant == "" or variant == "tu":
+            all_call_operators += list(
+                map(lambda op: op(variant + "m"), call_operators)
+            )
+        return func_obj.CallableClass(
+            template_param_list,
+            name,
+            all_call_operators,
+            requires_clauses=requires_clauses,
+        )
+
+    return inner
+
+
+TypeSpec = tuple[str, Sequence[str]]
+
+
+def callable_class_op(
+    num: int,
+    inst: str | tuple[str, str] | tuple[str, Sequence[str]],
+    allowed_type_categories: str | Sequence[str],
+    template_param_list: template.TemplateTypeParamList,
+    type_specs: Sequence[TypeSpec],
+    body: Callable[[str, function.FunctionTypedParamList], str],
+    *,
+    requires_clauses: Sequence[str] = tuple(),
+    names: Sequence[Sequence[str]] = tuple(),
+) -> Callable[[str], func_obj.CallableClass]:
+    assert num > 0
+    if isinstance(inst, str):
+        rvv_insts: Sequence[str] = [f"__riscv_{inst}"] * num
+    else:
+        rvv_insts: Sequence[str] = inst[1]
+        if isinstance(rvv_insts, str):
+            rvv_insts = [rvv_insts] * num
+        inst = inst[0]
+
+    if isinstance(allowed_type_categories, str):
+        allowed_type_categories = [allowed_type_categories] * num
+    assert len(allowed_type_categories) == num
+    assert len(type_specs) == num
+    if len(names) == 0:
+        names = [tuple()] * num
+
+    call_operators: Sequence[Callable[[str], func.Function]] = []
+    for rvv_inst, allowed_type_category, type_spec, name in zip(
+        rvv_insts, allowed_type_categories, type_specs, names
+    ):
+
+        call_operators.append(
+            ops.op(
+                ("operator()", rvv_inst),
+                allowed_type_category,
+                type_spec[0],
+                list(type_spec[1]),
+                names=name,
+                modifier="const",
+                function_body=lambda variant, rvv_inst, param_list: body(
+                    rvv_inst + func.rvv_postfix(variant, overloaded=True),
+                    param_list,
+                ),
+            ),
+        )
+
+    return callable_class_with_variant(
+        template_param_list,
+        inst,
+        call_operators,
+        requires_clauses=requires_clauses,
+    )

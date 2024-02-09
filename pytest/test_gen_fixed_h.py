@@ -2,7 +2,7 @@ import gen_fixed_h
 
 
 def test_vaadd():
-    c = gen_fixed_h.fixed_op("vaadd")("")
+    c = gen_fixed_h.fixed_arith_op("vaadd")("")
     assert (
         c.cpp_repr
         == """namespace internal {
@@ -73,7 +73,7 @@ constexpr inline internal::vaadd<kVXRM> vaadd{};"""
 
 
 def test_vaadd_tumu():
-    c = gen_fixed_h.fixed_op("vaadd")("tumu")
+    c = gen_fixed_h.fixed_arith_op("vaadd")("tumu")
     assert (
         c.cpp_repr
         == """namespace internal {
@@ -116,7 +116,7 @@ constexpr inline internal::vaadd<kVXRM> vaadd{};"""
 
 
 def test_vaaddu_tu():
-    c = gen_fixed_h.fixed_op("vaaddu")("tu")
+    c = gen_fixed_h.fixed_arith_op("vaaddu")("tu")
     assert (
         c.cpp_repr
         == """namespace internal {
@@ -187,7 +187,7 @@ constexpr inline internal::vaaddu<kVXRM> vaaddu{};"""
 
 
 def test_vaaddu_mu():
-    c = gen_fixed_h.fixed_op("vaaddu")("mu")
+    c = gen_fixed_h.fixed_arith_op("vaaddu")("mu")
     assert (
         c.cpp_repr
         == """namespace internal {
