@@ -214,6 +214,37 @@ rvv_fp_header = header.Header(
                             [fp_widening_fma_op],
                             allowed_variants={"", "tu", "mu", "tumu"},
                         ),
+                        "// 5.7. Vector Floating-Point Square-Root Intrinsics",
+                        header.WithVariants(
+                            fp_v_op("vfsqrt"),
+                            allowed_variants={"", "tu", "mu", "tumu"},
+                        ),
+                        "// 5.8. Vector Floating-Point Reciprocal Square-Root Estimate Intrinsics",
+                        header.WithVariants(
+                            ops.simple_v_op("vfrsqrt7", "fp"),
+                        ),
+                        header.WithVariants(
+                            fp_v_op("vfrec7"),
+                            allowed_variants={"", "tu", "mu", "tumu"},
+                        ),
+                        "// 5.9. Vector Floating-Point MIN/MAX Intrinsics",
+                        header.CrossProduct(
+                            ops.bin_part,
+                            ["vfmax", "vfmin"],
+                            ["fp"],
+                            [ops.simple_vv_op, ops.simple_vx_op],
+                        ),
+                        "// 5.10. Vector Floating-Point Sign-Injection Intrinsics",
+                        header.CrossProduct(
+                            ops.bin_part,
+                            ["vfsgnj", "vfsgnjn", "vfsgnjx"],
+                            ["fp"],
+                            [ops.simple_vv_op, ops.simple_vx_op],
+                        ),
+                        "// 5.11. Vector Floating-Point Absolute Value Intrinsics",
+                        header.WithVariants(
+                            ops.simple_v_op("vfabs", "fp"),
+                        ),
                     ]
                 )
             ],
