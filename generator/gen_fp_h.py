@@ -69,6 +69,38 @@ rvv_fp_header = header.Header(
                                 widening_wf_op,
                             ],
                         ),
+                        "// 5.3. Vector Single-Width Floating-Point Multiply/Divide Intrinsics",
+                        header.CrossProduct(
+                            ops.bin_part,
+                            ["vfmul", "vfdiv"],
+                            ["fp"],
+                            [ops.simple_vx_op, ops.simple_vv_op],
+                        ),
+                        header.WithVariants(ops.simple_vx_op("vfrdiv", "fp")),
+                        "// 5.4. Vector Widening Floating-Point Multiply Intrinsics",
+                        header.CrossProduct(
+                            ops.inferred_type_part,
+                            ["vfwmul"],
+                            [
+                                widening_vv_op,
+                                widening_vf_op,
+                            ],
+                        ),
+                        "// 5.5. Vector Single-Width Floating-Point Fused Multiply-Add Intrinsics",
+                        header.CrossProduct(
+                            ops.inferred_type_part,
+                            [
+                                "vfmacc",
+                                "vfnmacc",
+                                "vfmsac",
+                                "vfnmsac",
+                                "vfmadd",
+                                "vfnmadd",
+                                "vfmsub",
+                                "vfnmsub",
+                            ],
+                            [ops.fma_vv_op, ops.fma_vx_op],
+                        ),
                     ]
                 )
             ],

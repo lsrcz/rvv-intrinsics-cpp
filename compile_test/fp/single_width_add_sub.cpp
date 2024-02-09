@@ -13,10 +13,12 @@ VX_OP_TEST(vfrsub, 4, f16, m4);
 UNARY_OP_TEST(vfneg, 8, f16, m2);
 #endif
 
+#if HAS_ZVE32F
 BIN_OP_TEST(vfadd, 32, f32, m1);
 BIN_OP_TEST(vfsub, 16, f32, m2);
 VX_OP_TEST(vfrsub, 8, f32, m4);
 UNARY_OP_TEST(vfneg, 16, f32, m2);
+#endif
 
 #if HAS_ZVE64D
 BIN_OP_TEST(vfadd, 64, f64, m1);

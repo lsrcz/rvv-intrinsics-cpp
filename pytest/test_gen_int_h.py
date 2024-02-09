@@ -1,9 +1,9 @@
-import codegen.ops
+from codegen import ops
 import gen_int_h
 
 
 def test_vadd_vx() -> None:
-    f = codegen.ops.simple_vx_op("vadd", "int")
+    f = ops.simple_vx_op("vadd", "int")
     assert (
         f("").cpp_repr
         == """template <typename V, size_t kRatio>
@@ -16,7 +16,7 @@ V vadd(V vs2, elem_t<V> rs1, vl_t<kRatio> vl) {
 
 
 def test_vadd_vx_tum() -> None:
-    f = codegen.ops.simple_vx_op("vadd", "int")
+    f = ops.simple_vx_op("vadd", "int")
     assert (
         f("tum").cpp_repr
         == """template <typename V, size_t kRatio>
@@ -29,7 +29,7 @@ V vadd(vmask_t<kRatio> vm, V vd, V vs2, elem_t<V> rs1, vl_t<kRatio> vl) {
 
 
 def test_vadd_vv_m() -> None:
-    f = codegen.ops.simple_vv_op("vadd", "int")
+    f = ops.simple_vv_op("vadd", "int")
     assert (
         f("m").cpp_repr
         == """template <typename V, size_t kRatio>
@@ -42,7 +42,7 @@ V vadd(vmask_t<kRatio> vm, V vs2, V vs1, vl_t<kRatio> vl) {
 
 
 def test_vadd_vv_tum() -> None:
-    f = codegen.ops.simple_vv_op("vadd", "int")
+    f = ops.simple_vv_op("vadd", "int")
     assert (
         f("tum").cpp_repr
         == """template <typename V, size_t kRatio>
@@ -107,7 +107,7 @@ widen_t<V> vwaddu(vmask_t<kRatio> vm, widen_t<V> vd, V vs2, V vs1, vl_t<kRatio> 
 
 
 def test_vneg_v() -> None:
-    f = codegen.ops.simple_v_op("vneg", "int")
+    f = ops.simple_v_op("vneg", "int")
     assert (
         f("").cpp_repr
         == """template <typename V, size_t kRatio>
@@ -120,7 +120,7 @@ V vneg(V vs, vl_t<kRatio> vl) {
 
 
 def test_vneg_v_tum() -> None:
-    f = codegen.ops.simple_v_op("vneg", "int")
+    f = ops.simple_v_op("vneg", "int")
     assert (
         f("tum").cpp_repr
         == """template <typename V, size_t kRatio>
@@ -430,7 +430,7 @@ vmask_t<kRatio> vmsgt(V vs2, V vs1, vl_t<kRatio> vl) {
 
 
 def test_vmin_vv() -> None:
-    f = codegen.ops.sign_aware_vv_op("vmin")
+    f = ops.sign_aware_vv_op("vmin")
     assert (
         f("").cpp_repr
         == """template <typename V, size_t kRatio>
@@ -443,7 +443,7 @@ V vmin(V vs2, V vs1, vl_t<kRatio> vl) {
 
 
 def test_vmaxu_vx_tum() -> None:
-    f = codegen.ops.sign_aware_vx_op("vmaxu")
+    f = ops.sign_aware_vx_op("vmaxu")
     assert (
         f("tum").cpp_repr
         == """template <typename V, size_t kRatio>
@@ -456,7 +456,7 @@ V vmaxu(vmask_t<kRatio> vm, V vd, V vs2, elem_t<V> rs1, vl_t<kRatio> vl) {
 
 
 def test_vmacc_vx() -> None:
-    f = gen_int_h.fma_vx_op("vmacc")
+    f = ops.fma_vx_op("vmacc")
     assert (
         f("").cpp_repr
         == """template <typename V, size_t kRatio>
@@ -469,7 +469,7 @@ V vmacc(V vd, elem_t<V> rs1, V vs2, vl_t<kRatio> vl) {
 
 
 def test_vmadd_vx_tum() -> None:
-    f = gen_int_h.fma_vx_op("vmadd")
+    f = ops.fma_vx_op("vmadd")
     assert (
         f("tum").cpp_repr
         == """template <typename V, size_t kRatio>
@@ -482,7 +482,7 @@ V vmadd(vmask_t<kRatio> vm, V vd, elem_t<V> rs1, V vs2, vl_t<kRatio> vl) {
 
 
 def test_vnmsac_vv_m() -> None:
-    f = gen_int_h.fma_vv_op("vnmsac")
+    f = ops.fma_vv_op("vnmsac")
     assert (
         f("m").cpp_repr
         == """template <typename V, size_t kRatio>
@@ -495,7 +495,7 @@ V vnmsac(vmask_t<kRatio> vm, V vd, V vs1, V vs2, vl_t<kRatio> vl) {
 
 
 def test_vnmsub_vv_tumu() -> None:
-    f = gen_int_h.fma_vv_op("vnmsub")
+    f = ops.fma_vv_op("vnmsub")
     assert (
         f("tumu").cpp_repr
         == """template <typename V, size_t kRatio>

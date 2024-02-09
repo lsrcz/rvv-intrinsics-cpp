@@ -172,22 +172,6 @@ def comparing_vv_op(
     )
 
 
-def fma_vx_op(
-    inst: str,
-) -> Callable[[str], func.Function]:
-    return ops.op(
-        inst, "int", "v", ["e", "v"], names=["rs1", "vs2"], have_dest_arg=True
-    )
-
-
-def fma_vv_op(
-    inst: str,
-) -> Callable[[str], func.Function]:
-    return ops.op(
-        inst, "int", "v", ["v", "v"], names=["vs1", "vs2"], have_dest_arg=True
-    )
-
-
 def widening_part(
     op: str,
     signed: bool,
@@ -348,7 +332,7 @@ rvv_int_header = header.Header(
                         header.CrossProduct(
                             ops.inferred_type_part,
                             ["vmacc", "vmadd", "vnmsac", "vnmsub"],
-                            [fma_vv_op, fma_vx_op],
+                            [ops.fma_vv_op, ops.fma_vx_op],
                         ),
                         "// 3.17. Vector Widening Integer Multiply-Add Intrinsics",
                         header.WithVariants(

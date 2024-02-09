@@ -234,6 +234,40 @@ def sign_aware_vx_op(
     )
 
 
+def fma_vx_op(
+    inst: str,
+) -> Callable[[str], func.Function]:
+    if inst.startswith("vf"):
+        allowed_type_category = "fp"
+    else:
+        allowed_type_category = "int"
+    return ops.op(
+        inst,
+        allowed_type_category,
+        "v",
+        ["e", "v"],
+        names=["rs1", "vs2"],
+        have_dest_arg=True,
+    )
+
+
+def fma_vv_op(
+    inst: str,
+) -> Callable[[str], func.Function]:
+    if inst.startswith("vf"):
+        allowed_type_category = "fp"
+    else:
+        allowed_type_category = "int"
+    return ops.op(
+        inst,
+        allowed_type_category,
+        "v",
+        ["v", "v"],
+        names=["vs1", "vs2"],
+        have_dest_arg=True,
+    )
+
+
 def sign_aware_vv_op(
     inst: str,
 ) -> Callable[[str], func.Function]:
