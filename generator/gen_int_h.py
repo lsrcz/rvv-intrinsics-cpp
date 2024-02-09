@@ -9,7 +9,7 @@ def widening_vx_op(inst: str, signed: bool) -> Callable[[str], func.Function]:
         (inst_with_sign, f"__riscv_{inst_with_sign}_vx"),
         "signed" if signed else "unsigned",
         "w",
-        ["v", "x"],
+        ["v", "e"],
     )
 
 
@@ -74,7 +74,7 @@ def vvm_v_op(inst: str) -> Callable[[str], func.Function]:
 
 
 def vxm_v_op(inst: str) -> Callable[[str], func.Function]:
-    return ops.op(inst, "int", "v", ["v", "x", "m"])
+    return ops.op(inst, "int", "v", ["v", "e", "m"])
 
 
 def carry_out_vvm_op(inst: str) -> Callable[[str], func.Function]:
@@ -82,7 +82,7 @@ def carry_out_vvm_op(inst: str) -> Callable[[str], func.Function]:
 
 
 def carry_out_vxm_op(inst: str) -> Callable[[str], func.Function]:
-    return ops.op(inst, "int", "m", ["v", "x", "m"])
+    return ops.op(inst, "int", "m", ["v", "e", "m"])
 
 
 def carry_out_vv_op(inst: str) -> Callable[[str], func.Function]:
@@ -90,7 +90,7 @@ def carry_out_vv_op(inst: str) -> Callable[[str], func.Function]:
 
 
 def carry_out_vx_op(inst: str) -> Callable[[str], func.Function]:
-    return ops.op(inst, "int", "m", ["v", "x"])
+    return ops.op(inst, "int", "m", ["v", "e"])
 
 
 def shifting_type_category(inst: str) -> str:
@@ -157,7 +157,7 @@ def comparing_vx_op(
         inst,
         comparing_type_category(inst),
         "m",
-        ["v", "x"],
+        ["v", "e"],
     )
 
 
@@ -176,7 +176,7 @@ def fma_vx_op(
     inst: str,
 ) -> Callable[[str], func.Function]:
     return ops.op(
-        inst, "int", "v", ["x", "v"], names=["rs1", "vs2"], have_dest_arg=True
+        inst, "int", "v", ["e", "v"], names=["rs1", "vs2"], have_dest_arg=True
     )
 
 
@@ -330,13 +330,13 @@ rvv_int_header = header.Header(
                             ops.op("vwmul", "signed", "w", ["v", "v"])
                         ),
                         header.WithVariants(
-                            ops.op("vwmul", "signed", "w", ["v", "x"])
+                            ops.op("vwmul", "signed", "w", ["v", "e"])
                         ),
                         header.WithVariants(
                             ops.op("vwmulu", "unsigned", "w", ["v", "v"])
                         ),
                         header.WithVariants(
-                            ops.op("vwmulu", "unsigned", "w", ["v", "x"])
+                            ops.op("vwmulu", "unsigned", "w", ["v", "e"])
                         ),
                         header.WithVariants(
                             ops.op("vwmulsu", "signed", "w", ["v", "u"])
@@ -356,7 +356,7 @@ rvv_int_header = header.Header(
                                 "vwmacc",
                                 "signed",
                                 "w",
-                                ["x", "v"],
+                                ["e", "v"],
                                 have_dest_arg=True,
                             )
                         ),
@@ -374,7 +374,7 @@ rvv_int_header = header.Header(
                                 "vwmaccu",
                                 "unsigned",
                                 "w",
-                                ["x", "v"],
+                                ["e", "v"],
                                 have_dest_arg=True,
                             )
                         ),

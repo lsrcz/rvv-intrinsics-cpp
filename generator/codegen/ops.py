@@ -77,7 +77,7 @@ def parse_type(
             return vreg.narrow(vreg.to_signed(vreg_type))
         case "size":
             return misc.size_t
-        case "x":
+        case "e":
             return vreg.get_elem(vreg_type)
         case "en":
             return vreg.get_elem(vreg.narrow(vreg_type))
@@ -99,7 +99,7 @@ def parse_name(
     match c:
         case "v" | "w" | "ws" | "n" | "u" | "nu" | "ns":
             return f"vs{name_num}"
-        case "size" | "x" | "en" | "eu" | "es":
+        case "size" | "e" | "en" | "eu" | "es":
             return f"rs{name_num}"
         case "m":
             return f"v{name_num}"
@@ -207,7 +207,7 @@ def simple_vx_op(
     inst: str,
     allowed_type_category: str,
 ) -> Callable[[str], func.Function]:
-    return ops.op(inst, allowed_type_category, "v", ["v", "x"])
+    return ops.op(inst, allowed_type_category, "v", ["v", "e"])
 
 
 def simple_vv_op(
@@ -230,7 +230,7 @@ def sign_aware_vx_op(
         inst,
         "unsigned" if inst.endswith("u") else "signed",
         "v",
-        ["v", "x"],
+        ["v", "e"],
     )
 
 

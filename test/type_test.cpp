@@ -532,7 +532,16 @@ using WideningConfigs =
                      WideningConfig<int32_t, void, false>,
                      WideningConfig<uint32_t, void, false>,
 #endif
+#if HAS_ZVE64D && HAS_ZVE32F
+                     WideningConfig<float, double, true>,
+#else
                      WideningConfig<float, void, false>,
+#endif
+#if HAS_ZVE32F && HAS_ZVFH
+                     WideningConfig<rvv::float16_t, float, true>,
+#else
+                     WideningConfig<rvv::float16_t, void, false>,
+#endif
                      WideningConfig<vint8m1_t, vint16m2_t, true>,
 #if HAS_ZVE64X
                      WideningConfig<vuint32m2_t, vuint64m4_t, true>,
@@ -540,7 +549,9 @@ using WideningConfigs =
 #else
                      WideningConfig<vuint32m2_t, void, false>,
 #endif
-#if HAS_ZVE32F
+#if HAS_ZVE32F && HAS_ZVE64D
+                     WideningConfig<vfloat32m1_t, vfloat64m2_t, true>,
+#else
                      WideningConfig<vfloat32m1_t, void, false>,
 #endif
                      WideningConfig<vint8m8_t, void, false>>;
@@ -578,13 +589,24 @@ using NarrowingConfigs =
 #endif
                      NarrowingConfig<void, int8_t, false>,
                      NarrowingConfig<void, uint8_t, false>,
-                     NarrowingConfig<void, float, false>,
+#if HAS_ZVE64D && HAS_ZVE32F
+                     NarrowingConfig<float, double, true>,
+#else
+                     NarrowingConfig<float, void, false>,
+#endif
+#if HAS_ZVE32F && HAS_ZVFHMIN
+                     NarrowingConfig<rvv::float16_t, float, true>,
+#else
+                     NarrowingConfig<rvv::float16_t, void, false>,
+#endif
                      NarrowingConfig<vint8m1_t, vint16m2_t, true>,
 #if HAS_ZVE64X
                      NarrowingConfig<vuint32m2_t, vuint64m4_t, true>,
 #endif
-#if HAS_ZVE32F
-                     NarrowingConfig<void, vfloat32m1_t, false>,
+#if HAS_ZVE32F && HAS_ZVE64D
+                     NarrowingConfig<vfloat32m1_t, vfloat64m2_t, true>,
+#else
+                     NarrowingConfig<void, vfloat64m2_t, false>,
 #endif
                      NarrowingConfig<void, vint8m8_t, false>>;
 
@@ -645,7 +667,11 @@ using WideningNConfigs =
                      WideningNConfig<int32_t, void, 2, false>,
                      WideningNConfig<uint32_t, void, 2, false>,
 #endif
+#if HAS_ZVE32F && HAS_ZVE64D
+                     WideningNConfig<float, double, 2, true>,
+#else
                      WideningNConfig<float, void, 2, false>,
+#endif
                      WideningNConfig<vint8m1_t, vint16m2_t, 2, true>,
                      WideningNConfig<vint8m1_t, vint32m4_t, 4, true>,
 #if HAS_ZVE64X
@@ -654,8 +680,15 @@ using WideningNConfigs =
 #else
                      WideningNConfig<vuint8m1_t, void, 8, false>,
 #endif
-#if HAS_ZVE32F
+#if HAS_ZVE32F && HAS_ZVE64D
+                     WideningNConfig<vfloat32m1_t, vfloat64m2_t, 2, true>,
+#else
                      WideningNConfig<vfloat32m1_t, void, 2, false>,
+#endif
+#if HAS_ZVFHMIN && HAS_ZVE64D
+                     WideningNConfig<vfloat16mf2_t, vfloat64m2_t, 4, true>,
+#else
+                     WideningNConfig<vfloat16mf2_t, void, 4, false>,
 #endif
                      WideningNConfig<vint8m8_t, void, 2, false>>;
 

@@ -49,29 +49,45 @@ struct GetRatio<{raw_type}> {{
     )
 
 
+def widened_type(elem_type: elem.RawElemType) -> Optional[elem.RawElemType]:
+    if isinstance(elem_type, elem.IntType) and elem_type.width <= 32:
+        return elem.int_type(elem_type.width * 2, elem_type.signed)
+    if isinstance(elem_type, elem.FloatType) and elem_type.width <= 32:
+        return elem.float_type(elem_type.width * 2)
+    return None
+
+
+def narrowed_type(elem_type: elem.RawElemType) -> Optional[elem.RawElemType]:
+    if isinstance(elem_type, elem.IntType) and elem_type.width >= 16:
+        return elem.int_type(elem_type.width // 2, elem_type.signed)
+    if isinstance(elem_type, elem.FloatType) and elem_type.width >= 32:
+        return elem.float_type(elem_type.width // 2)
+    return None
+
+
 def widened_narrowed_scalar_type_specialization_def(
     elem_type: elem.RawElemType,
 ) -> str:
     ret: list[str] = []
-    if isinstance(elem_type, elem.IntType) and elem_type.width <= 32:
-        widened_type = elem.int_type(elem_type.width * 2, elem_type.signed)
+    widened = widened_type(elem_type)
+    narrowed = narrowed_type(elem_type)
+    if widened:
         ret.append(
             guarded.Guarded(
-                guarded.elem_guard(widened_type, need_zvfh=False),
+                guarded.elem_guard(widened, need_zvfh=False),
                 f"""template <>
 struct WidenedType<{elem_type.cpp_repr}> {{
-  using Type = {widened_type.cpp_repr};
+  using Type = {widened.cpp_repr};
 }};""",
             ).cpp_repr
         )
-    if isinstance(elem_type, elem.IntType) and elem_type.width >= 16:
-        narrowed_type = elem.int_type(elem_type.width // 2, elem_type.signed)
+    if narrowed:
         ret.append(
             guarded.Guarded(
                 guarded.elem_guard(elem_type, need_zvfh=False),
                 f"""template <>
 struct NarrowedType<{elem_type.cpp_repr}> {{
-  using Type = {narrowed_type.cpp_repr};
+  using Type = {narrowed.cpp_repr};
 }};""",
             ).cpp_repr
         )
@@ -84,43 +100,37 @@ def widened_narrowed_vreg_specialization_def(
 ) -> cpp_repr.HasCppRepr:
     if not validate.is_compatible_elem_ratio_may_under_guards(elem_type, ratio):
         return ""
-    if not isinstance(elem_type, elem.IntType):
-        return ""
     ret: list[guarded.Guarded] = []
-    if elem_type.width <= 32:
-        widened_type = elem.int_type(elem_type.width * 2, elem_type.signed)
-        if validate.is_compatible_elem_ratio_may_under_guards(
-            widened_type, ratio
-        ):
-            ret.append(
-                guarded.Guarded(
-                    guarded.elem_ratio_guard(
-                        widened_type, ratio, need_zvfh=False
-                    ),
-                    f"""template <>
+    widened = widened_type(elem_type)
+    narrowed = narrowed_type(elem_type)
+    if (
+        widened is not None
+        and validate.is_compatible_elem_ratio_may_under_guards(widened, ratio)
+    ):
+        ret.append(
+            guarded.Guarded(
+                guarded.elem_ratio_guard(widened, ratio, need_zvfh=False),
+                f"""template <>
 struct WidenedType<vreg_t<{elem_type.cpp_repr}, {ratio.cpp_repr}>> {{
-  using Type = vreg_t<{widened_type.cpp_repr}, {ratio.cpp_repr}>;
+  using Type = vreg_t<{widened.cpp_repr}, {ratio.cpp_repr}>;
 }};
 """,
-                )
             )
-    if elem_type.width >= 16:
-        narrowed_type = elem.int_type(elem_type.width // 2, elem_type.signed)
-        if validate.is_compatible_elem_ratio_may_under_guards(
-            narrowed_type, ratio
-        ):
-            ret.append(
-                guarded.Guarded(
-                    guarded.elem_ratio_guard(
-                        narrowed_type, ratio, need_zvfh=False
-                    ),
-                    f"""template <>
+        )
+    if (
+        narrowed is not None
+        and validate.is_compatible_elem_ratio_may_under_guards(narrowed, ratio)
+    ):
+        ret.append(
+            guarded.Guarded(
+                guarded.elem_ratio_guard(narrowed, ratio, need_zvfh=False),
+                f"""template <>
 struct NarrowedType<vreg_t<{elem_type.cpp_repr}, {ratio.cpp_repr}>> {{
-  using Type = vreg_t<{narrowed_type.cpp_repr}, {ratio.cpp_repr}>;
+  using Type = vreg_t<{narrowed.cpp_repr}, {ratio.cpp_repr}>;
 }};
 """,
-                )
             )
+        )
     if len(ret) == 0:
         return ""
     if len(ret) == 1:
