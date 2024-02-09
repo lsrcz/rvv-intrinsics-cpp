@@ -251,6 +251,37 @@ def fma_vx_op(
     )
 
 
+def widening_fma_vx_op(
+    inst: str,
+) -> Callable[[str], func.Function]:
+    if inst.endswith("su"):
+        ret_type_spec = "ws"
+    else:
+        ret_type_spec = "w"
+
+    if inst.startswith("vf"):
+        allowed_type_category = "fp"
+    elif inst.endswith("u"):
+        allowed_type_category = "unsigned"
+    else:
+        allowed_type_category = "signed"
+
+    if inst.endswith("su"):
+        arg_type_spec = ["es", "v"]
+    elif inst.endswith("us"):
+        arg_type_spec = ["eu", "v"]
+    else:
+        arg_type_spec = ["e", "v"]
+    return ops.op(
+        inst,
+        allowed_type_category,
+        ret_type_spec,
+        arg_type_spec,
+        names=["rs1", "vs2"],
+        have_dest_arg=True,
+    )
+
+
 def fma_vv_op(
     inst: str,
 ) -> Callable[[str], func.Function]:
@@ -263,6 +294,31 @@ def fma_vv_op(
         allowed_type_category,
         "v",
         ["v", "v"],
+        names=["vs1", "vs2"],
+        have_dest_arg=True,
+    )
+
+
+def widening_fma_vv_op(
+    inst: str,
+) -> Callable[[str], func.Function]:
+    if inst.startswith("vf"):
+        allowed_type_category = "fp"
+        arg_type_spec = ["v", "v"]
+    elif inst.endswith("su"):
+        allowed_type_category = "signed"
+        arg_type_spec = ["v", "u"]
+    elif inst.endswith("u"):
+        allowed_type_category = "unsigned"
+        arg_type_spec = ["v", "v"]
+    else:
+        allowed_type_category = "signed"
+        arg_type_spec = ["v", "v"]
+    return ops.op(
+        inst,
+        allowed_type_category,
+        "w",
+        arg_type_spec,
         names=["vs1", "vs2"],
         have_dest_arg=True,
     )

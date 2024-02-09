@@ -335,68 +335,15 @@ rvv_int_header = header.Header(
                             [ops.fma_vv_op, ops.fma_vx_op],
                         ),
                         "// 3.17. Vector Widening Integer Multiply-Add Intrinsics",
-                        header.WithVariants(
-                            ops.op(
-                                "vwmacc",
-                                "signed",
-                                "w",
-                                ["e", "v"],
-                                have_dest_arg=True,
-                            )
+                        header.CrossProduct(
+                            ops.inferred_type_part,
+                            ["vwmacc", "vwmaccu", "vwmaccsu"],
+                            [ops.widening_fma_vv_op],
                         ),
-                        header.WithVariants(
-                            ops.op(
-                                "vwmacc",
-                                "signed",
-                                "w",
-                                ["v", "v"],
-                                have_dest_arg=True,
-                            )
-                        ),
-                        header.WithVariants(
-                            ops.op(
-                                "vwmaccu",
-                                "unsigned",
-                                "w",
-                                ["e", "v"],
-                                have_dest_arg=True,
-                            )
-                        ),
-                        header.WithVariants(
-                            ops.op(
-                                "vwmaccu",
-                                "unsigned",
-                                "w",
-                                ["v", "v"],
-                                have_dest_arg=True,
-                            )
-                        ),
-                        header.WithVariants(
-                            ops.op(
-                                "vwmaccsu",
-                                "unsigned",
-                                "ws",
-                                ["es", "v"],
-                                have_dest_arg=True,
-                            )
-                        ),
-                        header.WithVariants(
-                            ops.op(
-                                "vwmaccsu",
-                                "signed",
-                                "w",
-                                ["v", "u"],
-                                have_dest_arg=True,
-                            )
-                        ),
-                        header.WithVariants(
-                            ops.op(
-                                "vwmaccus",
-                                "signed",
-                                "w",
-                                ["eu", "v"],
-                                have_dest_arg=True,
-                            )
+                        header.CrossProduct(
+                            ops.inferred_type_part,
+                            ["vwmacc", "vwmaccu", "vwmaccsu", "vwmaccus"],
+                            [ops.widening_fma_vx_op],
                         ),
                         "// 3.18. Vector Integer Merge Intrinsics",
                         header.CrossProduct(

@@ -6,20 +6,6 @@
 #include <rvv/policy/tu/int.h>
 #include <rvv/policy/tumu/int.h>
 
-#define WIDENING_FMA_VV_OP_TEST(name, ratio, short_name, lmul)             \
-  FMA_OP_TEST_ALL(name##_vv_##short_name##lmul, name, rvv::vmask_t<ratio>, \
-                  WIDEN_VREG_NAME(short_name, lmul),                       \
-                  (WIDEN_VREG_NAME(short_name, lmul), vd),                 \
-                  (VREG_NAME(short_name, lmul), vs2),                      \
-                  (VREG_NAME(short_name, lmul), vs1), (rvv::vl_t<ratio>, vl));
-
-#define WIDENING_FMA_VX_OP_TEST(name, ratio, short_name, lmul)             \
-  FMA_OP_TEST_ALL(name##_vx_##short_name##lmul, name, rvv::vmask_t<ratio>, \
-                  WIDEN_VREG_NAME(short_name, lmul),                       \
-                  (WIDEN_VREG_NAME(short_name, lmul), vd),                 \
-                  (C_TYPE_NAME(short_name), rs1),                          \
-                  (VREG_NAME(short_name, lmul), vs2), (rvv::vl_t<ratio>, vl));
-
 WIDENING_FMA_VV_OP_TEST(vwmacc, 8, i8, m1);
 WIDENING_FMA_VX_OP_TEST(vwmacc, 8, i8, m1);
 WIDENING_FMA_VV_OP_TEST(vwmaccu, 8, u8, m1);

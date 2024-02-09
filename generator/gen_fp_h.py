@@ -2,13 +2,19 @@ from typing import Callable
 from codegen import header, main, ops, func
 
 
-def widening_vf_op(inst: str) -> Callable[[str], func.Function]:
+def widening_vf_op(
+    inst: str, need_suffix: bool = True
+) -> Callable[[str], func.Function]:
     return ops.op(
-        (inst, f"__riscv_{inst}_vf"),
+        (inst, f"__riscv_{inst}_vf") if need_suffix else inst,
         "fp",
         "w",
         ["v", "e"],
     )
+
+
+def widening_vf_no_suffix_op(inst: str) -> Callable[[str], func.Function]:
+    return widening_vf_op(inst, False)
 
 
 def widening_wf_op(inst: str) -> Callable[[str], func.Function]:
@@ -20,13 +26,19 @@ def widening_wf_op(inst: str) -> Callable[[str], func.Function]:
     )
 
 
-def widening_vv_op(inst: str) -> Callable[[str], func.Function]:
+def widening_vv_op(
+    inst: str, need_suffix: bool = True
+) -> Callable[[str], func.Function]:
     return ops.op(
-        (inst, f"__riscv_{inst}_vv"),
+        (inst, f"__riscv_{inst}_vv") if need_suffix else inst,
         "fp",
         "w",
         ["v", "v"],
     )
+
+
+def widening_vv_no_suffix_op(inst: str) -> Callable[[str], func.Function]:
+    return widening_vv_op(inst, False)
 
 
 def widening_wv_op(inst: str) -> Callable[[str], func.Function]:
@@ -82,8 +94,8 @@ rvv_fp_header = header.Header(
                             ops.inferred_type_part,
                             ["vfwmul"],
                             [
-                                widening_vv_op,
-                                widening_vf_op,
+                                widening_vv_no_suffix_op,
+                                widening_vf_no_suffix_op,
                             ],
                         ),
                         "// 5.5. Vector Single-Width Floating-Point Fused Multiply-Add Intrinsics",
@@ -100,6 +112,17 @@ rvv_fp_header = header.Header(
                                 "vfnmsub",
                             ],
                             [ops.fma_vv_op, ops.fma_vx_op],
+                        ),
+                        "// 5.6. Vector Widening Floating-Point Fused Multiply-Add Intrinsics",
+                        header.CrossProduct(
+                            ops.inferred_type_part,
+                            [
+                                "vfwmacc",
+                                "vfwnmacc",
+                                "vfwmsac",
+                                "vfwnmsac",
+                            ],
+                            [ops.widening_fma_vv_op, ops.widening_fma_vx_op],
                         ),
                     ]
                 )
