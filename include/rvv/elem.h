@@ -1,6 +1,6 @@
 // Copyright (c) 2024 <Sirui Lu (siruilu@cs.washington.edu)>
-#ifndef RVV_TYPE_TRAITS_H_
-#define RVV_TYPE_TRAITS_H_
+#ifndef RVV_ELEM_H_
+#define RVV_ELEM_H_
 
 #include <rvv/config.h>
 #include <stddef.h>
@@ -38,6 +38,9 @@ concept IsSigned = AnyOf<E, int8_t, int16_t, int32_t, int64_t>;
 
 template <typename E>
 concept IsIntegral = IsSigned<E> || IsUnsigned<E>;
+
+template <typename E>
+concept IsElement = IsSigned<E> || IsUnsigned<E> || IsFloatingPoint<E>;
 
 template <typename E, bool kNeedZvfh>
 concept NeedUnsupportedZvfh =
@@ -91,19 +94,94 @@ concept SupportedFloatingPointElement =
 
 template <typename E, bool kNeedZvfh>
 concept SupportedElement =
-    !NeedUnsupportedZvfh<E, kNeedZvfh> && !NeedUnsupportedZve32f<E> &&
-    !NeedUnsupportedZve64d<E> && !NeedUnsupportedZve64x<E> &&
-    (IsIntegral<E> || IsFloatingPoint<E>);
+    SupportedIntegralElement<E> || SupportedFloatingPointElement<E, kNeedZvfh>;
 
-template <size_t kRatio>
-concept NeedUnsupportedElen64 = kRatio == 64 && !HAS_ELEN64;
+namespace internal {
+template <size_t kBits>
+struct UnsignedType {
+  using Type = void;
+};
 
-template <size_t kRatio>
-concept SupportedRatio =
-    (kRatio == 1 || kRatio == 2 || kRatio == 4 || kRatio == 8 || kRatio == 16 ||
-     kRatio == 32 || kRatio == 64) &&
-    !NeedUnsupportedElen64<kRatio>;
+template <>
+struct UnsignedType<8> {
+  using Type = uint8_t;
+};
+
+template <>
+struct UnsignedType<16> {
+  using Type = uint16_t;
+};
+
+template <>
+struct UnsignedType<32> {
+  using Type = uint32_t;
+};
+
+template <>
+struct UnsignedType<64> {
+  using Type = uint64_t;
+};
+
+template <size_t kBits>
+struct SignedType {
+  using Type = void;
+};
+
+template <>
+struct SignedType<8> {
+  using Type = int8_t;
+};
+
+template <>
+struct SignedType<16> {
+  using Type = int16_t;
+};
+
+template <>
+struct SignedType<32> {
+  using Type = int32_t;
+};
+
+template <>
+struct SignedType<64> {
+  using Type = int64_t;
+};
+
+template <size_t kBits>
+struct FloatingPointType {
+  using Type = void;
+};
+
+template <>
+struct FloatingPointType<16> {
+  using Type = float16_t;
+};
+
+template <>
+struct FloatingPointType<32> {
+  using Type = float32_t;
+};
+
+template <>
+struct FloatingPointType<64> {
+  using Type = float64_t;
+};
+}  // namespace internal
+
+template <size_t kBits>
+  requires SupportedUnsignedElement<
+               typename internal::UnsignedType<kBits>::Type>
+using uint_t = typename internal::UnsignedType<kBits>::Type;
+
+template <size_t kBits>
+  requires SupportedSignedElement<typename internal::SignedType<kBits>::Type>
+using int_t = typename internal::SignedType<kBits>::Type;
+
+template <size_t kBits>
+  requires SupportedFloatingPointElement<
+               typename internal::FloatingPointType<kBits>::Type, false>
+using float_t = typename internal::FloatingPointType<kBits>::Type;
 
 }  // namespace rvv
 
-#endif  // RVV_TYPE_TRAITS_H_
+#endif  // RVV_ELEM_H_

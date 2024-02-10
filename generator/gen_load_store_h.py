@@ -268,6 +268,7 @@ def vsxei_defs(inst: str) -> Callable[[str, int], Optional[func.Function]]:
 
 rvv_load_store_header = header.Header(
     [
+        header.Include("rvv/elem.h"),
         header.Include("rvv/type.h"),
         header.Namespace(
             "rvv",

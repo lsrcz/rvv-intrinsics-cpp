@@ -43,6 +43,7 @@ def vsetvl_defs(
 
 rvv_misc_header = header.Header(
     [
+        header.Include("rvv/elem.h"),
         header.Include("rvv/type.h"),
         header.Namespace(
             "rvv",

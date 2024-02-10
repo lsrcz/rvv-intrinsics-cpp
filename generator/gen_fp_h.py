@@ -144,6 +144,8 @@ def fp_compare_op(inst: str) -> Callable[[str], func_obj.CallableClass]:
 
 rvv_fp_header = header.Header(
     [
+        header.Include("rvv/elem.h"),
+        header.Include("rvv/conversion.h"),
         header.Include("rvv/type.h"),
         header.Namespace(
             "rvv",

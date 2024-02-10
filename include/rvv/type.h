@@ -4,9 +4,20 @@
 
 #include <riscv_vector.h>
 #include <rvv/config.h>
-#include <rvv/type_traits.h>
+#include <rvv/elem.h>
 
 namespace rvv {
+
+// Ratio of SEW and LMUL.
+template <size_t kRatio>
+concept NeedUnsupportedElen64 = kRatio == 64 && !HAS_ELEN64;
+
+template <size_t kRatio>
+concept SupportedRatio =
+    (kRatio == 1 || kRatio == 2 || kRatio == 4 || kRatio == 8 || kRatio == 16 ||
+     kRatio == 32 || kRatio == 64) &&
+    !NeedUnsupportedElen64<kRatio>;
+
 enum class LMul {
   kM8 = 3,
   kM4 = 2,
@@ -125,107 +136,9 @@ template <typename T, bool kNeedZvfh>
 concept SupportedFloatingPointVReg =
     IsVReg<T> && SupportedFloatingPointElement<elem_t<T>, kNeedZvfh>;
 
-template <typename T>
-concept SupportedIntegral =
-    SupportedIntegralVReg<T> || SupportedIntegralElement<T>;
-
-template <typename T>
-concept SupportedSigned = SupportedSignedVReg<T> || SupportedSignedElement<T>;
-
-template <typename T>
-concept SupportedUnsigned =
-    SupportedUnsignedVReg<T> || SupportedUnsignedElement<T>;
-
 template <typename T, bool kNeedZvfh>
-concept SupportedFloatingPoint = SupportedFloatingPointVReg<T, kNeedZvfh> ||
-                                 SupportedFloatingPointElement<T, kNeedZvfh>;
-
-namespace internal {
-template <typename E>
-struct WidenedType {};
-template <typename E>
-struct NarrowedType {};
-}  // namespace internal
-
-template <typename T>
-using widen_t = typename internal::WidenedType<T>::Type;
-template <typename T>
-using narrow_t = typename internal::NarrowedType<T>::Type;
-
-template <typename T>
-concept Widenable = requires { typename internal::WidenedType<T>::Type; };
-
-template <typename T>
-concept Narrowable = requires { typename internal::NarrowedType<T>::Type; };
-
-namespace internal {
-template <size_t kN>
-struct WidenedNType {};
-
-template <>
-struct WidenedNType<2> {
-  template <typename T>
-    requires Widenable<T>
-  using Type = widen_t<T>;
-};
-template <>
-struct WidenedNType<4> {
-  template <typename T>
-    requires Widenable<T> && Widenable<widen_t<T>>
-  using Type = widen_t<widen_t<T>>;
-};
-template <>
-struct WidenedNType<8> {
-  template <typename T>
-    requires Widenable<T> && Widenable<widen_t<T>> &&
-                 Widenable<widen_t<widen_t<T>>>
-  using Type = widen_t<widen_t<widen_t<T>>>;
-};
-}  // namespace internal
-
-template <size_t kN, typename T>
-using widen_n_t = typename internal::WidenedNType<kN>::template Type<T>;
-
-template <size_t kN, typename T>
-concept WidenableN =
-    requires { typename internal::WidenedNType<kN>::template Type<T>; };
-
-namespace internal {
-template <typename T>
-struct ToUnsigned {
-  using Type = T;
-};
-template <typename T>
-  requires SupportedSignedElement<T>
-struct ToUnsigned<T> {
-  using Type = T;
-};
-template <typename T>
-  requires SupportedSignedVReg<T>
-struct ToUnsigned<T> {
-  using Type = T;
-};
-template <typename T>
-struct ToSigned {
-  using Type = T;
-};
-template <typename T>
-  requires SupportedUnsignedElement<T>
-struct ToSigned<T> {
-  using Type = T;
-};
-template <typename T>
-  requires SupportedSignedVReg<T>
-struct ToSigned<T> {
-  using Type = T;
-};
-}  // namespace internal
-
-template <typename T>
-using to_unsigned_t = typename internal::ToUnsigned<T>::Type;
-
-template <typename T>
-using to_signed_t = typename internal::ToSigned<T>::Type;
+concept SupportedVReg =
+    SupportedIntegralVReg<T> || SupportedFloatingPointVReg<T, kNeedZvfh>;
 
 enum class VXRM {
   kRNU = 0,

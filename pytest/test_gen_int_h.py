@@ -378,7 +378,7 @@ narrow_t<V> vncvt(vmask_t<kRatio> vm, narrow_t<V> vd, V vs2, vl_t<kRatio> vl) {
 
 
 def test_vmseq_vx() -> None:
-    f = gen_int_h.comparing_vx_op("vmseq")
+    f = ops.comparing_vx_op("vmseq")
     assert (
         f("").cpp_repr
         == """template <typename V, size_t kRatio>
@@ -391,7 +391,7 @@ vmask_t<kRatio> vmseq(V vs2, elem_t<V> rs1, vl_t<kRatio> vl) {
 
 
 def test_vmseq_vv_tum() -> None:
-    f = gen_int_h.comparing_vv_op("vmseq")
+    f = ops.comparing_vv_op("vmseq")
     assert (
         f("tum").cpp_repr
         == """template <typename V, size_t kRatio>
@@ -404,7 +404,7 @@ vmask_t<kRatio> vmseq(vmask_t<kRatio> vm, vmask_t<kRatio> vd, V vs2, V vs1, vl_t
 
 
 def test_vmsltu_vx() -> None:
-    f = gen_int_h.comparing_vx_op("vmsltu")
+    f = ops.comparing_vx_op("vmsltu")
     assert (
         f("").cpp_repr
         == """template <typename V, size_t kRatio>
@@ -417,7 +417,7 @@ vmask_t<kRatio> vmsltu(V vs2, elem_t<V> rs1, vl_t<kRatio> vl) {
 
 
 def test_vmsgt_vv() -> None:
-    f = gen_int_h.comparing_vv_op("vmsgt")
+    f = ops.comparing_vv_op("vmsgt")
     assert (
         f("").cpp_repr
         == """template <typename V, size_t kRatio>

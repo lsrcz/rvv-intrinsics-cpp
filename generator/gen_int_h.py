@@ -138,7 +138,6 @@ def vncvt(variant: str) -> func.Function:
     return ops.op(("vncvt", "__riscv_vncvt_x"), "int", "n", ["v"])(variant)
 
 
-
 def widening_part(
     op: str,
     signed: bool,
@@ -149,6 +148,8 @@ def widening_part(
 
 rvv_int_header = header.Header(
     [
+        header.Include("rvv/elem.h"),
+        header.Include("rvv/conversion.h"),
         header.Include("rvv/type.h"),
         header.Namespace(
             "rvv",
