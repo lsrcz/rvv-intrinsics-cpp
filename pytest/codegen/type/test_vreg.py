@@ -29,9 +29,10 @@ def test_widen_vreg_type() -> None:
         vreg.concrete(
             elem.param("E"),
             misc.param_size_t("kRatio"),
-        )
+        ),
+        False,
     )
-    assert widen_vreg.cpp_repr == "widen_t<vreg_t<E, kRatio>>"
+    assert widen_vreg.cpp_repr == "widen_t<vreg_t<E, kRatio>, false>"
 
 
 def test_widen_n_vreg_type() -> None:
@@ -41,5 +42,6 @@ def test_widen_n_vreg_type() -> None:
             elem.param("E"),
             misc.param_size_t("kRatio"),
         ),
+        True,
     )
     assert widen_n_vreg.cpp_repr == "widen_n_t<4, vreg_t<E, kRatio>>"

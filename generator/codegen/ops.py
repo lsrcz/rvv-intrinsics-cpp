@@ -7,11 +7,11 @@ from codegen.typing import base, misc, vl, vmask, vreg
 
 def vreg_require_clauses(
     allowed_type_category: str,
-    vreg_type: vreg.VRegType,
+    vreg_type: base.Type,
     ratio: misc.SizeTValue,
-    widening: bool | int = False,
-    narrowing: bool = False,
+    need_zvfh: bool = True,
 ) -> list[str]:
+    assert isinstance(vreg_type, vreg.VRegType)
     ret: list[str] = []
     match allowed_type_category:
         case "int":
@@ -22,7 +22,7 @@ def vreg_require_clauses(
             ret.append(constraints.supported_unsigned_vreg(vreg_type))
         case "fp":
             ret.append(
-                constraints.supported_floating_point_vreg(vreg_type, True)
+                constraints.supported_floating_point_vreg(vreg_type, need_zvfh)
             )
         case "all":
             pass
@@ -31,72 +31,61 @@ def vreg_require_clauses(
                 f"Unknown allowed type category: {allowed_type_category}"
             )
     ret.append(constraints.compatible_vreg_ratio(vreg_type, ratio))
-    if widening is True:
-        ret.append(constraints.widenable(vreg_type))
-        ret.append(
-            constraints.compatible_vreg_ratio(vreg.widen(vreg_type), ratio)
-        )
-    elif widening in [2, 4, 8]:
-        ret.append(constraints.widenable_n(widening, vreg_type))
-        ret.append(
-            constraints.compatible_vreg_ratio(
-                vreg.widen_n(widening, vreg_type), ratio
-            )
-        )
-    elif narrowing:
-        ret.append(constraints.narrowable(vreg_type))
-        ret.append(
-            constraints.compatible_vreg_ratio(vreg.narrow(vreg_type), ratio)
-        )
     return ret
 
 
 def parse_type(
-    vreg_type: vreg.VRegType, ratio: misc.SizeTValue, c: str
+    vreg_type: vreg.VRegType, ratio: misc.SizeTValue, c: str, need_zvfh: bool
 ) -> base.Type:
     match c:
         case "v":
             return vreg_type
         case "u":
-            return vreg.to_unsigned(vreg_type)
+            return vreg.to_unsigned(vreg_type, need_zvfh)
         case "s":
-            return vreg.to_signed(vreg_type)
+            return vreg.to_signed(vreg_type, need_zvfh)
         case "f":
-            return vreg.to_floating_point(vreg_type)
+            return vreg.to_floating_point(vreg_type, need_zvfh)
         case "w":
-            return vreg.widen(vreg_type)
+            return vreg.widen(vreg_type, need_zvfh)
         case "wu":
-            return vreg.widen(vreg.to_unsigned(vreg_type))
+            return vreg.widen(vreg.to_unsigned(vreg_type, need_zvfh), need_zvfh)
         case "ws":
-            return vreg.widen(vreg.to_signed(vreg_type))
+            return vreg.widen(vreg.to_signed(vreg_type, need_zvfh), need_zvfh)
         case "wf":
-            return vreg.widen(vreg.to_floating_point(vreg_type))
+            return vreg.to_floating_point(
+                vreg.widen(vreg_type, need_zvfh), need_zvfh
+            )
         case "2":
-            return vreg.widen_n(2, vreg_type)
+            return vreg.widen_n(2, vreg_type, need_zvfh)
         case "4":
-            return vreg.widen_n(4, vreg_type)
+            return vreg.widen_n(4, vreg_type, need_zvfh)
         case "8":
-            return vreg.widen_n(8, vreg_type)
+            return vreg.widen_n(8, vreg_type, need_zvfh)
         case "n":
-            return vreg.narrow(vreg_type)
+            return vreg.narrow(vreg_type, need_zvfh)
         case "nu":
-            return vreg.narrow(vreg.to_unsigned(vreg_type))
+            return vreg.narrow(
+                vreg.to_unsigned(vreg_type, need_zvfh), need_zvfh
+            )
         case "ns":
-            return vreg.narrow(vreg.to_signed(vreg_type))
+            return vreg.narrow(vreg.to_signed(vreg_type, need_zvfh), need_zvfh)
         case "nf":
-            return vreg.narrow(vreg.to_floating_point(vreg_type))
+            return vreg.to_floating_point(
+                vreg.narrow(vreg_type, need_zvfh), need_zvfh
+            )
         case "size":
             return misc.size_t
         case "e":
             return vreg.get_elem(vreg_type)
         case "en":
-            return vreg.get_elem(vreg.narrow(vreg_type))
+            return vreg.get_elem(vreg.narrow(vreg_type, need_zvfh))
         case "eu":
-            return vreg.get_elem(vreg.to_unsigned(vreg_type))
+            return vreg.get_elem(vreg.to_unsigned(vreg_type, need_zvfh))
         case "es":
-            return vreg.get_elem(vreg.to_signed(vreg_type))
+            return vreg.get_elem(vreg.to_signed(vreg_type, need_zvfh))
         case "ef":
-            return vreg.get_elem(vreg.to_floating_point(vreg_type))
+            return vreg.get_elem(vreg.to_floating_point(vreg_type, need_zvfh))
         case "m":
             return vmask.vmask(ratio)
         case _:
@@ -136,11 +125,12 @@ def parse_type_list(
     vreg_type: vreg.VRegType,
     ratio: misc.SizeTValue,
     arg_type_spec: list[str],
+    need_zvfh: bool,
     *,
     names: Sequence[str] = tuple(),
     name_nums: str = "",
 ) -> function.FunctionTypedParamList:
-    types = [parse_type(vreg_type, ratio, c) for c in arg_type_spec]
+    types = [parse_type(vreg_type, ratio, c, need_zvfh) for c in arg_type_spec]
     if len(names) == 0:
         assert len(name_nums) >= len(arg_type_spec)
         names = [
@@ -173,6 +163,7 @@ def op(
         )
         + ";"
     ),
+    need_zvfh: bool = True,
 ) -> Callable[[str], func.Function]:
     if isinstance(inst, str):
         rvv_inst = f"__riscv_{inst}"
@@ -181,7 +172,7 @@ def op(
         inst = inst[0]
 
     def ret_type(vreg_type: vreg.VRegType, ratio: misc.SizeTValue) -> base.Type:
-        return parse_type(vreg_type, ratio, ret_type_spec)
+        return parse_type(vreg_type, ratio, ret_type_spec, need_zvfh)
 
     def function_param_list(
         variant: str, vreg_type: vreg.VRegType, ratio: misc.SizeTValue
@@ -190,6 +181,7 @@ def op(
             vreg_type,
             ratio,
             arg_type_spec,
+            need_zvfh,
             names=names,
             name_nums="210" if len(names) == 0 else "",
         ) + (vl.vl(ratio), "vl")
@@ -206,12 +198,6 @@ def op(
             undisturbed_need_dest_arg=not have_dest_arg,
         )
 
-    if "w" in arg_type_spec or "w" == ret_type_spec:
-        widening = True
-    elif ret_type_spec in ["2", "4", "8"]:
-        widening = int(ret_type_spec)
-    else:
-        widening = False
     return func.template_vreg_ratio(
         ret_type,
         inst,
@@ -219,14 +205,13 @@ def op(
         lambda variant, vreg_type, ratio, param_list: function_body(
             variant, rvv_inst, param_list
         ),
-        require_clauses=lambda vreg_type, ratio: vreg_require_clauses(
-            allowed_type_category,
-            vreg_type,
-            ratio,
-            narrowing="n" in arg_type_spec
-            or "en" in arg_type_spec
-            or "n" == ret_type_spec,
-            widening=widening,
+        require_clauses=lambda vreg_type, ratio: (
+            vreg_require_clauses(
+                allowed_type_category,
+                vreg_type,
+                ratio,
+                need_zvfh=need_zvfh,
+            )
         ),
         modifier=modifier,
     )

@@ -132,4 +132,13 @@
               rvv::vmask_t<ratio>, ret_reg(short_name, lmul), \
               (VREG_NAME(short_name, lmul), vs2), (rvv::vl_t<ratio>, vl))
 
+#define WIDEN_UNSIGNED_VREG_NAME(short_name, lmul) \
+  VREG_NAME(TO_UNSIGNED(WIDEN_SHORT_NAME(short_name)), WIDEN_LMUL(lmul))
+
+#define WIDEN_SIGNED_VREG_NAME(short_name, lmul) \
+  VREG_NAME(TO_SIGNED(WIDEN_SHORT_NAME(short_name)), WIDEN_LMUL(lmul))
+
+#define WIDEN_FP_VREG_NAME(short_name, lmul) \
+  VREG_NAME(TO_FP(WIDEN_SHORT_NAME(short_name)), WIDEN_LMUL(lmul))
+
 #endif  // MACROS_TYPE_H_

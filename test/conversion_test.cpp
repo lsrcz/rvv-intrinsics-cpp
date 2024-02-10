@@ -1,21 +1,23 @@
 // Copyright (c) 2024 <Sirui Lu (siruilu@cs.washington.edu)>
+#include "rvv/conversion.h"
+
 #include <gtest/gtest.h>
 #include <rvv/config.h>
 #include <rvv/type.h>
 
 #include <cstddef>
 
-#include "rvv/conversion.h"
-
 template <typename Config>
 class WideningTest : public ::testing::Test {};
 
-template <typename Narrow_, typename Wide_, bool kWidenable_>
+template <typename Narrow_, typename Wide_, bool kWidenable_,
+          bool kNeedZvfh_ = false>
 class WideningConfig {
  public:
   using Narrow = Narrow_;
   using Wide = Wide_;
   static constexpr bool kWidenable = kWidenable_;
+  static constexpr bool kNeedZvfh = kNeedZvfh_;
 };
 
 using WideningConfigs =
@@ -37,10 +39,16 @@ using WideningConfigs =
 #else
                      WideningConfig<float, void, false>,
 #endif
-#if HAS_ZVE32F && HAS_ZVFH
+#if HAS_ZVE32F && HAS_ZVFHMIN
                      WideningConfig<rvv::float16_t, float, true>,
+
 #else
                      WideningConfig<rvv::float16_t, void, false>,
+#endif
+#if HAS_ZVE32F && HAS_ZVFH
+                     WideningConfig<rvv::float16_t, float, true, true>,
+#else
+                     WideningConfig<rvv::float16_t, void, false, true>,
 #endif
                      WideningConfig<vint8m1_t, vint16m2_t, true>,
 #if HAS_ZVE64X
@@ -60,22 +68,27 @@ TYPED_TEST_SUITE(WideningTest, WideningConfigs);
 
 TYPED_TEST(WideningTest, widening) {
   EXPECT_TRUE(
-      (rvv::Widenable<typename TypeParam::Narrow> == TypeParam::kWidenable));
-  if constexpr (rvv::Widenable<typename TypeParam::Narrow>) {
-    EXPECT_TRUE((std::is_same_v<rvv::widen_t<typename TypeParam::Narrow>,
-                                typename TypeParam::Wide>));
+      (rvv::Widenable<typename TypeParam::Narrow, TypeParam::kNeedZvfh> ==
+       TypeParam::kWidenable));
+  if constexpr (rvv::Widenable<typename TypeParam::Narrow,
+                               TypeParam::kNeedZvfh>) {
+    EXPECT_TRUE((std::is_same_v<
+                 rvv::widen_t<typename TypeParam::Narrow, TypeParam::kNeedZvfh>,
+                 typename TypeParam::Wide>));
   }
 }
 
 template <typename Config>
 class NarrowingTest : public ::testing::Test {};
 
-template <typename Narrow_, typename Wide_, bool kNarrowable_>
+template <typename Narrow_, typename Wide_, bool kNarrowable_,
+          bool kNeedZvfh_ = false>
 class NarrowingConfig {
  public:
   using Narrow = Narrow_;
   using Wide = Wide_;
   static constexpr bool kNarrowable = kNarrowable_;
+  static constexpr bool kNeedZvfh = kNeedZvfh_;
 };
 
 using NarrowingConfigs =
@@ -92,12 +105,18 @@ using NarrowingConfigs =
 #if HAS_ZVE64D && HAS_ZVE32F
                      NarrowingConfig<float, double, true>,
 #else
-                     NarrowingConfig<float, void, false>,
+                     NarrowingConfig<void, double, false>,
 #endif
 #if HAS_ZVE32F && HAS_ZVFHMIN
                      NarrowingConfig<rvv::float16_t, float, true>,
+
 #else
-                     NarrowingConfig<rvv::float16_t, void, false>,
+                     NarrowingConfig<void, float, false>,
+#endif
+#if HAS_ZVE32F && HAS_ZVFH
+                     NarrowingConfig<rvv::float16_t, float, true, true>,
+#else
+                     NarrowingConfig<void, float, false, true>,
 #endif
                      NarrowingConfig<vint8m1_t, vint16m2_t, true>,
 #if HAS_ZVE64X
@@ -114,105 +133,119 @@ TYPED_TEST_SUITE(NarrowingTest, NarrowingConfigs);
 
 TYPED_TEST(NarrowingTest, narrowing) {
   EXPECT_TRUE(
-      (rvv::Narrowable<typename TypeParam::Wide> == TypeParam::kNarrowable));
-  if constexpr (rvv::Narrowable<typename TypeParam::Wide>) {
-    EXPECT_TRUE((std::is_same_v<rvv::narrow_t<typename TypeParam::Wide>,
-                                typename TypeParam::Narrow>));
+      (rvv::Narrowable<typename TypeParam::Wide, TypeParam::kNeedZvfh> ==
+       TypeParam::kNarrowable));
+  if constexpr (rvv::Narrowable<typename TypeParam::Wide,
+                                TypeParam::kNeedZvfh>) {
+    EXPECT_TRUE((std::is_same_v<
+                 rvv::narrow_t<typename TypeParam::Wide, TypeParam::kNeedZvfh>,
+                 typename TypeParam::Narrow>));
   }
 }
 
 template <typename Config>
 class WideningNTest : public ::testing::Test {};
 
-template <typename Narrow_, typename Wide_, size_t kN_, bool kWidenable_>
+template <typename Narrow_, typename Wide_, size_t kN_, bool kWidenable_,
+          bool kNeedZvfh_ = false>
 class WideningNConfig {
  public:
   using Narrow = Narrow_;
   using Wide = Wide_;
   static constexpr size_t kN = kN_;
   static constexpr bool kWidenable = kWidenable_;
+  static constexpr bool kNeedZvfh = kNeedZvfh_;
 };
 
-using WideningNConfigs =
-    ::testing::Types<WideningNConfig<int8_t, int16_t, 2, true>,
-                     WideningNConfig<uint8_t, uint16_t, 2, true>,
-                     WideningNConfig<int8_t, int32_t, 4, true>,
-                     WideningNConfig<uint8_t, uint32_t, 4, true>,
-                     WideningNConfig<int16_t, int32_t, 2, true>,
-                     WideningNConfig<uint16_t, uint32_t, 2, true>,
-                     WideningNConfig<int16_t, void, 8, false>,
-                     WideningNConfig<uint16_t, void, 8, false>,
-                     WideningNConfig<int32_t, void, 4, false>,
-                     WideningNConfig<uint32_t, void, 4, false>,
-                     WideningNConfig<int32_t, void, 8, false>,
-                     WideningNConfig<uint32_t, void, 8, false>,
-                     WideningNConfig<int64_t, void, 2, false>,
-                     WideningNConfig<uint64_t, void, 2, false>,
-                     WideningNConfig<int64_t, void, 4, false>,
-                     WideningNConfig<uint64_t, void, 4, false>,
-                     WideningNConfig<int64_t, void, 8, false>,
-                     WideningNConfig<uint64_t, void, 8, false>,
+using WideningNConfigs = ::testing::Types<
+    WideningNConfig<int8_t, int16_t, 2, true>,
+    WideningNConfig<uint8_t, uint16_t, 2, true>,
+    WideningNConfig<int8_t, int32_t, 4, true>,
+    WideningNConfig<uint8_t, uint32_t, 4, true>,
+    WideningNConfig<int16_t, int32_t, 2, true>,
+    WideningNConfig<uint16_t, uint32_t, 2, true>,
+    WideningNConfig<int16_t, void, 8, false>,
+    WideningNConfig<uint16_t, void, 8, false>,
+    WideningNConfig<int32_t, void, 4, false>,
+    WideningNConfig<uint32_t, void, 4, false>,
+    WideningNConfig<int32_t, void, 8, false>,
+    WideningNConfig<uint32_t, void, 8, false>,
+    WideningNConfig<int64_t, void, 2, false>,
+    WideningNConfig<uint64_t, void, 2, false>,
+    WideningNConfig<int64_t, void, 4, false>,
+    WideningNConfig<uint64_t, void, 4, false>,
+    WideningNConfig<int64_t, void, 8, false>,
+    WideningNConfig<uint64_t, void, 8, false>,
 #if HAS_ZVE64X
-                     WideningNConfig<int8_t, int64_t, 8, true>,
-                     WideningNConfig<uint8_t, uint64_t, 8, true>,
-                     WideningNConfig<int16_t, int64_t, 4, true>,
-                     WideningNConfig<uint16_t, uint64_t, 4, true>,
-                     WideningNConfig<int32_t, int64_t, 2, true>,
-                     WideningNConfig<uint32_t, uint64_t, 2, true>,
+    WideningNConfig<int8_t, int64_t, 8, true>,
+    WideningNConfig<uint8_t, uint64_t, 8, true>,
+    WideningNConfig<int16_t, int64_t, 4, true>,
+    WideningNConfig<uint16_t, uint64_t, 4, true>,
+    WideningNConfig<int32_t, int64_t, 2, true>,
+    WideningNConfig<uint32_t, uint64_t, 2, true>,
 #else
-                     WideningNConfig<int8_t, void, 8, false>,
-                     WideningNConfig<uint8_t, void, 8, false>,
-                     WideningNConfig<int16_t, void, 4, false>,
-                     WideningNConfig<uint16_t, void, 4, false>,
-                     WideningNConfig<int32_t, void, 2, false>,
-                     WideningNConfig<uint32_t, void, 2, false>,
+    WideningNConfig<int8_t, void, 8, false>,
+    WideningNConfig<uint8_t, void, 8, false>,
+    WideningNConfig<int16_t, void, 4, false>,
+    WideningNConfig<uint16_t, void, 4, false>,
+    WideningNConfig<int32_t, void, 2, false>,
+    WideningNConfig<uint32_t, void, 2, false>,
 #endif
 #if HAS_ZVE32F && HAS_ZVE64D
-                     WideningNConfig<float, double, 2, true>,
+    WideningNConfig<float, double, 2, true>,
 #else
-                     WideningNConfig<float, void, 2, false>,
+    WideningNConfig<float, void, 2, false>,
 #endif
-                     WideningNConfig<vint8m1_t, vint16m2_t, 2, true>,
-                     WideningNConfig<vint8m1_t, vint32m4_t, 4, true>,
+    WideningNConfig<vint8m1_t, vint16m2_t, 2, true>,
+    WideningNConfig<vint8m1_t, vint32m4_t, 4, true>,
 #if HAS_ZVE64X
-                     WideningNConfig<vuint8m1_t, vuint64m8_t, 8, true>,
-                     WideningNConfig<vuint64m4_t, void, 2, false>,
+    WideningNConfig<vuint8m1_t, vuint64m8_t, 8, true>,
+    WideningNConfig<vuint64m4_t, void, 2, false>,
 #else
-                     WideningNConfig<vuint8m1_t, void, 8, false>,
+    WideningNConfig<vuint8m1_t, void, 8, false>,
 #endif
 #if HAS_ZVE32F && HAS_ZVE64D
-                     WideningNConfig<vfloat32m1_t, vfloat64m2_t, 2, true>,
+    WideningNConfig<vfloat32m1_t, vfloat64m2_t, 2, true>,
 #else
-                     WideningNConfig<vfloat32m1_t, void, 2, false>,
+    WideningNConfig<vfloat32m1_t, void, 2, false>,
 #endif
 #if HAS_ZVFHMIN && HAS_ZVE64D
-                     WideningNConfig<vfloat16mf2_t, vfloat64m2_t, 4, true>,
+    WideningNConfig<vfloat16mf2_t, vfloat64m2_t, 4, true>,
 #else
-                     WideningNConfig<vfloat16mf2_t, void, 4, false>,
+    WideningNConfig<vfloat16mf2_t, void, 4, false>,
 #endif
-                     WideningNConfig<vint8m8_t, void, 2, false>>;
+#if HAS_ZVFH && HAS_ZVE64D
+    WideningNConfig<vfloat16mf2_t, vfloat64m2_t, 4, true, true>,
+#else
+    WideningNConfig<vfloat16mf2_t, void, 4, false, true>,
+#endif
+    WideningNConfig<vint8m8_t, void, 2, false>>;
 
 TYPED_TEST_SUITE(WideningNTest, WideningNConfigs);
 
 TYPED_TEST(WideningNTest, widening_n) {
-  EXPECT_TRUE((rvv::WidenableN<TypeParam::kN, typename TypeParam::Narrow> ==
-               TypeParam::kWidenable));
-  if constexpr (rvv::WidenableN<TypeParam::kN, typename TypeParam::Narrow>) {
-    EXPECT_TRUE((std::is_same_v<
-                 rvv::widen_n_t<TypeParam::kN, typename TypeParam::Narrow>,
-                 typename TypeParam::Wide>));
+  EXPECT_TRUE((rvv::WidenableN<TypeParam::kN, typename TypeParam::Narrow,
+                               TypeParam::kNeedZvfh> == TypeParam::kWidenable));
+  if constexpr (rvv::WidenableN<TypeParam::kN, typename TypeParam::Narrow,
+                                TypeParam::kNeedZvfh>) {
+    EXPECT_TRUE((
+        std::is_same_v<rvv::widen_n_t<TypeParam::kN, typename TypeParam::Narrow,
+                                      TypeParam::kNeedZvfh>,
+                       typename TypeParam::Wide>));
   }
 }
 
 template <typename Config>
 class ToSignedTest : public ::testing::Test {};
 
-template <typename T_, typename Signed_, bool kConvertibleToSigned_>
+template <typename T_, typename Signed_, bool kConvertibleToSigned_,
+          bool kNeedZvfh_ = false>
 class ToSignedConfig {
  public:
   using T = T_;
   using Signed = Signed_;
   constexpr static bool kConvertibleToSigned = kConvertibleToSigned_;
+  constexpr static bool kNeedZvfh = kNeedZvfh_;
 };
 
 using ToSignedConfigs = ::testing::Types<
@@ -226,6 +259,11 @@ using ToSignedConfigs = ::testing::Types<
     ToSignedConfig<rvv::float16_t, int16_t, true>,
 #else
     ToSignedConfig<rvv::float16_t, void, false>,
+#endif
+#if HAS_ZVFH
+    ToSignedConfig<rvv::float16_t, int16_t, true, true>,
+#else
+    ToSignedConfig<rvv::float16_t, void, false, true>,
 #endif
 #if HAS_ZVE32F
     ToSignedConfig<rvv::float32_t, int32_t, true>,
@@ -247,23 +285,27 @@ using ToSignedConfigs = ::testing::Types<
 TYPED_TEST_SUITE(ToSignedTest, ToSignedConfigs);
 
 TYPED_TEST(ToSignedTest, to_signed) {
-  EXPECT_TRUE((rvv::ConvertibleToSigned<typename TypeParam::T> ==
-               TypeParam::kConvertibleToSigned));
+  EXPECT_TRUE(
+      (rvv::ConvertibleToSigned<typename TypeParam::T, TypeParam::kNeedZvfh> ==
+       TypeParam::kConvertibleToSigned));
   if constexpr (TypeParam::kConvertibleToSigned) {
-    EXPECT_TRUE((std::is_same_v<rvv::to_signed_t<typename TypeParam::T>,
-                                typename TypeParam::Signed>));
+    EXPECT_TRUE((std::is_same_v<
+                 rvv::to_signed_t<typename TypeParam::T, TypeParam::kNeedZvfh>,
+                 typename TypeParam::Signed>));
   }
 }
 
 template <typename Config>
 class ToUnsignedTest : public ::testing::Test {};
 
-template <typename T_, typename Unsigned_, bool kConvertibleToUnsigned_>
+template <typename T_, typename Unsigned_, bool kConvertibleToUnsigned_,
+          bool kNeedZvfh_ = false>
 class ToUnsignedConfig {
  public:
   using T = T_;
   using Unsigned = Unsigned_;
   constexpr static bool kConvertibleToUnsigned = kConvertibleToUnsigned_;
+  constexpr static bool kNeedZvfh = kNeedZvfh_;
 };
 
 using ToUnsignedConfigs = ::testing::Types<
@@ -278,6 +320,11 @@ using ToUnsignedConfigs = ::testing::Types<
     ToUnsignedConfig<rvv::float16_t, uint16_t, true>,
 #else
     ToUnsignedConfig<rvv::float16_t, void, false>,
+#endif
+#if HAS_ZVFH
+    ToUnsignedConfig<rvv::float16_t, uint16_t, true, true>,
+#else
+    ToUnsignedConfig<rvv::float16_t, void, false, true>,
 #endif
 #if HAS_ZVE32F
     ToUnsignedConfig<rvv::float32_t, uint32_t, true>,
@@ -301,24 +348,29 @@ using ToUnsignedConfigs = ::testing::Types<
 TYPED_TEST_SUITE(ToUnsignedTest, ToUnsignedConfigs);
 
 TYPED_TEST(ToUnsignedTest, to_unsigned) {
-  EXPECT_TRUE((rvv::ConvertibleToUnsigned<typename TypeParam::T> ==
-               TypeParam::kConvertibleToUnsigned));
+  EXPECT_TRUE((
+      rvv::ConvertibleToUnsigned<typename TypeParam::T, TypeParam::kNeedZvfh> ==
+      TypeParam::kConvertibleToUnsigned));
   if constexpr (TypeParam::kConvertibleToUnsigned) {
-    EXPECT_TRUE((std::is_same_v<rvv::to_unsigned_t<typename TypeParam::T>,
-                                typename TypeParam::Unsigned>));
+    EXPECT_TRUE(
+        (std::is_same_v<
+            rvv::to_unsigned_t<typename TypeParam::T, TypeParam::kNeedZvfh>,
+            typename TypeParam::Unsigned>));
   }
 }
 
 template <typename Config>
 class ToFloatingPointTest : public ::testing::Test {};
 
-template <typename T_, typename Unsigned_, bool kConvertibleToFloatingPoint_>
+template <typename T_, typename Unsigned_, bool kConvertibleToFloatingPoint_,
+          bool kNeedZvfh_ = false>
 class ToFloatingPointConfig {
  public:
   using T = T_;
   using Unsigned = Unsigned_;
   constexpr static bool kConvertibleToFloatingPoint =
       kConvertibleToFloatingPoint_;
+  constexpr static bool kNeedZvfh = kNeedZvfh_;
 };
 
 using ToFloatingPointConfigs = ::testing::Types<
@@ -334,6 +386,19 @@ using ToFloatingPointConfigs = ::testing::Types<
     ToFloatingPointConfig<uint16_t, void, false>,
     ToFloatingPointConfig<vint16m1_t, void, false>,
     ToFloatingPointConfig<vuint16m1_t, void, false>,
+#endif
+#if HAS_ZVFH
+    ToFloatingPointConfig<rvv::float16_t, rvv::float16_t, true, true>,
+    ToFloatingPointConfig<int16_t, rvv::float16_t, true, true>,
+    ToFloatingPointConfig<uint16_t, rvv::float16_t, true, true>,
+    ToFloatingPointConfig<vint16m1_t, vfloat16m1_t, true, true>,
+    ToFloatingPointConfig<vuint16m1_t, vfloat16m1_t, true, true>,
+#else
+    ToFloatingPointConfig<rvv::float16_t, void, false, true>,
+    ToFloatingPointConfig<int16_t, void, false, true>,
+    ToFloatingPointConfig<uint16_t, void, false, true>,
+    ToFloatingPointConfig<vint16m1_t, void, false, true>,
+    ToFloatingPointConfig<vuint16m1_t, void, false, true>,
 #endif
 #if HAS_ZVE32F
     ToFloatingPointConfig<rvv::float32_t, rvv::float32_t, true>,
@@ -368,10 +433,12 @@ using ToFloatingPointConfigs = ::testing::Types<
 TYPED_TEST_SUITE(ToFloatingPointTest, ToFloatingPointConfigs);
 
 TYPED_TEST(ToFloatingPointTest, to_float_t) {
-  EXPECT_TRUE((rvv::ConvertibleToFloatingPoint<typename TypeParam::T> ==
+  EXPECT_TRUE((rvv::ConvertibleToFloatingPoint<typename TypeParam::T,
+                                               TypeParam::kNeedZvfh> ==
                TypeParam::kConvertibleToFloatingPoint));
   if constexpr (TypeParam::kConvertibleToFloatingPoint) {
-    EXPECT_TRUE((std::is_same_v<rvv::to_float_t<typename TypeParam::T>,
-                                typename TypeParam::Unsigned>));
+    EXPECT_TRUE((std::is_same_v<
+                 rvv::to_float_t<typename TypeParam::T, TypeParam::kNeedZvfh>,
+                 typename TypeParam::Unsigned>));
   }
 }

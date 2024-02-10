@@ -61,22 +61,10 @@ def supported_unsigned_vreg(vreg_type: vreg.VRegType) -> str:
 def supported_floating_point_vreg(
     vreg_type: vreg.VRegType, need_zvfh: bool
 ) -> str:
-    return (
-        f"SupportedFloatingPointVReg<{vreg_type.cpp_repr}, "
-        + f"{'true' if need_zvfh else 'false'}>"
-    )
-
-
-def widenable(t: base.Type) -> str:
-    return f"Widenable<{t.cpp_repr}>"
-
-
-def widenable_n(n: int, t: base.Type) -> str:
-    return f"WidenableN<{n}, {t.cpp_repr}>"
-
-
-def narrowable(t: base.Type) -> str:
-    return f"Narrowable<{t.cpp_repr}>"
+    if need_zvfh:
+        return f"SupportedFloatingPointVReg<{vreg_type.cpp_repr}>"
+    else:
+        return f"SupportedFloatingPointVReg<{vreg_type.cpp_repr}, false>"
 
 
 def supported_vxrm(vxrm: base.Type) -> str:

@@ -99,21 +99,9 @@ def test_supported_unsigned_vreg() -> None:
 def test_supported_floating_point_vreg() -> None:
     assert (
         constraints.supported_floating_point_vreg(vreg.param("V"), True)
-        == "SupportedFloatingPointVReg<V, true>"
+        == "SupportedFloatingPointVReg<V>"
     )
     assert (
         constraints.supported_floating_point_vreg(vreg.param("V"), False)
         == "SupportedFloatingPointVReg<V, false>"
     )
-
-
-def test_widenable() -> None:
-    assert constraints.widenable(elem.param("E")) == "Widenable<E>"
-
-
-def test_widenable_n() -> None:
-    assert constraints.widenable_n(4, elem.param("E")) == "WidenableN<4, E>"
-
-
-def test_narrowable() -> None:
-    assert constraints.narrowable(elem.param("E")) == "Narrowable<E>"

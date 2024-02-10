@@ -149,7 +149,37 @@ def fp_classify_op(inst: str) -> Callable[[str], func_obj.CallableClass]:
 def single_width_convert(inst: str) -> Callable[[str], func.Function]:
     allowed_type_category = "int" if inst.endswith("f") else "fp"
     ret_type = "s" if inst.endswith("x") else "u" if inst.endswith("u") else "f"
-    return ops.op(inst, allowed_type_category, ret_type, ["v"])
+    return ops.op(
+        inst,
+        allowed_type_category,
+        ret_type,
+        ["v"],
+    )
+
+
+def widening_convert(inst: str) -> Callable[[str], func.Function]:
+    allowed_type_category = "int" if inst.endswith("f") else "fp"
+    ret_type = (
+        "ws" if inst.endswith("x") else "wu" if inst.endswith("u") else "wf"
+    )
+    return ops.op(
+        inst,
+        allowed_type_category,
+        ret_type,
+        ["v"],
+    )
+
+
+def widening_convert_float_to_float(
+    inst: str,
+) -> Callable[[str], func.Function]:
+    return ops.op(
+        inst,
+        "fp",
+        "w",
+        ["v"],
+        need_zvfh=False,
+    )
 
 
 rvv_fp_header = header.Header(
@@ -307,6 +337,21 @@ rvv_fp_header = header.Header(
                                 "vfcvt_f",
                             ],
                             [single_width_convert],
+                        ),
+                        "// 5.17. Widening Vector Floating-Point/Integer Type-Convert Intrinsics",
+                        header.CrossProduct(
+                            ops.inferred_type_part,
+                            [
+                                "vfwcvt_x",
+                                "vfwcvt_rtz_x",
+                                "vfwcvt_xu",
+                                "vfwcvt_rtz_xu",
+                                "vfwcvt_f",
+                            ],
+                            [widening_convert],
+                        ),
+                        header.WithVariants(
+                            widening_convert_float_to_float("vfwcvt_f")
                         ),
                     ]
                 )

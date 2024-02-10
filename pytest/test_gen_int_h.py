@@ -59,7 +59,7 @@ def test_vwadd_wx_m() -> None:
     assert (
         f("m").cpp_repr
         == """template <typename V, size_t kRatio>
-  requires SupportedSignedVReg<V> && CompatibleVRegRatio<V, kRatio> && Narrowable<V> && CompatibleVRegRatio<narrow_t<V>, kRatio>
+  requires SupportedSignedVReg<V> && CompatibleVRegRatio<V, kRatio>
 RVV_ALWAYS_INLINE
 V vwadd(vmask_t<kRatio> vm, V vs2, elem_t<narrow_t<V>> rs1, vl_t<kRatio> vl) {
   return __riscv_vwadd_wx(vm, vs2, rs1, vl);
@@ -72,7 +72,7 @@ def test_vwaddu_vx_tum() -> None:
     assert (
         f("tum").cpp_repr
         == """template <typename V, size_t kRatio>
-  requires SupportedUnsignedVReg<V> && CompatibleVRegRatio<V, kRatio> && Widenable<V> && CompatibleVRegRatio<widen_t<V>, kRatio>
+  requires SupportedUnsignedVReg<V> && CompatibleVRegRatio<V, kRatio>
 RVV_ALWAYS_INLINE
 widen_t<V> vwaddu(vmask_t<kRatio> vm, widen_t<V> vd, V vs2, elem_t<V> rs1, vl_t<kRatio> vl) {
   return __riscv_vwaddu_vx_tum(vm, vd, vs2, rs1, vl);
@@ -85,7 +85,7 @@ def test_vwadd_wv_m() -> None:
     assert (
         f("m").cpp_repr
         == """template <typename V, size_t kRatio>
-  requires SupportedSignedVReg<V> && CompatibleVRegRatio<V, kRatio> && Narrowable<V> && CompatibleVRegRatio<narrow_t<V>, kRatio>
+  requires SupportedSignedVReg<V> && CompatibleVRegRatio<V, kRatio>
 RVV_ALWAYS_INLINE
 V vwadd(vmask_t<kRatio> vm, V vs2, narrow_t<V> vs1, vl_t<kRatio> vl) {
   return __riscv_vwadd_wv(vm, vs2, vs1, vl);
@@ -98,7 +98,7 @@ def test_vwadd_vv_tum() -> None:
     assert (
         f("tum").cpp_repr
         == """template <typename V, size_t kRatio>
-  requires SupportedUnsignedVReg<V> && CompatibleVRegRatio<V, kRatio> && Widenable<V> && CompatibleVRegRatio<widen_t<V>, kRatio>
+  requires SupportedUnsignedVReg<V> && CompatibleVRegRatio<V, kRatio>
 RVV_ALWAYS_INLINE
 widen_t<V> vwaddu(vmask_t<kRatio> vm, widen_t<V> vd, V vs2, V vs1, vl_t<kRatio> vl) {
   return __riscv_vwaddu_vv_tum(vm, vd, vs2, vs1, vl);
@@ -137,7 +137,7 @@ def test_vwcvt_x() -> None:
     assert (
         f("").cpp_repr
         == """template <typename V, size_t kRatio>
-  requires SupportedSignedVReg<V> && CompatibleVRegRatio<V, kRatio> && Widenable<V> && CompatibleVRegRatio<widen_t<V>, kRatio>
+  requires SupportedSignedVReg<V> && CompatibleVRegRatio<V, kRatio>
 RVV_ALWAYS_INLINE
 widen_t<V> vwcvt(V vs2, vl_t<kRatio> vl) {
   return __riscv_vwcvt_x(vs2, vl);
@@ -150,7 +150,7 @@ def test_vwcvtu_x_tum() -> None:
     assert (
         f("tum").cpp_repr
         == """template <typename V, size_t kRatio>
-  requires SupportedUnsignedVReg<V> && CompatibleVRegRatio<V, kRatio> && Widenable<V> && CompatibleVRegRatio<widen_t<V>, kRatio>
+  requires SupportedUnsignedVReg<V> && CompatibleVRegRatio<V, kRatio>
 RVV_ALWAYS_INLINE
 widen_t<V> vwcvtu(vmask_t<kRatio> vm, widen_t<V> vd, V vs2, vl_t<kRatio> vl) {
   return __riscv_vwcvtu_x_tum(vm, vd, vs2, vl);
@@ -163,7 +163,7 @@ def test_vsext2() -> None:
     assert (
         f("", 2).cpp_repr
         == """template <typename V, size_t kRatio>
-  requires SupportedSignedVReg<V> && CompatibleVRegRatio<V, kRatio> && WidenableN<2, V> && CompatibleVRegRatio<widen_n_t<2, V>, kRatio>
+  requires SupportedSignedVReg<V> && CompatibleVRegRatio<V, kRatio>
 RVV_ALWAYS_INLINE
 widen_n_t<2, V> vsext2(V vs2, vl_t<kRatio> vl) {
   return __riscv_vsext_vf2(vs2, vl);
@@ -176,7 +176,7 @@ def test_vzext8_tum() -> None:
     assert (
         f("tum", 8).cpp_repr
         == """template <typename V, size_t kRatio>
-  requires SupportedUnsignedVReg<V> && CompatibleVRegRatio<V, kRatio> && WidenableN<8, V> && CompatibleVRegRatio<widen_n_t<8, V>, kRatio>
+  requires SupportedUnsignedVReg<V> && CompatibleVRegRatio<V, kRatio>
 RVV_ALWAYS_INLINE
 widen_n_t<8, V> vzext8(vmask_t<kRatio> vm, widen_n_t<8, V> vd, V vs2, vl_t<kRatio> vl) {
   return __riscv_vzext_vf8_tum(vm, vd, vs2, vl);
@@ -306,7 +306,7 @@ def test_vnsra_wx_tumu() -> None:
     assert (
         f("tumu").cpp_repr
         == """template <typename V, size_t kRatio>
-  requires SupportedSignedVReg<V> && CompatibleVRegRatio<V, kRatio> && Narrowable<V> && CompatibleVRegRatio<narrow_t<V>, kRatio>
+  requires SupportedSignedVReg<V> && CompatibleVRegRatio<V, kRatio>
 RVV_ALWAYS_INLINE
 narrow_t<V> vnsra(vmask_t<kRatio> vm, narrow_t<V> vd, V vs2, size_t rs1, vl_t<kRatio> vl) {
   return __riscv_vnsra_tumu(vm, vd, vs2, rs1, vl);
@@ -319,7 +319,7 @@ def test_vnsrl_wx() -> None:
     assert (
         f("").cpp_repr
         == """template <typename V, size_t kRatio>
-  requires SupportedUnsignedVReg<V> && CompatibleVRegRatio<V, kRatio> && Narrowable<V> && CompatibleVRegRatio<narrow_t<V>, kRatio>
+  requires SupportedUnsignedVReg<V> && CompatibleVRegRatio<V, kRatio>
 RVV_ALWAYS_INLINE
 narrow_t<V> vnsrl(V vs2, size_t rs1, vl_t<kRatio> vl) {
   return __riscv_vnsrl(vs2, rs1, vl);
@@ -332,7 +332,7 @@ def test_vnsra_wv_tum() -> None:
     assert (
         f("tum").cpp_repr
         == """template <typename V, size_t kRatio>
-  requires SupportedSignedVReg<V> && CompatibleVRegRatio<V, kRatio> && Narrowable<V> && CompatibleVRegRatio<narrow_t<V>, kRatio>
+  requires SupportedSignedVReg<V> && CompatibleVRegRatio<V, kRatio>
 RVV_ALWAYS_INLINE
 narrow_t<V> vnsra(vmask_t<kRatio> vm, narrow_t<V> vd, V vs2, narrow_t<to_unsigned_t<V>> vs1, vl_t<kRatio> vl) {
   return __riscv_vnsra_tum(vm, vd, vs2, vs1, vl);
@@ -345,7 +345,7 @@ def test_vnsrl_wv_m() -> None:
     assert (
         f("m").cpp_repr
         == """template <typename V, size_t kRatio>
-  requires SupportedUnsignedVReg<V> && CompatibleVRegRatio<V, kRatio> && Narrowable<V> && CompatibleVRegRatio<narrow_t<V>, kRatio>
+  requires SupportedUnsignedVReg<V> && CompatibleVRegRatio<V, kRatio>
 RVV_ALWAYS_INLINE
 narrow_t<V> vnsrl(vmask_t<kRatio> vm, V vs2, narrow_t<V> vs1, vl_t<kRatio> vl) {
   return __riscv_vnsrl(vm, vs2, vs1, vl);
@@ -357,7 +357,7 @@ def test_vncvt() -> None:
     assert (
         gen_int_h.vncvt("").cpp_repr
         == """template <typename V, size_t kRatio>
-  requires SupportedIntegralVReg<V> && CompatibleVRegRatio<V, kRatio> && Narrowable<V> && CompatibleVRegRatio<narrow_t<V>, kRatio>
+  requires SupportedIntegralVReg<V> && CompatibleVRegRatio<V, kRatio>
 RVV_ALWAYS_INLINE
 narrow_t<V> vncvt(V vs2, vl_t<kRatio> vl) {
   return __riscv_vncvt_x(vs2, vl);
@@ -369,7 +369,7 @@ def test_vncvt_tum() -> None:
     assert (
         gen_int_h.vncvt("tum").cpp_repr
         == """template <typename V, size_t kRatio>
-  requires SupportedIntegralVReg<V> && CompatibleVRegRatio<V, kRatio> && Narrowable<V> && CompatibleVRegRatio<narrow_t<V>, kRatio>
+  requires SupportedIntegralVReg<V> && CompatibleVRegRatio<V, kRatio>
 RVV_ALWAYS_INLINE
 narrow_t<V> vncvt(vmask_t<kRatio> vm, narrow_t<V> vd, V vs2, vl_t<kRatio> vl) {
   return __riscv_vncvt_x_tum(vm, vd, vs2, vl);

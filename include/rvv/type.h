@@ -132,11 +132,11 @@ template <typename T>
 concept SupportedUnsignedVReg =
     IsVReg<T> && SupportedUnsignedElement<elem_t<T>>;
 
-template <typename T, bool kNeedZvfh>
+template <typename T, bool kNeedZvfh = true>
 concept SupportedFloatingPointVReg =
     IsVReg<T> && SupportedFloatingPointElement<elem_t<T>, kNeedZvfh>;
 
-template <typename T, bool kNeedZvfh>
+template <typename T, bool kNeedZvfh = true>
 concept SupportedVReg =
     SupportedIntegralVReg<T> || SupportedFloatingPointVReg<T, kNeedZvfh>;
 
