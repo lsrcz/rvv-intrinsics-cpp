@@ -142,6 +142,16 @@ def fp_compare_op(inst: str) -> Callable[[str], func_obj.CallableClass]:
     return fp_op(inst, [("m", ["v", "v"]), ("m", ["v", "e"])])
 
 
+def fp_classify_op(inst: str) -> Callable[[str], func_obj.CallableClass]:
+    return fp_op(inst, [("u", ["v"])])
+
+
+def single_width_convert(inst: str) -> Callable[[str], func.Function]:
+    allowed_type_category = "int" if inst.endswith("f") else "fp"
+    ret_type = "s" if inst.endswith("x") else "u" if inst.endswith("u") else "f"
+    return ops.op(inst, allowed_type_category, ret_type, ["v"])
+
+
 rvv_fp_header = header.Header(
     [
         header.Include("rvv/elem.h"),
@@ -263,6 +273,40 @@ rvv_fp_header = header.Header(
                                 "vmfge",
                             ],
                             [ops.comparing_vv_op, ops.comparing_vx_op],
+                        ),
+                        " // 5.13. Vector Floating-Point Classify Intrinsics",
+                        header.WithVariants(
+                            ops.op("vfclass", "fp", "u", ["v"]),
+                        ),
+                        " // 5.14. Vector Floating-Point Merge Intrinsics",
+                        header.WithVariants(
+                            ops.vvm_v_op("vmerge", "fp"),
+                        ),
+                        header.WithVariants(
+                            ops.vxm_v_op("vfmerge", "fp"),
+                        ),
+                        "// 5.15. Vector Floating-Point Move Intrinsics",
+                        header.WithVariants(
+                            ops.op(
+                                ("vmv", "__riscv_vmv_v"),
+                                "fp",
+                                "v",
+                                ["v"],
+                                names=["vs1"],
+                            ),
+                            allowed_variants={"", "tu"},
+                        ),
+                        "// 5.16. Single-Width Vector Floating-Point/Integer Type-Convert Intrinsics",
+                        header.CrossProduct(
+                            ops.inferred_type_part,
+                            [
+                                "vfcvt_x",
+                                "vfcvt_rtz_x",
+                                "vfcvt_xu",
+                                "vfcvt_rtz_xu",
+                                "vfcvt_f",
+                            ],
+                            [single_width_convert],
                         ),
                     ]
                 )

@@ -57,10 +57,20 @@ def parse_type(
     match c:
         case "v":
             return vreg_type
+        case "u":
+            return vreg.to_unsigned(vreg_type)
+        case "s":
+            return vreg.to_signed(vreg_type)
+        case "f":
+            return vreg.to_floating_point(vreg_type)
         case "w":
             return vreg.widen(vreg_type)
+        case "wu":
+            return vreg.widen(vreg.to_unsigned(vreg_type))
         case "ws":
             return vreg.widen(vreg.to_signed(vreg_type))
+        case "wf":
+            return vreg.widen(vreg.to_floating_point(vreg_type))
         case "2":
             return vreg.widen_n(2, vreg_type)
         case "4":
@@ -69,12 +79,12 @@ def parse_type(
             return vreg.widen_n(8, vreg_type)
         case "n":
             return vreg.narrow(vreg_type)
-        case "u":
-            return vreg.to_unsigned(vreg_type)
         case "nu":
             return vreg.narrow(vreg.to_unsigned(vreg_type))
         case "ns":
             return vreg.narrow(vreg.to_signed(vreg_type))
+        case "nf":
+            return vreg.narrow(vreg.to_floating_point(vreg_type))
         case "size":
             return misc.size_t
         case "e":
@@ -85,6 +95,8 @@ def parse_type(
             return vreg.get_elem(vreg.to_unsigned(vreg_type))
         case "es":
             return vreg.get_elem(vreg.to_signed(vreg_type))
+        case "ef":
+            return vreg.get_elem(vreg.to_floating_point(vreg_type))
         case "m":
             return vmask.vmask(ratio)
         case _:
@@ -97,9 +109,22 @@ def parse_name(
     name_num: str = "",
 ) -> str:
     match c:
-        case "v" | "w" | "ws" | "n" | "u" | "nu" | "ns":
+        case (
+            "v"
+            | "u"
+            | "s"
+            | "f"
+            | "w"
+            | "wu"
+            | "ws"
+            | "wf"
+            | "n"
+            | "nu"
+            | "ns"
+            | "nf"
+        ):
             return f"vs{name_num}"
-        case "size" | "e" | "en" | "eu" | "es":
+        case "size" | "e" | "en" | "eu" | "es" | "ef":
             return f"rs{name_num}"
         case "m":
             return f"v{name_num}"
@@ -472,3 +497,15 @@ def comparing_vv_op(
         "m",
         ["v", "v"],
     )
+
+
+def vvm_v_op(
+    inst: str, allowed_type_category: str
+) -> Callable[[str], func.Function]:
+    return ops.op(inst, allowed_type_category, "v", ["v", "v", "m"])
+
+
+def vxm_v_op(
+    inst: str, allowed_type_category: str
+) -> Callable[[str], func.Function]:
+    return ops.op(inst, allowed_type_category, "v", ["v", "e", "m"])

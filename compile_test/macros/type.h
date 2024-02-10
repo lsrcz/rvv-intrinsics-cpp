@@ -84,10 +84,52 @@
 #define TO_UNSIGNED_u16 u16
 #define TO_UNSIGNED_u32 u32
 #define TO_UNSIGNED_u64 u64
+#define TO_UNSIGNED_f16 u16
+#define TO_UNSIGNED_f32 u32
+#define TO_UNSIGNED_f64 u64
 
 #define TO_UNSIGNED0(lmul) TO_UNSIGNED_##lmul
 #define TO_UNSIGNED(...) TO_UNSIGNED0(__VA_ARGS__)
 
 #define UNSIGNED_VREG_NAME(short_name, lmul) \
   VREG_NAME(TO_UNSIGNED(short_name), lmul)
+
+#define TO_SIGNED_i8 i8
+#define TO_SIGNED_i16 i16
+#define TO_SIGNED_i32 i32
+#define TO_SIGNED_i64 i64
+#define TO_SIGNED_u8 i8
+#define TO_SIGNED_u16 i16
+#define TO_SIGNED_u32 i32
+#define TO_SIGNED_u64 i64
+#define TO_SIGNED_f16 i16
+#define TO_SIGNED_f32 i32
+#define TO_SIGNED_f64 i64
+
+#define TO_SIGNED0(lmul) TO_SIGNED_##lmul
+#define TO_SIGNED(...) TO_SIGNED0(__VA_ARGS__)
+
+#define SIGNED_VREG_NAME(short_name, lmul) \
+  VREG_NAME(TO_SIGNED(short_name), lmul)
+
+#define TO_FP_i16 f16
+#define TO_FP_i32 f32
+#define TO_FP_i64 f64
+#define TO_FP_u16 f16
+#define TO_FP_u32 f32
+#define TO_FP_u64 f64
+#define TO_FP_f16 f16
+#define TO_FP_f32 f32
+#define TO_FP_f64 f64
+
+#define TO_FP0(lmul) TO_FP_##lmul
+#define TO_FP(...) TO_FP0(__VA_ARGS__)
+
+#define FP_VREG_NAME(short_name, lmul) VREG_NAME(TO_FP(short_name), lmul)
+
+#define CVT_OP_TEST(ret_reg, name, ratio, short_name, lmul)   \
+  OP_TEST_ALL(ret_reg##_##name##_v_##short_name##lmul, name,  \
+              rvv::vmask_t<ratio>, ret_reg(short_name, lmul), \
+              (VREG_NAME(short_name, lmul), vs2), (rvv::vl_t<ratio>, vl))
+
 #endif  // MACROS_TYPE_H_

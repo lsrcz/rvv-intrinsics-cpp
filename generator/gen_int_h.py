@@ -69,14 +69,6 @@ def extending_op(inst: str) -> Callable[[str, int], func.Function]:
     return inner
 
 
-def vvm_v_op(inst: str) -> Callable[[str], func.Function]:
-    return ops.op(inst, "int", "v", ["v", "v", "m"])
-
-
-def vxm_v_op(inst: str) -> Callable[[str], func.Function]:
-    return ops.op(inst, "int", "v", ["v", "e", "m"])
-
-
 def carry_out_vvm_op(inst: str) -> Callable[[str], func.Function]:
     return ops.op(inst, "int", "m", ["v", "v", "m"])
 
@@ -192,9 +184,10 @@ rvv_int_header = header.Header(
                         ),
                         "// 3.5. Vector Integer Add-with-Carry and Subtract-with-Borrow Intrinsics",
                         header.CrossProduct(
-                            ops.inferred_type_part,
+                            ops.bin_part,
                             ["vadc", "vsbc"],
-                            [vvm_v_op, vxm_v_op],
+                            ["int"],
+                            [ops.vvm_v_op, ops.vxm_v_op],
                             allowed_variants={"", "tu"},
                         ),
                         header.CrossProduct(
@@ -315,9 +308,10 @@ rvv_int_header = header.Header(
                         ),
                         "// 3.18. Vector Integer Merge Intrinsics",
                         header.CrossProduct(
-                            ops.inferred_type_part,
+                            ops.bin_part,
                             ["vmerge"],
-                            [vvm_v_op, vxm_v_op],
+                            ["int"],
+                            [ops.vvm_v_op, ops.vxm_v_op],
                             allowed_variants={"", "tu"},
                         ),
                         "// 3.19. Vector Integer Move Intrinsics",
