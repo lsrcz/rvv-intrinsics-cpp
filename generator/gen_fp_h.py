@@ -182,6 +182,31 @@ def widening_convert_float_to_float(
     )
 
 
+def narrowing_convert(inst: str) -> Callable[[str], func.Function]:
+    allowed_type_category = "int" if inst.endswith("f") else "fp"
+    ret_type = (
+        "ns" if inst.endswith("x") else "nu" if inst.endswith("u") else "nf"
+    )
+    return ops.op(
+        inst,
+        allowed_type_category,
+        ret_type,
+        ["v"],
+    )
+
+
+def narrowing_convert_float_to_float(
+    inst: str, need_zvfh: bool
+) -> Callable[[str], func.Function]:
+    return ops.op(
+        inst,
+        "fp",
+        "n",
+        ["v"],
+        need_zvfh=need_zvfh,
+    )
+
+
 rvv_fp_header = header.Header(
     [
         header.Include("rvv/elem.h"),
@@ -352,6 +377,26 @@ rvv_fp_header = header.Header(
                         ),
                         header.WithVariants(
                             widening_convert_float_to_float("vfwcvt_f")
+                        ),
+                        "// 5.18. Vector Floating-Point/Integer Type-Convert Intrinsics",
+                        header.CrossProduct(
+                            ops.inferred_type_part,
+                            [
+                                "vfncvt_x",
+                                "vfncvt_rtz_x",
+                                "vfncvt_xu",
+                                "vfncvt_rtz_xu",
+                                "vfncvt_f",
+                            ],
+                            [narrowing_convert],
+                        ),
+                        header.WithVariants(
+                            narrowing_convert_float_to_float("vfncvt_f", False)
+                        ),
+                        header.WithVariants(
+                            narrowing_convert_float_to_float(
+                                "vfncvt_rod_f", True
+                            )
                         ),
                     ]
                 )

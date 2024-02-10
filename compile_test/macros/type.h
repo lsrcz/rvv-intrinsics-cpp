@@ -141,4 +141,35 @@
 #define WIDEN_FP_VREG_NAME(short_name, lmul) \
   VREG_NAME(TO_FP(WIDEN_SHORT_NAME(short_name)), WIDEN_LMUL(lmul))
 
+#define NARROW_SHORT_NAME_i16 i8
+#define NARROW_SHORT_NAME_i32 i16
+#define NARROW_SHORT_NAME_i64 i32
+#define NARROW_SHORT_NAME_u16 u8
+#define NARROW_SHORT_NAME_u32 u16
+#define NARROW_SHORT_NAME_u64 u32
+#define NARROW_SHORT_NAME_f32 f16
+#define NARROW_SHORT_NAME_f64 f32
+
+#define NARROW_LMUL_mf4 mf8
+#define NARROW_LMUL_mf2 mf4
+#define NARROW_LMUL_m1 mf2
+#define NARROW_LMUL_m2 m1
+#define NARROW_LMUL_m4 m2
+#define NARROW_LMUL_m8 m4
+
+#define NARROW_LMUL0(lmul) NARROW_LMUL_##lmul
+#define NARROW_LMUL(...) NARROW_LMUL0(__VA_ARGS__)
+
+#define NARROW_SHORT_NAME0(short_name) NARROW_SHORT_NAME_##short_name
+#define NARROW_SHORT_NAME(...) NARROW_SHORT_NAME0(__VA_ARGS__)
+
+#define NARROW_UNSIGNED_VREG_NAME(short_name, lmul) \
+  VREG_NAME(TO_UNSIGNED(NARROW_SHORT_NAME(short_name)), NARROW_LMUL(lmul))
+
+#define NARROW_SIGNED_VREG_NAME(short_name, lmul) \
+  VREG_NAME(TO_SIGNED(NARROW_SHORT_NAME(short_name)), NARROW_LMUL(lmul))
+
+#define NARROW_FP_VREG_NAME(short_name, lmul) \
+  VREG_NAME(TO_FP(NARROW_SHORT_NAME(short_name)), NARROW_LMUL(lmul))
+
 #endif  // MACROS_TYPE_H_
