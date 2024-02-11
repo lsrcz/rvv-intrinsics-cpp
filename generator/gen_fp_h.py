@@ -2,7 +2,7 @@ from typing import Callable, Sequence
 
 from codegen import func, header, main, ops, constraints, func_obj
 from codegen.param_list import function, template
-from codegen.typing import misc
+from codegen.typing import misc, elem
 
 
 def fp_body(rvv_inst: str, param_list: function.FunctionTypedParamList) -> str:
@@ -207,6 +207,14 @@ def narrowing_convert_float_to_float(
     )
 
 
+def v_f_move_part(
+    elem_type: elem.RawElemType, ratio: misc.LitSizeTValue
+) -> header.WithVariants:
+    return header.WithVariants(
+        ops.v_scalar_move(("vfmv_v", "__riscv_vfmv_v_f"), elem_type, ratio)
+    )
+
+
 rvv_fp_header = header.Header(
     [
         header.Include("rvv/elem.h"),
@@ -343,12 +351,18 @@ rvv_fp_header = header.Header(
                         "// 5.15. Vector Floating-Point Move Intrinsics",
                         header.WithVariants(
                             ops.op(
-                                ("vmv", "__riscv_vmv_v"),
+                                ("vmv_v", "__riscv_vmv_v"),
                                 "fp",
                                 "v",
                                 ["v"],
                                 names=["vs1"],
                             ),
+                            allowed_variants={"", "tu"},
+                        ),
+                        header.CrossProduct(
+                            v_f_move_part,
+                            elem.ALL_FLOAT_TYPES,
+                            misc.ALL_RATIO,
                             allowed_variants={"", "tu"},
                         ),
                         "// 5.16. Single-Width Vector Floating-Point/Integer Type-Convert Intrinsics",

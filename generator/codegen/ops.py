@@ -1,8 +1,8 @@
 from typing import Callable, Optional, Sequence
 
-from codegen import constraints, func, func_obj, header, ops
+from codegen import constraints, func, func_obj, header, ops, validate, guarded
 from codegen.param_list import function, template
-from codegen.typing import base, misc, vl, vmask, vreg
+from codegen.typing import base, elem, misc, vl, vmask, vreg
 
 
 def vreg_require_clauses(
@@ -509,3 +509,40 @@ def vxm_v_op(
     inst: str, allowed_type_category: str
 ) -> Callable[[str], func.Function]:
     return ops.op(inst, allowed_type_category, "v", ["v", "e", "m"])
+
+
+def v_scalar_move(
+    inst_pair: tuple[str, str],
+    elem_type: elem.RawElemType,
+    ratio: misc.LitSizeTValue,
+) -> Callable[[str], Optional[func.Function]]:
+    inst = inst_pair[0]
+    rvv_inst = inst_pair[1]
+
+    def inner(variant: str) -> Optional[func.Function]:
+        if not validate.is_compatible_elem_ratio_may_under_guards(
+            elem_type, ratio
+        ):
+            return None
+        param_list = func.vreg_ratio_param_list(
+            vreg.concrete(elem_type, ratio),
+            ratio,
+            variant,
+            [elem_type, vl.vl(ratio)],
+            ["rs1", "vl"],
+        )
+        return func.Function(
+            vreg.concrete(elem_type, ratio),
+            inst,
+            param_list,
+            "  return "
+            + func.apply_function(
+                f"{rvv_inst}_{elem_type.short_name}{validate.elem_ratio_to_lmul(elem_type, ratio).lmul.short_name}"
+                + func.rvv_postfix(variant),
+                param_list,
+            )
+            + ";",
+            feature_guards=guarded.elem_ratio_guard(elem_type, ratio, True),
+        )
+
+    return inner

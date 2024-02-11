@@ -7,13 +7,19 @@
 #include <rvv/policy/tumu/int.h>
 
 #if HAS_ZVFH
-BASE_UNARY_OP_TEST(OP_TEST_NO_MASK, vmv, vmv, 16, f16, m1);
+BASE_UNARY_OP_TEST(OP_TEST_NO_MASK, vmv_v, vmv_v, 16, f16, m1);
+BASE_SCALAR_TO_VECTOR_MOVE_OP_TEST(OP_TEST_NO_MASK, vfmv_v, vfmv_v, 16, f16,
+                                   m1);
 #endif
 
 #if HAS_ZVE32F
-BASE_UNARY_OP_TEST(OP_TEST_NO_MASK, vmv, vmv, 32, f32, m1);
+BASE_UNARY_OP_TEST(OP_TEST_NO_MASK, vmv_v, vmv_v, 32, f32, m1);
+BASE_SCALAR_TO_VECTOR_MOVE_OP_TEST(OP_TEST_NO_MASK, vfmv_v, vfmv_v, 32, f32,
+                                   m1);
 #endif
 
 #if HAS_ZVE64D
-BASE_UNARY_OP_TEST(OP_TEST_NO_MASK, vmv, vmv, 32, f64, m2);
+BASE_UNARY_OP_TEST(OP_TEST_NO_MASK, vmv_v, vmv_v, 32, f64, m2);
+BASE_SCALAR_TO_VECTOR_MOVE_OP_TEST(OP_TEST_NO_MASK, vfmv_v, vfmv_v, 32, f64,
+                                   m2);
 #endif

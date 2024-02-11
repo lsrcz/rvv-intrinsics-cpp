@@ -114,6 +114,17 @@
         VREG_NAME(short_name, lmul), (VREG_NAME(short_name, lmul), vs2),   \
         (rvv::vl_t<ratio>, vl))
 
+#define BASE_SCALAR_TO_VECTOR_MOVE_OP_TEST(macro, name, rvv_name, ratio, \
+                                           short_name, lmul)             \
+  macro(name##_v_##short_name##lmul, rvv_name, rvv::vmask_t<ratio>,      \
+        VREG_NAME(short_name, lmul), (C_TYPE_NAME(short_name), vs),      \
+        (rvv::vl_t<ratio>, vl))
+
+#define BASE_MOVE_OP_TEST(macro, name, rvv_name, ratio, short_name, lmul)      \
+  BASE_UNARY_OP_TEST(macro, name, rvv_name, ratio, short_name, lmul)           \
+  BASE_SCALAR_TO_VECTOR_MOVE_OP_TEST(macro, name, rvv_name, ratio, short_name, \
+                                     lmul)
+
 #define BASE_WIDENING_VV_OP_TEST(macro, name, rvv_name, ratio, short_name,     \
                                  lmul)                                         \
   macro(name##_vv_##short_name##lmul, rvv_name, rvv::vmask_t<ratio>,           \

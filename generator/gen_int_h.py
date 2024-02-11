@@ -1,6 +1,7 @@
 from typing import Callable
 
 from codegen import func, header, main, ops
+from codegen.typing import elem, misc
 
 
 def widening_vx_op(inst: str, signed: bool) -> Callable[[str], func.Function]:
@@ -136,6 +137,14 @@ def widening_part(
     f: Callable[[str, bool], Callable[[str], func.Function]],
 ) -> header.HeaderPart:
     return header.WithVariants(f(op, signed))
+
+
+def v_x_move_part(
+    elem_type: elem.RawElemType, ratio: misc.LitSizeTValue
+) -> header.WithVariants:
+    return header.WithVariants(
+        ops.v_scalar_move(("vmv_v", "__riscv_vmv_v_x"), elem_type, ratio)
+    )
 
 
 rvv_int_header = header.Header(
@@ -317,12 +326,18 @@ rvv_int_header = header.Header(
                         "// 3.19. Vector Integer Move Intrinsics",
                         header.WithVariants(
                             ops.op(
-                                ("vmv", "__riscv_vmv_v"),
+                                ("vmv_v", "__riscv_vmv_v"),
                                 "int",
                                 "v",
                                 ["v"],
                                 names=["vs1"],
                             ),
+                            allowed_variants={"", "tu"},
+                        ),
+                        header.CrossProduct(
+                            v_x_move_part,
+                            elem.ALL_INT_TYPES,
+                            misc.ALL_RATIO,
                             allowed_variants={"", "tu"},
                         ),
                     ]
