@@ -50,7 +50,7 @@ def mask_op(
         function_param_list,
         lambda variant, ratio, param_list: "  return "
         + func.apply_function(
-            rvv_inst + func.rvv_postfix(variant),
+            rvv_inst + func.rvv_postfix(variant, overloaded=True),
             param_list,
         )
         + ";",
@@ -125,6 +125,31 @@ rvv_mask_h = header.Header(
                             ["vmclr", "vmset"],
                             misc.ALL_RATIO,
                             allowed_variants={""},
+                        ),
+                        "// 7.2. Vector count population in mask vcpop.m",
+                        header.WithVariants(
+                            mask_op("vcpop", "uint", ["m"]),
+                            allowed_variants={"", "m"},
+                        ),
+                        "// 7.3. vfirst find-first-set mask bit",
+                        header.WithVariants(
+                            mask_op("vfirst", "int", ["m"]),
+                            allowed_variants={"", "m"},
+                        ),
+                        "// 7.4. vmsbf.m set-before-first mask bit",
+                        header.WithVariants(
+                            mask_op("vmsbf", "m", ["m"]),
+                            allowed_variants={"", "m", "mu"},
+                        ),
+                        "// 7.5. vmsif.m set-including-first mask bit",
+                        header.WithVariants(
+                            mask_op("vmsif", "m", ["m"]),
+                            allowed_variants={"", "m", "mu"},
+                        ),
+                        "// 7.6. vmsof.m set-only-first mask bit",
+                        header.WithVariants(
+                            mask_op("vmsof", "m", ["m"]),
+                            allowed_variants={"", "m", "mu"},
                         ),
                     ]
                 )
