@@ -20,6 +20,23 @@ def sign_aware_reduce_vv_op(
     )
 
 
+def widening_fp_reduce_vv_op(
+    inst: str,
+) -> Callable[[str], func.Function]:
+    return ops.op(inst, "fp", "wm1", ["v", "wm1"])
+
+
+def sign_aware_widening_reduce_vv_op(
+    inst: str,
+) -> Callable[[str], func.Function]:
+    return ops.op(
+        inst,
+        "unsigned" if inst.endswith("u") else "signed",
+        "wm1",
+        ["v", "wm1"],
+    )
+
+
 rvv_reduce_header = header.Header(
     [
         header.Include("rvv/elem.h"),
@@ -43,6 +60,28 @@ rvv_reduce_header = header.Header(
                             ops.inferred_type_part,
                             ["vredmax", "vredmaxu", "vredmin", "vredminu"],
                             [sign_aware_reduce_vv_op],
+                            allowed_variants={"", "m", "tu", "tum"},
+                        ),
+                        "// 6.2. Vector Widening Integer Reduction Intrinsics",
+                        header.CrossProduct(
+                            ops.inferred_type_part,
+                            ["vwredsum", "vwredsumu"],
+                            [sign_aware_widening_reduce_vv_op],
+                            allowed_variants={"", "m", "tu", "tum"},
+                        ),
+                        "// 6.3. Vector Single-Width Floating-Point Reduction Intrinsics",
+                        header.CrossProduct(
+                            ops.bin_part,
+                            ["vfredosum", "vfredusum", "vfredmax", "vfredmin"],
+                            ["fp"],
+                            [reduce_vv_op],
+                            allowed_variants={"", "m", "tu", "tum"},
+                        ),
+                        "// 6.4. Vector Widening Floating-Point Reduction Intrinsics",
+                        header.CrossProduct(
+                            ops.inferred_type_part,
+                            ["vfwredosum", "vfwredusum"],
+                            [widening_fp_reduce_vv_op],
                             allowed_variants={"", "m", "tu", "tum"},
                         ),
                     ],

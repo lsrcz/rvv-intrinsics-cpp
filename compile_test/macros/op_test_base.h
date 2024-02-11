@@ -211,4 +211,12 @@
         VREG_NAME(short_name, m1), (VREG_NAME(short_name, lmul), vs2),    \
         (VREG_NAME(short_name, m1), vs1), (rvv::vl_t<ratio>, vl))
 
+#define WIDENING_REDUCE_VV_OP_TEST(macro, name, rvv_name, ratio, short_name, \
+                                   lmul)                                     \
+  macro(name##_vv_##short_name##lmul, rvv_name, rvv::vmask_t<ratio>,         \
+        VREG_NAME(WIDEN_SHORT_NAME(short_name), m1),                         \
+        (VREG_NAME(short_name, lmul), vs2),                                  \
+        (VREG_NAME(WIDEN_SHORT_NAME(short_name), m1), vs1),                  \
+        (rvv::vl_t<ratio>, vl))
+
 #endif  // MACROS_OP_TEST_BASE_H_
