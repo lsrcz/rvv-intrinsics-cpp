@@ -17,7 +17,7 @@ constexpr inline internal::viota<E> viota{};"""
 
 def test_viota_def():
     assert (
-        gen_mask_h.mask_iota_op(elem.unsigned_type(32))("").cpp_repr
+        gen_mask_h.mask_vec_ret_op("viota", elem.unsigned_type(32))("").cpp_repr
         == """namespace internal {
 template <>
 struct viota<uint32_t> {

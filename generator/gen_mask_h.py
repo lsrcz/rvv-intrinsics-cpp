@@ -1,4 +1,4 @@
-from typing import Callable, Sequence
+from typing import Callable
 from codegen import (
     func,
     guarded,
@@ -109,9 +109,12 @@ def mask_vec_ret_op_decl(inst: str) -> Callable[[str], func_obj.CallableClass]:
     )
 
 
-def mask_iota_op(
+def mask_vec_ret_op(
+    inst: str,
     elem_type: elem.RawElemType,
 ) -> Callable[[str], func_obj.CallableClass]:
+    assert inst in ["viota", "vid"]
+
     template_param_list = template.TemplateTypeArgumentList(elem_type)
 
     def some_operator(
@@ -125,12 +128,16 @@ def mask_iota_op(
                     vreg.concrete(elem_type, ratio),
                     ratio,
                     variant,
-                    [vmask.vmask(ratio), vl.vl(ratio)],
-                    ["vs2", "vl"],
+                    (
+                        [vmask.vmask(ratio), vl.vl(ratio)]
+                        if inst == "viota"
+                        else [vl.vl(ratio)]
+                    ),
+                    ["vs2", "vl"] if inst == "viota" else ["vl"],
                 ),
                 lambda variant, ratio, param_list: "  return "
                 + func.apply_function(
-                    f"__riscv_viota_m_{elem_type.short_name}"
+                    f"__riscv_{inst}_{'m' if inst == 'viota' else 'v'}_{elem_type.short_name}"
                     + f"{validate.elem_ratio_to_lmul(elem_type, ratio).lmul.short_name}"
                     + func.rvv_postfix(variant, overloaded=False),
                     param_list,
@@ -151,16 +158,17 @@ def mask_iota_op(
 
     return ops.callable_class_with_variant(
         template_param_list,
-        "viota",
+        inst,
         call_operators,
         requires_clauses=[],
     )
 
 
-def mask_iota_op_header_part(
+def mask_vec_ret_op_header_part(
+    inst: str,
     elem_type: elem.RawElemType,
 ) -> header.HeaderPart:
-    return header.WithVariants(mask_iota_op(elem_type))
+    return header.WithVariants(mask_vec_ret_op(inst, elem_type))
 
 
 rvv_mask_h = header.Header(
@@ -233,7 +241,19 @@ rvv_mask_h = header.Header(
                             allowed_variants={"", "mu", "tu", "tumu"},
                         ),
                         header.CrossProduct(
-                            mask_iota_op_header_part,
+                            mask_vec_ret_op_header_part,
+                            ["viota"],
+                            elem.ALL_UNSIGNED_INT_TYPES,
+                            allowed_variants={"", "mu", "tu", "tumu"},
+                        ),
+                        "// 7.8. Vector Element Index Intrinsics",
+                        header.WithVariants(
+                            mask_vec_ret_op_decl("vid"),
+                            allowed_variants={"", "mu", "tu", "tumu"},
+                        ),
+                        header.CrossProduct(
+                            mask_vec_ret_op_header_part,
+                            ["vid"],
                             elem.ALL_UNSIGNED_INT_TYPES,
                             allowed_variants={"", "mu", "tu", "tumu"},
                         ),
