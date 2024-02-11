@@ -1,7 +1,16 @@
-from typing import Callable
-from codegen import func, header, main, ops
-from codegen.typing import base, misc, vmask, vl
-from codegen.param_list import function
+from typing import Callable, Sequence
+from codegen import (
+    func,
+    guarded,
+    header,
+    main,
+    ops,
+    constraints,
+    func_obj,
+    validate,
+)
+from codegen.typing import base, elem, misc, vmask, vl, vreg
+from codegen.param_list import function, template
 
 
 def parse_type(ratio: misc.SizeTValue, c: str) -> base.Type:
@@ -87,6 +96,73 @@ def mask_bin_op(inst: str) -> Callable[[str], func.Function]:
     return mask_op(inst, "m", ["m", "m"])
 
 
+def mask_vec_ret_op_decl(inst: str) -> Callable[[str], func_obj.CallableClass]:
+    elem_type = elem.param("E")
+    template_param_list = template.TemplateTypeParamList(elem_type)
+    requires_clauses = [constraints.supported_unsigned_element(elem_type)]
+
+    return ops.callable_class_with_variant(
+        template_param_list,
+        inst,
+        None,
+        requires_clauses=requires_clauses,
+    )
+
+
+def mask_iota_op(
+    elem_type: elem.RawElemType,
+) -> Callable[[str], func_obj.CallableClass]:
+    template_param_list = template.TemplateTypeArgumentList(elem_type)
+
+    def some_operator(
+        ratio: misc.LitSizeTValue,
+    ) -> Callable[[str], func.Function]:
+        def inner(variant: str) -> func.Function:
+            return func.for_all_ratio(
+                lambda ratio: vreg.concrete(elem_type, ratio),
+                "operator()",
+                lambda variant, ratio: func.vreg_ratio_param_list(
+                    vreg.concrete(elem_type, ratio),
+                    ratio,
+                    variant,
+                    [vmask.vmask(ratio), vl.vl(ratio)],
+                    ["vs2", "vl"],
+                ),
+                lambda variant, ratio, param_list: "  return "
+                + func.apply_function(
+                    f"__riscv_viota_m_{elem_type.short_name}"
+                    + f"{validate.elem_ratio_to_lmul(elem_type, ratio).lmul.short_name}"
+                    + func.rvv_postfix(variant, overloaded=False),
+                    param_list,
+                )
+                + ";",
+                feature_guards=lambda ratio: guarded.elem_ratio_guard(
+                    elem_type, ratio, True
+                ),
+                modifier="const",
+            )(variant, ratio)
+
+        return inner
+
+    call_operators: list[Callable[[str], func.Function]] = []
+    for ratio in misc.ALL_RATIO:
+        if validate.is_compatible_elem_ratio_may_under_guards(elem_type, ratio):
+            call_operators.append(some_operator(ratio))
+
+    return ops.callable_class_with_variant(
+        template_param_list,
+        "viota",
+        call_operators,
+        requires_clauses=[],
+    )
+
+
+def mask_iota_op_header_part(
+    elem_type: elem.RawElemType,
+) -> header.HeaderPart:
+    return header.WithVariants(mask_iota_op(elem_type))
+
+
 rvv_mask_h = header.Header(
     [
         header.Include("rvv/elem.h"),
@@ -150,6 +226,16 @@ rvv_mask_h = header.Header(
                         header.WithVariants(
                             mask_op("vmsof", "m", ["m"]),
                             allowed_variants={"", "m", "mu"},
+                        ),
+                        "// 7.7. Vector Iota Intrinsics",
+                        header.WithVariants(
+                            mask_vec_ret_op_decl("viota"),
+                            allowed_variants={"", "mu", "tu", "tumu"},
+                        ),
+                        header.CrossProduct(
+                            mask_iota_op_header_part,
+                            elem.ALL_UNSIGNED_INT_TYPES,
+                            allowed_variants={"", "mu", "tu", "tumu"},
                         ),
                     ]
                 )

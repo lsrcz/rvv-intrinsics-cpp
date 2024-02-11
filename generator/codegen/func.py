@@ -132,17 +132,19 @@ def for_all_ratio(
     feature_guards: Callable[
         [misc.LitSizeTValue], Sequence[guarded.Guard]
     ] = guarded.ratio_guard,
+    modifier: str = "",
 ) -> Callable[[str, misc.LitSizeTValue], Function]:
     def inner(variant: str, ratio: misc.LitSizeTValue) -> Function:
         param_list = function_param_list(variant, ratio)
         return Function(
             ret_type(ratio),
-            f"{cpp_intrinsics_base_name}{rvv_postfix(variant)}",
+            f"{cpp_intrinsics_base_name}",
             param_list,
             function_body(variant, ratio, param_list),
             template_param_list=template_param_list,
             require_clauses=require_clauses,
             feature_guards=feature_guards(ratio),
+            modifier=modifier,
         )
 
     return inner
@@ -191,7 +193,7 @@ def for_all_elem_ratio(
         param_list = function_param_list(variant, elem_type, ratio)
         return Function(
             ret_type(elem_type, ratio),
-            f"{cpp_intrinsics_base_name}{rvv_postfix(variant)}",
+            f"{cpp_intrinsics_base_name}",
             param_list,
             function_body(variant, elem_type, ratio, param_list),
             template_param_list=template_param_list,

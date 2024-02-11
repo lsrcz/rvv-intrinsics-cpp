@@ -1,4 +1,4 @@
-from typing import Callable, Sequence
+from typing import Callable, Optional, Sequence
 
 from codegen import constraints, func, func_obj, header, ops
 from codegen.param_list import function, template
@@ -371,19 +371,28 @@ def inferred_type_part(
 
 
 def callable_class_with_variant(
-    template_param_list: template.TemplateTypeParamList,
+    template_param_list: (
+        template.TemplateTypeParamList
+        | template.TemplateTypeArgumentList
+        | None
+    ),
     name: str,
-    call_operators: Sequence[Callable[[str], func.Function]],
+    call_operators: Optional[Sequence[Callable[[str], func.Function]]],
     *,
     requires_clauses: Sequence[str] = tuple(),
 ) -> Callable[[str], func_obj.CallableClass]:
     def inner(variant: str) -> func_obj.CallableClass:
         assert variant in ["", "tu", "mu", "tumu"]
-        all_call_operators = list(map(lambda op: op(variant), call_operators))
-        if variant == "" or variant == "tu":
-            all_call_operators += list(
-                map(lambda op: op(variant + "m"), call_operators)
+        if call_operators is not None:
+            all_call_operators = list(
+                map(lambda op: op(variant), call_operators)
             )
+            if variant == "" or variant == "tu":
+                all_call_operators += list(
+                    map(lambda op: op(variant + "m"), call_operators)
+                )
+        else:
+            all_call_operators = None
         return func_obj.CallableClass(
             template_param_list,
             name,
