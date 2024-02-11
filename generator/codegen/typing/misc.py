@@ -142,3 +142,23 @@ class ParamFRMValue(base.TypeParam, base.Type):
 
 def param_frm(typename: str) -> ParamFRMValue:
     return ParamFRMValue(typename=typename)
+
+
+@dataclass(frozen=True, kw_only=True)
+class CUnsignedIntType(base.Type):
+    @property
+    def cpp_repr(self) -> str:
+        return "unsigned int"
+
+
+c_unsigned_int_t = CUnsignedIntType()
+
+
+@dataclass(frozen=True, kw_only=True)
+class CIntType(base.Type):
+    @property
+    def cpp_repr(self) -> str:
+        return "int"
+
+
+c_int_t = CIntType()
