@@ -140,6 +140,10 @@ template <typename T, bool kNeedZvfh = true>
 concept SupportedVReg =
     SupportedIntegralVReg<T> || SupportedFloatingPointVReg<T, kNeedZvfh>;
 
+template <typename V>
+  requires IsVReg<V>
+using vreg_m1_t = vreg_t<elem_t<V>, sizeof(elem_t<V>) * 8>;
+
 enum class VXRM {
   kRNU = 0,
   kRNE = 1,

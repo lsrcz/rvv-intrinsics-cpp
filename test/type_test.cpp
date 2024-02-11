@@ -506,3 +506,28 @@ TYPED_TEST(IsCompatibleVRegRatioTest, is_compatible_vreg_ratio) {
       (rvv::CompatibleVRegRatio<typename TypeParam::T, TypeParam::kRatio>),
       TypeParam::kExpected);
 }
+
+template <typename Config>
+class VRegM1TypeTest : public ::testing::Test {};
+
+template <typename V_, typename VRegM1_>
+class VRegM1TypeConfig {
+ public:
+  using V = V_;
+  using VRegM1 = VRegM1_;
+};
+
+using VRegM1TypeTestConfigs =
+    ::testing::Types<VRegM1TypeConfig<vuint8mf4_t, vuint8m1_t>,
+                     VRegM1TypeConfig<vint16m2_t, vint16m1_t>,
+#if HAS_ZVE32F
+                     VRegM1TypeConfig<vfloat32m2_t, vfloat32m1_t>,
+#endif
+                     VRegM1TypeConfig<vint32mf2_t, vint32m1_t>>;
+
+TYPED_TEST_SUITE(VRegM1TypeTest, VRegM1TypeTestConfigs);
+
+TYPED_TEST(VRegM1TypeTest, vreg_m1) {
+  using Actual = rvv::vreg_m1_t<typename TypeParam::V>;
+  EXPECT_TRUE((std::is_same_v<Actual, typename TypeParam::VRegM1>));
+}

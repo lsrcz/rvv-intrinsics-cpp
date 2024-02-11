@@ -442,3 +442,33 @@ TYPED_TEST(ToFloatingPointTest, to_float_t) {
                  typename TypeParam::Unsigned>));
   }
 }
+
+template <typename Config>
+class WidenVRegM1TypeTest : public ::testing::Test {};
+
+template <typename V_, typename WidenVRegM1_>
+class WidenVRegM1TypeConfig {
+ public:
+  using V = V_;
+  using WidenVRegM1 = WidenVRegM1_;
+};
+
+using WidenVRegM1TypeTestConfigs = ::testing::Types<
+#if HAS_ZVFH && HAS_ZVE32F
+    WidenVRegM1TypeConfig<vfloat16m8_t, vfloat32m1_t>,
+#endif
+#if HAS_ZVE32F && HAS_ZVE64D
+    WidenVRegM1TypeConfig<vfloat32m2_t, vfloat64m1_t>,
+#endif
+#if HAS_ZVE64X
+    WidenVRegM1TypeConfig<vint32mf2_t, vint64m1_t>,
+#endif
+    WidenVRegM1TypeConfig<vuint8mf4_t, vuint16m1_t>,
+    WidenVRegM1TypeConfig<vint16m2_t, vint32m1_t>>;
+
+TYPED_TEST_SUITE(WidenVRegM1TypeTest, WidenVRegM1TypeTestConfigs);
+
+TYPED_TEST(WidenVRegM1TypeTest, vreg_m1) {
+  using Actual = rvv::widen_vreg_m1_t<typename TypeParam::V>;
+  EXPECT_TRUE((std::is_same_v<Actual, typename TypeParam::WidenVRegM1>));
+}

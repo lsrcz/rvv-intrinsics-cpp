@@ -116,6 +116,11 @@ template <typename T, bool kNeedZvfh = true>
   requires Widenable<T, kNeedZvfh>
 using widen_t = convert_t<internal::WidenedElementType, T, kNeedZvfh>;
 
+template <typename V, bool kNeedZvfh = true>
+  requires IsVReg<V> && Widenable<elem_t<V>, kNeedZvfh>
+using widen_vreg_m1_t =
+    vreg_t<widen_t<elem_t<V>, kNeedZvfh>, sizeof(elem_t<V>) * 16>;
+
 template <typename T, bool kNeedZvfh>
 concept Widenable2 = Widenable<T, kNeedZvfh>;
 
