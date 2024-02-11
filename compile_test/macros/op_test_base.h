@@ -89,6 +89,12 @@
   OP_TEST_M(name, rvv_name, mask_type, ret_type, __VA_ARGS__)     \
   OP_TEST_MU(name, rvv_name, mask_type, ret_type, __VA_ARGS__)
 
+#define OP_TEST_NO_MASK_UNDISTURBED(name, rvv_name, mask_type, ret_type, ...) \
+  OP_TEST(name, rvv_name, mask_type, ret_type, __VA_ARGS__)                   \
+  OP_TEST_M(name, rvv_name, mask_type, ret_type, __VA_ARGS__)                 \
+  OP_TEST_TU(name, rvv_name, mask_type, ret_type, __VA_ARGS__)                \
+  OP_TEST_TUM(name, rvv_name, mask_type, ret_type, __VA_ARGS__)
+
 #define BASE_VV_OP_TEST(macro, name, rvv_name, ratio, short_name, lmul)  \
   macro(name##_vv_##short_name##lmul, rvv_name, rvv::vmask_t<ratio>,     \
         VREG_NAME(short_name, lmul), (VREG_NAME(short_name, lmul), vs2), \
@@ -199,5 +205,10 @@
 #define BASE_COMPARE_OP_TEST(macro, name, rvv_name, ratio, short_name, lmul) \
   BASE_COMPARE_VV_OP_TEST(macro, name, rvv_name, ratio, short_name, lmul)    \
   BASE_COMPARE_VX_OP_TEST(macro, name, rvv_name, ratio, short_name, lmul)
+
+#define REDUCE_VV_OP_TEST(macro, name, rvv_name, ratio, short_name, lmul) \
+  macro(name##_vv_##short_name##lmul, rvv_name, rvv::vmask_t<ratio>,      \
+        VREG_NAME(short_name, m1), (VREG_NAME(short_name, lmul), vs2),    \
+        (VREG_NAME(short_name, m1), vs1), (rvv::vl_t<ratio>, vl))
 
 #endif  // MACROS_OP_TEST_BASE_H_

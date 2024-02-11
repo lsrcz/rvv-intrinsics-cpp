@@ -164,3 +164,29 @@ class VRegElemType(elem.ElemType):
 
 def get_elem(base_type: VRegType) -> VRegElemType:
     return VRegElemType(base_type=base_type)
+
+
+@dataclass(frozen=True, kw_only=True)
+class VRegM1Type(VRegType):
+    base_type: VRegType
+
+    @property
+    def cpp_repr(self) -> str:
+        return f"vreg_m1_t<{self.base_type.cpp_repr}>"
+
+
+def vreg_m1(base_type: VRegType) -> VRegM1Type:
+    return VRegM1Type(base_type=base_type)
+
+
+@dataclass(frozen=True, kw_only=True)
+class WidenVRegM1Type(VRegType):
+    base_type: VRegType
+
+    @property
+    def cpp_repr(self) -> str:
+        return f"widen_vreg_m1_t<{self.base_type.cpp_repr}>"
+
+
+def widen_vreg_m1(base_type: VRegType) -> WidenVRegM1Type:
+    return WidenVRegM1Type(base_type=base_type)

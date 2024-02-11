@@ -46,6 +46,8 @@ def parse_type(
             return vreg.to_signed(vreg_type, need_zvfh)
         case "f":
             return vreg.to_floating_point(vreg_type, need_zvfh)
+        case "m1":
+            return vreg.vreg_m1(vreg_type)
         case "w":
             return vreg.widen(vreg_type, need_zvfh)
         case "wu":
@@ -56,6 +58,8 @@ def parse_type(
             return vreg.to_floating_point(
                 vreg.widen(vreg_type, need_zvfh), need_zvfh
             )
+        case "wm1":
+            return vreg.widen_vreg_m1(vreg_type)
         case "2":
             return vreg.widen_n(2, vreg_type, need_zvfh)
         case "4":
@@ -104,9 +108,11 @@ def parse_name(
             | "s"
             | "f"
             | "w"
+            | "m1"
             | "wu"
             | "ws"
             | "wf"
+            | "wm1"
             | "n"
             | "nu"
             | "ns"
