@@ -43,6 +43,47 @@ def vslide1_op(inst: str) -> Callable[[str], func.Function]:
     )
 
 
+def vrgather_vv_op(variant: str) -> func.Function:
+    return ops.op(
+        "vrgather",
+        "all",
+        "v",
+        ["v", "u"],
+        extra_requires_clauses=lambda vreg_type, ratio: [
+            constraints.does_not_have_width(vreg.get_elem(vreg_type), 16)
+        ],
+    )(variant)
+
+
+def vrgather_ve_op(variant: str) -> func.Function:
+    return ops.op(
+        "vrgather",
+        "all",
+        "v",
+        ["v", "size"],
+        names=["vs2", "vs1"],
+    )(variant)
+
+
+def vrgather_ei16_op(variant: str) -> func.Function:
+    return ops.op(
+        ("vrgather", "__riscv_vrgatherei16"),
+        "all",
+        "v",
+        ["v", "u16"],
+        names=["vs2", "vs1"],
+    )(variant)
+
+
+def vcompress_op(variant: str) -> func.Function:
+    return ops.op(
+        "vcompress",
+        "all",
+        "v",
+        ["v", "m"],
+    )(variant)
+
+
 rvv_perm_h = header.Header(
     [
         header.Include("rvv/elem.h"),
@@ -106,6 +147,15 @@ rvv_perm_h = header.Header(
                                 "vfslide1down",
                             ],
                             [vslide1_op],
+                        ),
+                        "// 8.5. Vector Register Gather Intrinsics",
+                        header.CrossProduct(
+                            header.WithVariants,
+                            [vrgather_vv_op, vrgather_ve_op, vrgather_ei16_op],
+                        ),
+                        "// 8.6. Vector Compress Intrinsics",
+                        header.WithVariants(
+                            vcompress_op, allowed_variants={"", "tu"}
                         ),
                     ]
                 )

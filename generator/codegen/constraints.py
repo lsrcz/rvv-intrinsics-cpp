@@ -25,6 +25,10 @@ def has_width(elem_type: elem.ElemType, width: int) -> str:
     return f"(sizeof({elem_type.cpp_repr}) == {width // 8})"
 
 
+def does_not_have_width(elem_type: elem.ElemType, width: int) -> str:
+    return f"(sizeof({elem_type.cpp_repr}) != {width // 8})"
+
+
 def supported_integral_element(elem_type: elem.ElemType) -> str:
     return f"SupportedIntegralElement<{elem_type.cpp_repr}>"
 

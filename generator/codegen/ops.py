@@ -48,6 +48,8 @@ def parse_type(
             return vreg.to_floating_point(vreg_type, need_zvfh)
         case "m1":
             return vreg.vreg_m1(vreg_type)
+        case "u16":
+            return vreg.concrete(elem.uint16_t, ratio)
         case "w":
             return vreg.widen(vreg_type, need_zvfh)
         case "wu":
@@ -107,6 +109,7 @@ def parse_name(
             | "u"
             | "s"
             | "f"
+            | "u16"
             | "w"
             | "m1"
             | "wu"
@@ -170,6 +173,9 @@ def op(
         + ";"
     ),
     need_zvfh: bool = True,
+    extra_requires_clauses: Callable[
+        [vreg.VRegType, misc.SizeTValue], list[str]
+    ] = lambda vreg_type, ratio: [],
 ) -> Callable[[str], func.Function]:
     if isinstance(inst, str):
         rvv_inst = f"__riscv_{inst}"
@@ -218,7 +224,8 @@ def op(
                 ratio,
                 need_zvfh=need_zvfh,
             )
-        ),
+        )
+        + extra_requires_clauses(vreg_type, ratio),
         modifier=modifier,
     )
 
