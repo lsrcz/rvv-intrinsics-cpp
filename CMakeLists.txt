@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.10)
-project(rvv-intrinsics-cpp)
+project(rvv)
 
+# ------------------------------------------------------------------------------
+# Compiler config
+# ------------------------------------------------------------------------------
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
@@ -36,13 +39,16 @@ set(RVV_FLAGS
     -Wnon-virtual-dtor)
 
 if(NOT DEFINED RISCV_ARCH)
-  set(RISCV_ARCH rv64gc_v1p0_zvfh)
+  set(RISCV_ARCH rv64gc_v1p0)
 endif()
 list(APPEND RVV_FLAGS -march=${RISCV_ARCH})
 if(${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
   list(APPEND RVV_FLAGS -menable-experimental-extensions)
 endif()
 
+# ------------------------------------------------------------------------------
+# Code generation
+# ------------------------------------------------------------------------------
 set(GENERATED_INCLUDE_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated)
 set_directory_properties(PROPERTY ADDITIONAL_CLEAN_FILES
                          ${GENERATED_INCLUDE_DIR})
@@ -98,16 +104,23 @@ generate_rvv("reduce.h" "gen_reduce_h.py" "tu" "mu" "tumu")
 generate_rvv("mask.h" "gen_mask_h.py" "tu" "mu" "tumu")
 generate_rvv("perm.h" "gen_perm_h.py" "tu" "mu" "tumu")
 
-add_custom_target(generated_files ALL DEPENDS ${GENERATED_HEADER_FILES}
-                                              ${GENERATED_INC_FILES})
-message("Generated files: ${GENERATED_HEADER_FILES}")
-install(DIRECTORY ${GENERATED_INCLUDE_DIR}/rvv include/rvv TYPE INCLUDE)
+# ------------------------------------------------------------------------------
+# Header library
+# ------------------------------------------------------------------------------
+add_library(rvv INTERFACE ${GENERATED_HEADER_FILES} ${GENERATED_INC_FILES})
+target_include_directories(
+  rvv
+  INTERFACE "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>"
+            "$<BUILD_INTERFACE:${GENERATED_INCLUDE_DIR}>"
+            "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>")
 
+# ------------------------------------------------------------------------------
+# Tests
+# ------------------------------------------------------------------------------
 macro(rvv_add_executable exe)
   add_executable(${exe} ${ARGN})
-  add_dependencies(${exe} generated_files)
   target_compile_options(${exe} PRIVATE ${RVV_FLAGS})
-  target_include_directories(${exe} PRIVATE ${GENERATED_INCLUDE_DIR} include)
+  target_link_libraries(${exe} PRIVATE rvv)
   if(NOT DEFINED _FIRST_EXECUTABLE_TARGET)
     set(_FIRST_EXECUTABLE_TARGET ${exe})
     target_precompile_headers(${exe} PRIVATE ${GENERATED_HEADER_FILES})
@@ -119,24 +132,33 @@ endmacro()
 macro(rvv_add_test exe)
   rvv_add_executable(${exe} ${ARGN})
   target_include_directories(${exe} PRIVATE GTest::GTest GTest::Main)
-  target_link_libraries(${exe} GTest::GTest GTest::Main)
+  target_link_libraries(${exe} PRIVATE GTest::GTest GTest::Main)
   add_test(NAME ${exe} COMMAND $<TARGET_FILE:${exe}>)
 endmacro()
 
-add_test(
-  NAME python_tests
-  COMMAND ${Python3_EXECUTABLE} -m pytest ${CMAKE_CURRENT_SOURCE_DIR}
-  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/generator)
+if(CMAKE_TESTING_ENABLED)
+  add_test(
+    NAME python_tests
+    COMMAND ${Python3_EXECUTABLE} -m pytest ${CMAKE_CURRENT_SOURCE_DIR}
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/generator)
 
-file(GLOB_RECURSE CPP_TESTS test/*.cpp)
+  file(GLOB_RECURSE CPP_TESTS test/*.cpp)
 
-foreach(test_file ${CPP_TESTS})
-  get_filename_component(test_name ${test_file} NAME_WE)
-  rvv_add_test(${test_name} ${test_file})
-endforeach()
+  foreach(test_file ${CPP_TESTS})
+    get_filename_component(test_name ${test_file} NAME_WE)
+    rvv_add_test(${test_name} ${test_file})
+  endforeach()
 
-file(GLOB_RECURSE CPP_COMPILE_TEST compile_test/*.cpp)
+  file(GLOB_RECURSE CPP_COMPILE_TEST compile_test/*.cpp)
 
-rvv_add_test(compile_test ${CPP_COMPILE_TEST})
-target_include_directories(compile_test
-                           PRIVATE ${PROJECT_SOURCE_DIR}/compile_test)
+  rvv_add_test(compile_test ${CPP_COMPILE_TEST})
+  target_include_directories(compile_test
+                             PRIVATE ${PROJECT_SOURCE_DIR}/compile_test)
+endif()
+
+# ------------------------------------------------------------------------------
+# Install
+# ------------------------------------------------------------------------------
+
+install(DIRECTORY ${GENERATED_INCLUDE_DIR}/rvv include/rvv TYPE INCLUDE)
+install(TARGETS rvv)
