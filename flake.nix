@@ -3,6 +3,23 @@
   inputs.flake-utils.url = "github:numtide/flake-utils";
 
   outputs = { self, nixpkgs, flake-utils }:
+    let
+      package = { stdenv, gtest, cmake, ninja, python311, llvmPackages_17 }:
+        llvmPackages_17.stdenv.mkDerivation {
+          pname = "rvv-intrinsic-cpp";
+          version = "0.1.0";
+          src = ./.;
+
+          nativeBuildInputs = [
+            cmake
+            ninja
+            (python311.withPackages (ps: with ps; [ pytest ]))
+          ];
+          buildInputs = [
+            gtest
+          ];
+        };
+    in
     flake-utils.lib.eachSystem [
       flake-utils.lib.system.x86_64-linux
       flake-utils.lib.system.riscv64-linux
@@ -10,30 +27,13 @@
       (system:
         let
           pkgs = import nixpkgs { inherit system; };
-          cross = import nixpkgs {
-            inherit system;
-            crossSystem = { config = flake-utils.lib.system.riscv64-linux; };
-          };
+          cross = pkgs.pkgsCross.riscv64;
           isCross = system != flake-utils.lib.system.riscv64-linux;
-          riscv_gtest = if isCross then cross.gtest else pkgs.gtest;
-          riscv_gcc = if isCross then cross.buildPackages.gcc13 else pkgs.gcc13;
+          riscv_pkgs = if isCross then cross else pkgs;
           riscv_llvm =
             if isCross
             then cross.buildPackages.llvmPackages_17
             else pkgs.llvmPackages_17;
-
-          python3WithPackages = pkgs.python311.withPackages (ps: with ps; [
-            pytest
-          ]);
-
-          buildDependencies = [
-            riscv_gcc
-            riscv_gtest
-            pkgs.cmake
-            pkgs.ninja
-            python3WithPackages
-            pkgs.cmake-format
-          ];
         in
         {
           formatter = pkgs.nixpkgs-fmt;
@@ -41,21 +41,16 @@
             buildInputs = [
               riscv_llvm.clang
               riscv_llvm.bintools
-              riscv_gcc
+              riscv_pkgs.gtest
               pkgs.clang-tools_17
               pkgs.cpplint
-            ] ++ buildDependencies;
+              pkgs.cmake
+              pkgs.ninja
+              pkgs.cmake-format
+              (pkgs.python311.withPackages (ps: with ps; [ pytest ]))
+            ];
           };
-          packages.default = riscv_gcc.stdenv.mkDerivation rec {
-            pname =
-              if isCross
-              then "rvv-intrinsic-cpp-riscv64-linux"
-              else "rvv-intrinsic-cpp";
-            version = "0.1.0";
-            src = ./.;
-
-            nativeBuildInputs = buildDependencies;
-          };
+          packages.default = riscv_pkgs.callPackage package { };
         }
       );
 }
