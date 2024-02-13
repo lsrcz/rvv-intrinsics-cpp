@@ -1,5 +1,5 @@
 from typing import Optional, Sequence
-from codegen import func
+from codegen import func, guarded
 from codegen.param_list import template
 
 
@@ -15,6 +15,7 @@ class CallableClass:
         call_operators: Optional[Sequence[func.Function]],
         *,
         requires_clauses: Sequence[str] = tuple(),
+        feature_guards: Sequence[guarded.Guard] = tuple(),
     ) -> None:
         self.template_param_list: (
             template.TemplateTypeParamList
@@ -28,6 +29,7 @@ class CallableClass:
             )
         self.call_operators: Optional[Sequence[func.Function]] = call_operators
         self.requires_clauses: Sequence[str] = requires_clauses
+        self.feature_guards: Sequence[guarded.Guard] = feature_guards
 
     @property
     def cpp_repr(self) -> str:
@@ -66,12 +68,14 @@ class CallableClass:
 }}  // namespace internal"""
 
         if isinstance(self.template_param_list, template.TemplateTypeParamList):
-            return f"""{body}
+            ret = f"""{body}
 template {self.template_param_list.cpp_repr}
 constexpr inline internal::{self.name}{self.template_param_list.forward.cpp_repr} {self.name}{{}};"""
-        if isinstance(
+        elif isinstance(
             self.template_param_list, template.TemplateTypeArgumentList
         ):
-            return body
-        return f"""{body}
+            ret = body
+        else:
+            ret = f"""{body}
 constexpr inline internal::{self.name} {self.name}{{}};"""
+        return guarded.Guarded(self.feature_guards, ret).cpp_repr

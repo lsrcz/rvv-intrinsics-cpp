@@ -387,6 +387,7 @@ def callable_class_with_variant(
     call_operators: Optional[Sequence[Callable[[str], func.Function]]],
     *,
     requires_clauses: Sequence[str] = tuple(),
+    feature_guards: Sequence[guarded.Guard] = tuple(),
 ) -> Callable[[str], func_obj.CallableClass]:
     def inner(variant: str) -> func_obj.CallableClass:
         assert variant in ["", "tu", "mu", "tumu"]
@@ -405,6 +406,7 @@ def callable_class_with_variant(
             name,
             all_call_operators,
             requires_clauses=requires_clauses,
+            feature_guards=feature_guards,
         )
 
     return inner
@@ -422,6 +424,7 @@ def callable_class_op(
     body: Callable[[str, function.FunctionTypedParamList], str],
     *,
     requires_clauses: Sequence[str] = tuple(),
+    feature_guards: Sequence[guarded.Guard] = tuple(),
     names: Sequence[Sequence[str]] = tuple(),
     have_dest_arg: bool = False,
 ) -> Callable[[str], func_obj.CallableClass]:
@@ -467,6 +470,7 @@ def callable_class_op(
         inst,
         call_operators,
         requires_clauses=requires_clauses,
+        feature_guards=feature_guards,
     )
 
 

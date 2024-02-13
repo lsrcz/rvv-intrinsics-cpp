@@ -161,6 +161,7 @@ def mask_vec_ret_op(
         inst,
         call_operators,
         requires_clauses=[],
+        feature_guards=guarded.elem_guard(elem_type, True),
     )
 
 
