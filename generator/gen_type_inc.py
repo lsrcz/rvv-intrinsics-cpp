@@ -20,11 +20,8 @@ struct VReg<{elem_type.cpp_repr}, {ratio.cpp_repr}> {{
   using RegType = {raw_type};
 }};
 template <>
-struct GetElemType<{raw_type}> {{
+struct VRegTraits<{raw_type}> {{
   using ElemType = {elem_type.cpp_repr};
-}};
-template <>
-struct GetRatio<{raw_type}> {{
   constexpr static size_t kRatio = {ratio.cpp_repr};
 }};
 """,
@@ -42,7 +39,7 @@ struct VMask<{ratio.cpp_repr}> {{
   using MaskType = {raw_type};
 }};
 template <>
-struct GetRatio<{raw_type}> {{
+struct VMaskTraits<{raw_type}> {{
   constexpr static size_t kRatio = {ratio.cpp_repr};
 }};
 """,

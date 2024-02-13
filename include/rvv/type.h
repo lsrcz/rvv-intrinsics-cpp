@@ -82,14 +82,32 @@ template <size_t kRatio>
   requires SupportedRatio<kRatio>
 struct VMask {};
 
-// Specialization generated.
-template <typename T>
-struct GetElemType {};
+template <typename V>
+struct VRegTraits;
 
-// Specialization generated.
-template <typename T>
-struct GetRatio {};
+template <typename V>
+struct VMaskTraits;
+
+template <typename V>
+struct VLTraits;
+
+template <size_t kRatio_>
+struct VLTraits<vl_t<kRatio_>> {
+  static constexpr size_t kRatio = kRatio_;
+};
 }  // namespace internal
+
+template <typename T>
+concept IsVReg = requires {
+  typename internal::VRegTraits<T>::ElemType;
+  internal::VRegTraits<T>::kRatio;
+};
+
+template <typename T>
+concept IsVMask = requires { internal::VMaskTraits<T>::kRatio; };
+
+template <typename T>
+concept IsVL = requires { internal::VLTraits<T>::kRatio; };
 
 template <typename E, size_t kRatio>
   requires CompatibleElemRatio<E, kRatio>
@@ -99,8 +117,29 @@ template <size_t kRatio>
   requires SupportedRatio<kRatio>
 using vmask_t = internal::VMask<kRatio>::MaskType;
 
+namespace internal {
 template <typename T>
-using elem_t = internal::GetElemType<T>::ElemType;
+  requires IsVReg<T> || IsVMask<T> || IsVL<T>
+struct GetRatio;
+template <typename V>
+  requires IsVReg<V>
+struct GetRatio<V> {
+  static constexpr size_t kRatio = VRegTraits<V>::kRatio;
+};
+template <typename V>
+  requires IsVMask<V>
+struct GetRatio<V> {
+  static constexpr size_t kRatio = VMaskTraits<V>::kRatio;
+};
+template <typename V>
+  requires IsVL<V>
+struct GetRatio<V> {
+  static constexpr size_t kRatio = VLTraits<V>::kRatio;
+};
+}  // namespace internal
+
+template <typename T>
+using elem_t = internal::VRegTraits<T>::ElemType;
 
 template <typename T>
 constexpr size_t ratio = internal::GetRatio<T>::kRatio;
@@ -110,12 +149,6 @@ constexpr size_t ratio<vl_t<kRatio>> = kRatio;
 
 template <typename T>
 constexpr LMul lmul = elem_ratio_to_lmul<elem_t<T>, ratio<T>>;
-
-template <typename T>
-concept IsVReg = requires {
-  typename internal::GetElemType<T>::ElemType;
-  internal::GetRatio<T>::kRatio;
-};
 
 template <typename T, size_t kRatio>
 concept CompatibleVRegRatio =
