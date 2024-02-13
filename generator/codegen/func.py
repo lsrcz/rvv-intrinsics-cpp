@@ -215,13 +215,13 @@ def elem_ratio_extend_param_list(
     extended_param_list = function.param_list()
     if "m" in variant:
         extended_param_list = extended_param_list + (
-            vmask.vmask(ratio=ratio),
+            vmask.concrete(ratio=ratio),
             "vm",
         )
     if variant not in ["", "m"] and undisturbed_need_dest_arg:
         extended_param_list = extended_param_list + (
             (
-                vmask.vmask(ratio=ratio)
+                vmask.concrete(ratio=ratio)
                 if comparing
                 else vreg.concrete(elem_type, ratio)
             ),
@@ -357,7 +357,7 @@ def vreg_ratio_extend_param_list(
     extended_param_list = function.param_list()
     if "m" in variant:
         extended_param_list = extended_param_list + (
-            vmask.vmask(ratio=ratio),
+            vmask.concrete(ratio=ratio),
             "vm",
         )
     if variant not in ["", "m"] and undisturbed_need_dest_arg:

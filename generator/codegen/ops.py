@@ -93,7 +93,7 @@ def parse_type(
         case "ef":
             return vreg.get_elem(vreg.to_floating_point(vreg_type, need_zvfh))
         case "m":
-            return vmask.vmask(ratio)
+            return vmask.concrete(ratio)
         case _:
             raise ValueError(f"Unknown type category: {c}")
 

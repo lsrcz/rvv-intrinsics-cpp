@@ -107,7 +107,15 @@ template <typename T>
 concept IsVMask = requires { internal::VMaskTraits<T>::kRatio; };
 
 template <typename T>
+concept SupportedVMask =
+    IsVMask<T> && SupportedRatio<internal::VMaskTraits<T>::kRatio>;
+
+template <typename T>
 concept IsVL = requires { internal::VLTraits<T>::kRatio; };
+
+template <typename T>
+concept SupportedVL =
+    IsVL<T> && SupportedRatio<internal::VMaskTraits<T>::kRatio>;
 
 template <typename E, size_t kRatio>
   requires CompatibleElemRatio<E, kRatio>

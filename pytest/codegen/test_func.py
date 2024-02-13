@@ -196,7 +196,7 @@ base_param_list = function.FunctionTypedParamList(
 )
 
 mask_extra = function.FunctionTypedParamList(
-    function.TypedParam(type=vmask.vmask(ratio), name="vm")
+    function.TypedParam(type=vmask.concrete(ratio), name="vm")
 )
 
 dest_extra = function.FunctionTypedParamList(

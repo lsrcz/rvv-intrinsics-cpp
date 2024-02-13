@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from codegen.typing import base, elem
 from codegen.typing import kind as k
-from codegen.typing import misc
+from codegen.typing import lmul, misc
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -164,6 +164,32 @@ class VRegElemType(elem.ElemType):
 
 def get_elem(base_type: VRegType) -> VRegElemType:
     return VRegElemType(base_type=base_type)
+
+
+@dataclass(frozen=True, kw_only=True)
+class VRegRatio(misc.SizeTValue):
+    base_type: VRegType
+
+    @property
+    def cpp_repr(self) -> str:
+        return f"ratio<{self.base_type.cpp_repr}>"
+
+
+def get_ratio(base_type: VRegType) -> VRegRatio:
+    return VRegRatio(base_type=base_type)
+
+
+@dataclass(frozen=True, kw_only=True)
+class VRegLMul(lmul.LMulValue):
+    base_type: VRegType
+
+    @property
+    def cpp_repr(self) -> str:
+        return f"lmul<{self.base_type.cpp_repr}>"
+
+
+def get_lmul(base_type: VRegType) -> VRegLMul:
+    return VRegLMul(base_type=base_type)
 
 
 @dataclass(frozen=True, kw_only=True)

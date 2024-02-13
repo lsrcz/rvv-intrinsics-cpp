@@ -189,7 +189,7 @@ def non_indexed_store_def_template(
 def vlm_defs(variant: str, ratio: misc.LitSizeTValue) -> func.Function:
     assert variant == ""
     return func.for_all_ratio(
-        vmask.vmask,
+        vmask.concrete,
         "vlm",
         lambda _, ratio: function.param_list(
             [misc.ptr(elem.uint8_t, is_const=True), vl.vl(ratio)],

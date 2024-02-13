@@ -16,7 +16,7 @@ from codegen.param_list import function, template
 def parse_type(ratio: misc.SizeTValue, c: str) -> base.Type:
     match c:
         case "m":
-            return vmask.vmask(ratio)
+            return vmask.concrete(ratio)
         case "uint":
             return misc.c_unsigned_int_t
         case "int":
@@ -70,7 +70,7 @@ def mask_nullary_op(
     inst: str,
 ) -> Callable[[str, misc.LitSizeTValue], func.Function]:
     return func.for_all_ratio(
-        vmask.vmask,
+        vmask.concrete,
         inst,
         lambda variant, ratio: function.param_list([vl.vl(ratio)], ["vl"]),
         lambda variant, ratio, param_list: "  return "
@@ -129,7 +129,7 @@ def mask_vec_ret_op(
                     ratio,
                     variant,
                     (
-                        [vmask.vmask(ratio), vl.vl(ratio)]
+                        [vmask.concrete(ratio), vl.vl(ratio)]
                         if inst == "viota"
                         else [vl.vl(ratio)]
                     ),

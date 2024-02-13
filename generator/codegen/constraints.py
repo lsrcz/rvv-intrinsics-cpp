@@ -1,4 +1,4 @@
-from codegen.typing import base, elem, lmul, misc, vreg
+from codegen.typing import base, elem, lmul, misc, vreg, vmask
 
 
 def supported_ratio(ratio: misc.SizeTValue) -> str:
@@ -71,9 +71,45 @@ def supported_floating_point_vreg(
         return f"SupportedFloatingPointVReg<{vreg_type.cpp_repr}, false>"
 
 
+def supported_vreg(vreg_type: vreg.VRegType) -> str:
+    return f"SupportedVReg<{vreg_type.cpp_repr}>"
+
+
+def supported_vmask(vmask_type: vmask.VMaskType) -> str:
+    return f"SupportedVMask<{vmask_type.cpp_repr}>"
+
+
+def supported_vreg_or_supported_vmask(ty: base.Type) -> str:
+    return f"(SupportedVReg<{ty.cpp_repr}> || SupportedVMask<{ty.cpp_repr}>)"
+
+
 def supported_vxrm(vxrm: base.Type) -> str:
     return f"SupportedVXRM<{vxrm.cpp_repr}>"
 
 
 def supported_frm(frm: base.Type) -> str:
     return f"SupportedFRM<{frm.cpp_repr}>"
+
+
+def same_width(elem_type1: elem.ElemType, elem_type2: elem.ElemType) -> str:
+    return f"(sizeof({elem_type1.cpp_repr}) == sizeof({elem_type2.cpp_repr}))"
+
+
+def same_ratio(ratio1: misc.SizeTValue, ratio2: misc.SizeTValue) -> str:
+    return f"({ratio1.cpp_repr} == {ratio2.cpp_repr})"
+
+
+def not_same_type(type1: base.Type, type2: base.Type) -> str:
+    return f"(!std::is_same_v<{type1.cpp_repr}, {type2.cpp_repr}>)"
+
+
+def doesnt_have_width(elem_type: elem.ElemType, width: int) -> str:
+    return f"(sizeof({elem_type.cpp_repr}) != {width // 8})"
+
+
+def same_lmul(lmul1: lmul.LMulValue, lmul2: lmul.LMulValue) -> str:
+    return f"({lmul1.cpp_repr} == {lmul2.cpp_repr})"
+
+
+def has_lmul(vreg_type: vreg.VRegType, l: lmul.LMulValue) -> str:
+    return same_lmul(vreg.get_lmul(vreg_type), l)
