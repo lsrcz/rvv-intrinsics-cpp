@@ -172,4 +172,15 @@
 #define NARROW_FP_VREG_NAME(short_name, lmul) \
   VREG_NAME(TO_FP(NARROW_SHORT_NAME(short_name)), NARROW_LMUL(lmul))
 
+#define CPP_LMUL_VALUE_mf8 rvv::LMul::kMF8
+#define CPP_LMUL_VALUE_mf4 rvv::LMul::kMF4
+#define CPP_LMUL_VALUE_mf2 rvv::LMul::kMF2
+#define CPP_LMUL_VALUE_m1 rvv::LMul::kM1
+#define CPP_LMUL_VALUE_m2 rvv::LMul::kM2
+#define CPP_LMUL_VALUE_m4 rvv::LMul::kM4
+#define CPP_LMUL_VALUE_m8 rvv::LMul::kM8
+
+#define CPP_LMUL_VALUE0(lmul) CPP_LMUL_VALUE_##lmul
+#define CPP_LMUL_VALUE(...) CPP_LMUL_VALUE0(__VA_ARGS__)
+
 #endif  // MACROS_TYPE_H_
