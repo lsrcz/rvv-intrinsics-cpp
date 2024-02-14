@@ -2,7 +2,7 @@ from typing import Callable, Optional
 
 from codegen import constraints, func, func_obj, guarded, header, main, validate
 from codegen.param_list import function, template
-from codegen.typing import elem, lmul, misc, vl, vmask, vreg
+from codegen.typing import elem, lmul, misc, vl, vmask, vreg, vtuple
 
 
 def vsetvl_decl(
@@ -149,6 +149,60 @@ def vreinterpret_op_def(
     )
 
 
+def vundefined_decl() -> func.Function:
+    type_param = vreg.param("V")
+    return func.Function(
+        type_param,
+        "vundefined",
+        function.param_list(),
+        function_body=None,
+        template_param_list=template.TemplateTypeParamList(type_param),
+        require_clauses=[
+            constraints.supported_vreg_or_supported_vtuple(type_param)
+        ],
+    )
+
+
+def vundefined_vreg_def(
+    elem_type: elem.RawElemType, ratio: misc.LitSizeTValue
+) -> Optional[func.Function]:
+    if not validate.is_compatible_elem_ratio_may_under_guards(elem_type, ratio):
+        return None
+    vreg_type = vreg.concrete(elem_type, ratio)
+    l = validate.elem_ratio_to_lmul(elem_type, ratio)
+    template_param_list = template.TemplateTypeArgumentList(vreg_type)
+    return func.Function(
+        vreg_type,
+        "vundefined",
+        function.param_list(),
+        f"  return __riscv_vundefined_{elem_type.short_name}{l.lmul.short_name}();",
+        template_param_list=template_param_list,
+        feature_guards=guarded.elem_ratio_guard(elem_type, ratio, True),
+    )
+
+
+def vundefined_vtuple_def(
+    elem_type: elem.RawElemType,
+    ratio: misc.LitSizeTValue,
+    tuple_size: misc.LitSizeTValue,
+) -> Optional[func.Function]:
+    if not validate.is_compatible_elem_ratio_tuple_size_may_under_guards(
+        elem_type, ratio, tuple_size
+    ):
+        return None
+    vtuple_type = vtuple.concrete(elem_type, ratio, tuple_size)
+    l = validate.elem_ratio_to_lmul(elem_type, ratio)
+    template_param_list = template.TemplateTypeArgumentList(vtuple_type)
+    return func.Function(
+        vtuple_type,
+        "vundefined",
+        function.param_list(),
+        f"  return __riscv_vundefined_{elem_type.short_name}{l.lmul.short_name}x{tuple_size.cpp_repr}();",
+        template_param_list=template_param_list,
+        feature_guards=guarded.elem_ratio_guard(elem_type, ratio, True),
+    )
+
+
 rvv_misc_header = header.Header(
     [
         header.Include("rvv/elem.h"),
@@ -186,6 +240,26 @@ RVV_ALWAYS_INLINE vl_t<elem_lmul_to_ratio<E, kLMul>> vsetvlmax() {
                     vreinterpret_mask_op_def,
                     misc.ALL_RATIO,
                 ),
+                "// 9.6. Vector Initialization Intrinsics",
+                """template <typename V>
+#if __riscv_v_intrinsic >= 1000000
+  requires(SupportedVReg<V> || SupportedVTuple<V>)
+#else
+  requires SupportedVReg<V>
+#endif
+RVV_ALWAYS_INLINE V vundefined();
+""",
+                header.CrossProduct(
+                    vundefined_vreg_def, elem.ALL_ELEM_TYPES, misc.ALL_RATIO
+                ),
+                "#if __riscv_v_intrinsic >= 1000000",
+                header.CrossProduct(
+                    vundefined_vtuple_def,
+                    elem.ALL_ELEM_TYPES,
+                    misc.ALL_RATIO,
+                    misc.ALL_TUPLE_SIZE,
+                ),
+                "#endif",
             ],
             allowed_variants={""},
         ),

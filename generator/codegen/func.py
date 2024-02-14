@@ -31,16 +31,22 @@ class Function:
         function_param_list: function.FunctionTypedParamList,
         function_body: Optional[str],
         *,
-        template_param_list: Optional[template.TemplateTypeParamList] = None,
+        template_param_list: (
+            template.TemplateTypeArgumentList
+            | template.TemplateTypeParamList
+            | None
+        ) = None,
         require_clauses: Sequence[str] = tuple(),
         feature_guards: Sequence[guarded.Guard] = tuple(),
         modifier: str = "",
     ) -> None:
         if not template_param_list:
             assert len(require_clauses) == 0
-        self.template_param_list: Optional[template.TemplateTypeParamList] = (
-            template_param_list
-        )
+        self.template_param_list: (
+            template.TemplateTypeArgumentList
+            | template.TemplateTypeParamList
+            | None
+        ) = template_param_list
         self.require_clauses: Sequence[str] = require_clauses
         self.ret_type: base.Type = ret_type
         self.func_name: str = func_name
@@ -53,18 +59,29 @@ class Function:
 
     @property
     def cpp_repr(self) -> str:
-        template_clause: str = (
-            f"template {self.template_param_list.cpp_repr}\n"
-            if self.template_param_list is not None
-            else ""
-        )
+        if isinstance(self.template_param_list, template.TemplateTypeParamList):
+            template_clause: str = (
+                f"template {self.template_param_list.cpp_repr}\n"
+            )
+        elif isinstance(
+            self.template_param_list, template.TemplateTypeArgumentList
+        ):
+            template_clause: str = "template <>\n"
+        else:
+            template_clause: str = ""
         requires_clause: str = (
             ""
             if len(self.require_clauses) == 0
             else "  requires " + " && ".join(self.require_clauses) + "\n"
         )
+        if isinstance(
+            self.template_param_list, template.TemplateTypeArgumentList
+        ):
+            template_arg_clause = self.template_param_list.cpp_repr
+        else:
+            template_arg_clause = ""
         declaration: str = f"""RVV_ALWAYS_INLINE
-{self.ret_type.cpp_repr} {self.func_name}{self.function_param_list.cpp_repr}"""
+{self.ret_type.cpp_repr} {self.func_name}{template_arg_clause}{self.function_param_list.cpp_repr}"""
         modifier = "" if self.modifier == "" else f" {self.modifier}"
         body_or_semicolon: str = (
             f" {{\n{self.function_body}\n}}" if self.function_body else ";"

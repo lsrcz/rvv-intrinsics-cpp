@@ -91,6 +91,10 @@ def supported_vreg_or_supported_vmask(ty: base.Type) -> str:
     return f"(SupportedVReg<{ty.cpp_repr}> || SupportedVMask<{ty.cpp_repr}>)"
 
 
+def supported_vreg_or_supported_vtuple(ty: base.Type) -> str:
+    return f"(SupportedVReg<{ty.cpp_repr}> || SupportedVTuple<{ty.cpp_repr}>)"
+
+
 def supported_vxrm(vxrm: base.Type) -> str:
     return f"SupportedVXRM<{vxrm.cpp_repr}>"
 
