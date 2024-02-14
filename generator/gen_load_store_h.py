@@ -16,6 +16,8 @@ def load_arguments(
         "vlsseg",
         "vloxei",
         "vluxei",
+        "vloxsege",
+        "vluxsege",
     ]
     param_list = function.param_list(
         [misc.ptr(elem_type, is_const=True)], ["rs1"]
@@ -23,7 +25,12 @@ def load_arguments(
 
     if inst == "vlse" or inst == "vlsseg":
         param_list = param_list + (misc.ptrdiff_t, "rs2")
-    if inst == "vloxei" or inst == "vluxei":
+    if (
+        inst == "vloxei"
+        or inst == "vluxei"
+        or inst == "vloxsege"
+        or inst == "vluxsege"
+    ):
         param_list = param_list + (
             vreg.concrete(elem.IntType(width=width, signed=False), ratio),
             "rs2",
