@@ -161,6 +161,9 @@ template <typename E, size_t kRatio, size_t kTupleSize>
   requires CompatibleElemRatioTupleSize<E, kRatio, kTupleSize>
 using vtuple_t = internal::VTuple<E, kRatio, kTupleSize>::TupleType;
 
+template <typename T>
+constexpr size_t tuple_size = internal::VTupleTraits<T>::kTupleSize;
+
 namespace internal {
 template <typename T>
   requires IsVReg<T> || IsVMask<T> || IsVL<T> || IsVTuple<T>
@@ -256,6 +259,26 @@ enum class FRM {
 };
 template <FRM kFRM>
 concept SupportedFRM = kFRM >= FRM::kImplicit && kFRM <= FRM::kRMM;
+
+template <LMul LMulLarge, LMul LMulSmall, size_t kIndex>
+concept ValidLMulIndex = (LMulLarge > LMulSmall) && (LMulLarge > LMul::kM1) &&
+                         kIndex < (1 << (static_cast<size_t>(LMulLarge) -
+                                         static_cast<size_t>(LMulSmall)));
+
+template <typename VLarge, typename VSmall, size_t kIndex>
+concept ValidVectorIndex = SupportedVReg<VLarge> && SupportedVReg<VSmall> &&
+                           std::is_same_v<elem_t<VLarge>, elem_t<VSmall>> &&
+                           ValidLMulIndex<lmul<VLarge>, lmul<VSmall>, kIndex>;
+
+template <typename VLarge, typename VSmall, size_t kIndex>
+concept ValidVTupleIndex =
+    SupportedVTuple<VLarge> && SupportedVReg<VSmall> &&
+    std::is_same_v<elem_t<VLarge>, elem_t<VSmall>> &&
+    (ratio<VLarge> == ratio<VSmall>)&&(kIndex < tuple_size<VLarge>);
+
+template <typename VLarge, typename VSmall, size_t kIndex>
+concept ValidIndex = ValidVectorIndex<VLarge, VSmall, kIndex> ||
+                     ValidVTupleIndex<VLarge, VSmall, kIndex>;
 
 }  // namespace rvv
 

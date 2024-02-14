@@ -583,3 +583,67 @@ TYPED_TEST(VRegM1TypeTest, vreg_m1) {
   using Actual = rvv::vreg_m1_t<typename TypeParam::V>;
   EXPECT_TRUE((std::is_same_v<Actual, typename TypeParam::VRegM1>));
 }
+
+template <typename Config>
+class ValidIndexTest : public ::testing::Test {};
+
+template <typename VLarge_, typename VSmall_, size_t kIndex_, bool kExpected_>
+class ValidIndexConfig {
+ public:
+  using VLarge = VLarge_;
+  using VSmall = VSmall_;
+  static constexpr size_t kIndex = kIndex_;
+  static constexpr bool kExpected = kExpected_;
+};
+
+using ValidIndexConfigs =
+    ::testing::Types<ValidIndexConfig<vuint8m8_t, vuint8m1_t, 0, true>,
+                     ValidIndexConfig<vuint8m8_t, vuint8m1_t, 1, true>,
+                     ValidIndexConfig<vuint8m8_t, vuint8m1_t, 7, true>,
+                     ValidIndexConfig<vuint8m8_t, vuint8m1_t, 8, false>,
+                     ValidIndexConfig<vuint8m8_t, vuint8m4_t, 0, true>,
+                     ValidIndexConfig<vuint8m8_t, vuint8m4_t, 1, true>,
+                     ValidIndexConfig<vuint8m8_t, vuint8m8_t, 0, false>,
+                     ValidIndexConfig<vuint8m1_t, vuint8m1_t, 0, false>,
+                     ValidIndexConfig<vuint8m1_t, vuint8mf2_t, 0, false>,
+                     ValidIndexConfig<vuint8mf2_t, vuint8mf4_t, 0, false>,
+                     ValidIndexConfig<vuint32m2_t, vuint8m1_t, 0, false>,
+                     ValidIndexConfig<vuint32m2_t, vuint8m2_t, 0, false>,
+                     ValidIndexConfig<vuint32m2_t, vuint32m1_t, 0, true>,
+#if HAS_ZVE64X
+                     ValidIndexConfig<vuint64m1_t, vuint64m1_t, 0, false>,
+                     ValidIndexConfig<vuint64m2_t, vuint64m1_t, 0, true>,
+                     ValidIndexConfig<vuint64m2_t, vuint64m1_t, 1, true>,
+                     ValidIndexConfig<vuint64m2_t, vuint64m1_t, 2, false>,
+#endif
+#if HAS_ZVFH
+                     ValidIndexConfig<vfloat64m4_t, vfloat64m1_t, 0, true>,
+                     ValidIndexConfig<vfloat64m4_t, vfloat64m1_t, 3, true>,
+                     ValidIndexConfig<vfloat64m4_t, vfloat64m1_t, 4, false>,
+#endif
+#if HAS_ZVE32F
+                     ValidIndexConfig<vfloat32m4_t, vfloat32m1_t, 0, true>,
+                     ValidIndexConfig<vfloat32m4_t, vfloat32m1_t, 3, true>,
+                     ValidIndexConfig<vfloat32m4_t, vfloat32m1_t, 4, false>,
+#endif
+#if HAS_ZVE64D
+                     ValidIndexConfig<vfloat64m4_t, vfloat64m1_t, 0, true>,
+                     ValidIndexConfig<vfloat64m4_t, vfloat64m1_t, 3, true>,
+                     ValidIndexConfig<vfloat64m4_t, vfloat64m1_t, 4, false>,
+#endif
+                     ValidIndexConfig<void, vuint32m1_t, 0, false>,
+                     ValidIndexConfig<vuint32m2_t, void, 0, false>,
+                     ValidIndexConfig<vint32m1x2_t, vint32m1_t, 0, true>,
+                     ValidIndexConfig<vint32m1x2_t, vint32m1_t, 1, true>,
+                     ValidIndexConfig<vint32m1x2_t, vint32m1_t, 2, false>,
+                     ValidIndexConfig<vint32m1x6_t, vint32m1_t, 0, true>,
+                     ValidIndexConfig<vint32m1x6_t, vint32m1_t, 5, true>,
+                     ValidIndexConfig<vint32m1x6_t, vint32m1_t, 6, false>>;
+
+TYPED_TEST_SUITE(ValidIndexTest, ValidIndexConfigs);
+
+TYPED_TEST(ValidIndexTest, valid_index) {
+  EXPECT_EQ((rvv::ValidIndex<typename TypeParam::VLarge,
+                             typename TypeParam::VSmall, TypeParam::kIndex>),
+            TypeParam::kExpected);
+}
