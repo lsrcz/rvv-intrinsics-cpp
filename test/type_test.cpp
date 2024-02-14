@@ -585,6 +585,45 @@ TYPED_TEST(VRegM1TypeTest, vreg_m1) {
 }
 
 template <typename Config>
+class IndexBoundTest : public ::testing::Test {};
+
+template <typename VLarge_, typename VSmall_, size_t kExpected_>
+class IndexBoundConfig {
+ public:
+  using VLarge = VLarge_;
+  using VSmall = VSmall_;
+  static constexpr size_t kExpected = kExpected_;
+};
+
+using IndexBoundConfigs =
+    ::testing::Types<IndexBoundConfig<vuint8m8_t, vuint8m1_t, 8>,
+                     IndexBoundConfig<vuint8m8_t, vuint8m4_t, 2>,
+                     IndexBoundConfig<vuint32m2_t, vuint32m1_t, 2>,
+#if HAS_ZVE64X
+                     IndexBoundConfig<vuint64m8_t, vuint64m1_t, 8>,
+                     IndexBoundConfig<vuint64m2_t, vuint64m1_t, 2>,
+#endif
+#if HAS_ZVFH
+                     IndexBoundConfig<vfloat64m4_t, vfloat64m1_t, 4>,
+#endif
+#if HAS_ZVE32F
+                     IndexBoundConfig<vfloat32m4_t, vfloat32m1_t, 4>,
+#endif
+#if HAS_ZVE64D
+                     IndexBoundConfig<vfloat64m4_t, vfloat64m1_t, 4>,
+#endif
+                     IndexBoundConfig<vint32m1x2_t, vint32m1_t, 2>,
+                     IndexBoundConfig<vint32m1x6_t, vint32m1_t, 6>>;
+
+TYPED_TEST_SUITE(IndexBoundTest, IndexBoundConfigs);
+
+TYPED_TEST(IndexBoundTest, valid_index) {
+  EXPECT_EQ((rvv::index_bound<typename TypeParam::VLarge,
+                              typename TypeParam::VSmall>()),
+            TypeParam::kExpected);
+}
+
+template <typename Config>
 class ValidIndexTest : public ::testing::Test {};
 
 template <typename VLarge_, typename VSmall_, size_t kIndex_, bool kExpected_>

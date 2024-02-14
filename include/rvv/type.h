@@ -260,25 +260,35 @@ enum class FRM {
 template <FRM kFRM>
 concept SupportedFRM = kFRM >= FRM::kImplicit && kFRM <= FRM::kRMM;
 
-template <LMul LMulLarge, LMul LMulSmall, size_t kIndex>
-concept ValidLMulIndex = (LMulLarge > LMulSmall) && (LMulLarge > LMul::kM1) &&
-                         kIndex < (1 << (static_cast<size_t>(LMulLarge) -
-                                         static_cast<size_t>(LMulSmall)));
-
-template <typename VLarge, typename VSmall, size_t kIndex>
-concept ValidVectorIndex = SupportedVReg<VLarge> && SupportedVReg<VSmall> &&
-                           std::is_same_v<elem_t<VLarge>, elem_t<VSmall>> &&
-                           ValidLMulIndex<lmul<VLarge>, lmul<VSmall>, kIndex>;
-
-template <typename VLarge, typename VSmall, size_t kIndex>
-concept ValidVTupleIndex =
-    SupportedVTuple<VLarge> && SupportedVReg<VSmall> &&
+template <typename VLarge, typename VSmall>
+concept IndexableVector =
+    SupportedVReg<VLarge> && SupportedVReg<VSmall> &&
     std::is_same_v<elem_t<VLarge>, elem_t<VSmall>> &&
-    (ratio<VLarge> == ratio<VSmall>)&&(kIndex < tuple_size<VLarge>);
+    lmul<VLarge> > lmul<VSmall>&& lmul<VLarge> > LMul::kM1;
+
+template <typename VLarge, typename VSmall>
+concept IndexableTuple = SupportedVTuple<VLarge> && SupportedVReg<VSmall> &&
+                         std::is_same_v<elem_t<VLarge>, elem_t<VSmall>> &&
+                         ratio<VLarge> == ratio<VSmall>;
+
+template <typename VLarge, typename VSmall>
+concept Indexable =
+    IndexableVector<VLarge, VSmall> || IndexableTuple<VLarge, VSmall>;
+
+template <typename VLarge, typename VSmall>
+  requires Indexable<VLarge, VSmall>
+constexpr size_t index_bound() {
+  if constexpr (IndexableVector<VLarge, VSmall>) {
+    return (1 << (static_cast<size_t>(lmul<VLarge>) -
+                  static_cast<size_t>(lmul<VSmall>)));
+  } else {
+    return tuple_size<VLarge>;
+  }
+}
 
 template <typename VLarge, typename VSmall, size_t kIndex>
-concept ValidIndex = ValidVectorIndex<VLarge, VSmall, kIndex> ||
-                     ValidVTupleIndex<VLarge, VSmall, kIndex>;
+concept ValidIndex =
+    Indexable<VLarge, VSmall> && kIndex < index_bound<VLarge, VSmall>();
 
 }  // namespace rvv
 
