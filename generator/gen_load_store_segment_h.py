@@ -1,30 +1,45 @@
-from typing import Callable, Sequence
-from codegen import constraints, func, guarded, header, main, validate, func_obj
-from codegen import ops
-from codegen.param_list import function, template
-from codegen.typing import elem, misc, vtuple
+from typing import Callable, Optional, Sequence
+
 import gen_load_store_h
+from codegen import (
+    constraints,
+    func,
+    func_obj,
+    guarded,
+    header,
+    main,
+    ops,
+    validate,
+)
+from codegen.param_list import function, template
+from codegen.typing import elem, misc, vl, vreg, vtuple
 
 
-def load_function_body(
+def load_store_function_body(
     variant: str,
     inst: str,
     width: int,
     tuple_size: misc.LitSizeTValue,
     param_list: function.FunctionTypedParamList,
 ) -> str:
-    if inst == "vlseg" or inst == "vlsseg":
-        func_name = (
-            f"__riscv_{inst}{tuple_size.cpp_repr}e{width}"
-            + func.rvv_postfix(variant, overloaded=True)
-        )
-    elif inst == "vloxseg" or inst == "vluxseg":
-        func_name = (
-            f"__riscv_{inst}{tuple_size.cpp_repr}ei{width}"
-            + func.rvv_postfix(variant, overloaded=True)
-        )
+    assert inst in [
+        "vlseg",
+        "vlsseg",
+        "vloxseg",
+        "vluxseg",
+        "vsseg",
+        "vssseg",
+        "vsoxseg",
+        "vsuxseg",
+    ]
+    if inst in ["vlseg", "vlsseg", "vsseg", "vssseg"]:
+        width_prefix = "e"
     else:
-        raise ValueError(f"Unknown instruction {inst}")
+        width_prefix = "ei"
+    func_name = (
+        f"__riscv_{inst}{tuple_size.cpp_repr}{width_prefix}{width}"
+        + func.rvv_postfix(variant, overloaded=True)
+    )
     return (
         "  return "
         + func.apply_function(
@@ -42,6 +57,28 @@ def load_decl(
     return func_obj.CallableClass(
         template.TemplateTypeParamList(tuple_size), inst, None
     )
+
+
+def load_store_require_clauses(
+    inst: str,
+    elem_type: elem.ParamElemType,
+    ratio: misc.ParamSizeTValue,
+    tuple_size: misc.LitSizeTValue,
+    width: int,
+):
+    if inst in ["vlseg", "vlsseg", "vsseg", "vssseg"]:
+        return [
+            constraints.has_width(elem_type, width),
+            constraints.compatible_elem_ratio_tuple_size(
+                elem_type, ratio, tuple_size
+            ),
+        ]
+    else:
+        return [
+            constraints.compatible_elem_ratio_tuple_size(
+                elem_type, ratio, tuple_size
+            ),
+        ]
 
 
 def load_def(
@@ -93,25 +130,6 @@ def load_def(
                     )
         return ret
 
-    def require_clauses(
-        elem_type: elem.ParamElemType,
-        ratio: misc.ParamSizeTValue,
-        width: int,
-    ):
-        if inst == "vlseg" or inst == "vlsseg":
-            return [
-                constraints.has_width(elem_type, width),
-                constraints.compatible_elem_ratio_tuple_size(
-                    elem_type, ratio, tuple_size
-                ),
-            ]
-        else:
-            return [
-                constraints.compatible_elem_ratio_tuple_size(
-                    elem_type, ratio, tuple_size
-                ),
-            ]
-
     def variant_case(variant: str) -> Sequence[func.Function]:
         ret: list[func.Function] = []
         for elem_size in elem.ALL_ELEM_SIZES:
@@ -128,10 +146,12 @@ def load_def(
                         inst, elem_type, ratio, width
                     ),
                 ),
-                lambda variant, _, __, width, param_list: load_function_body(
+                lambda variant, _, __, width, param_list: load_store_function_body(
                     variant, inst, width, tuple_size, param_list
                 ),
-                require_clauses=require_clauses,
+                require_clauses=lambda elem_type, ratio, width: load_store_require_clauses(
+                    inst, elem_type, ratio, tuple_size, width
+                ),
                 modifier="const",
             )(variant, elem_size)
             if f is not None:
@@ -148,6 +168,59 @@ def load_def(
     return ops.callable_class_with_variant(
         template.TemplateTypeArgumentList(tuple_size), inst, call_operators
     )(variant)
+
+
+def store_arguments(
+    inst: str,
+    elem_type: elem.ElemType,
+    ratio: misc.SizeTValue,
+    tuple_size: misc.LitSizeTValue,
+    width: int,
+) -> function.FunctionTypedParamList:
+    assert inst in [
+        "vsseg",
+        "vssseg",
+        "vsoxseg",
+        "vsuxseg",
+    ]
+    param_list = function.param_list(
+        [misc.ptr(elem_type, is_const=False)], ["rs1"]
+    )
+    if inst == "vssseg":
+        param_list = param_list + (misc.ptrdiff_t, "rs2")
+    if inst in ["vsoxseg", "vsuxseg"]:
+        param_list = param_list + (
+            vreg.concrete(elem.IntType(width=width, signed=False), ratio),
+            "rs2",
+        )
+    param_list = (
+        param_list
+        + (vtuple.concrete(elem_type, ratio, tuple_size), "vs3")
+        + (vl.vl(ratio), "vl")
+    )
+    return param_list
+
+
+def store_def(
+    variant: str, inst: str, tuple_size: misc.LitSizeTValue, elem_size: int
+) -> Optional[func.Function]:
+    return func.template_elem_ratio_for_all_size(
+        lambda _, __: misc.void,
+        inst,
+        lambda variant, elem_type, ratio, width: func.vreg_ratio_extend_param_list(
+            misc.void,
+            ratio,
+            variant,
+            store_arguments(inst, elem_type, ratio, tuple_size, width),
+            undisturbed_need_dest_arg=False,
+        ),
+        lambda variant, _, __, width, param_list: load_store_function_body(
+            variant, inst, width, tuple_size, param_list
+        ),
+        require_clauses=lambda elem_type, ratio, width: load_store_require_clauses(
+            inst, elem_type, ratio, tuple_size, width
+        ),
+    )(variant, elem_size)
 
 
 rvv_load_store_segment_header = header.Header(
@@ -168,6 +241,14 @@ rvv_load_store_segment_header = header.Header(
                             misc.ALL_TUPLE_SIZE,
                             allowed_variants={"", "tu", "mu", "tumu"},
                         ),
+                        "// 2.2. Vector Unit-Stride Segment Store Intrinsics",
+                        header.CrossProduct.variant(
+                            store_def,
+                            ["vsseg"],
+                            misc.ALL_TUPLE_SIZE,
+                            elem.ALL_ELEM_SIZES,
+                            allowed_variants={"", "m"},
+                        ),
                         "// 2.3. Vector Strided Segment Load Intrinsics",
                         load_decl("vlsseg"),
                         header.CrossProduct.variant(
@@ -175,6 +256,14 @@ rvv_load_store_segment_header = header.Header(
                             ["vlsseg"],
                             misc.ALL_TUPLE_SIZE,
                             allowed_variants={"", "tu", "mu", "tumu"},
+                        ),
+                        "// 2.4. Vector Strided Segment Store Intrinsics",
+                        header.CrossProduct.variant(
+                            store_def,
+                            ["vssseg"],
+                            misc.ALL_TUPLE_SIZE,
+                            elem.ALL_ELEM_SIZES,
+                            allowed_variants={"", "m"},
                         ),
                         "// 2.5. Vector Indexed Segment Load Intrinsics",
                         load_decl("vloxseg"),
@@ -184,6 +273,14 @@ rvv_load_store_segment_header = header.Header(
                             ["vloxseg", "vluxseg"],
                             misc.ALL_TUPLE_SIZE,
                             allowed_variants={"", "tu", "mu", "tumu"},
+                        ),
+                        "// 2.6. Vector Indexed Segment Store Intrinsics",
+                        header.CrossProduct.variant(
+                            store_def,
+                            ["vsoxseg", "vsuxseg"],
+                            misc.ALL_TUPLE_SIZE,
+                            elem.ALL_ELEM_SIZES,
+                            allowed_variants={"", "m"},
                         ),
                     ]
                 )

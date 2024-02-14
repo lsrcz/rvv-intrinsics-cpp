@@ -89,6 +89,10 @@
   OP_TEST_M(name, rvv_name, mask_type, ret_type, __VA_ARGS__)     \
   OP_TEST_MU(name, rvv_name, mask_type, ret_type, __VA_ARGS__)
 
+#define OP_TEST_NO_POLICY(name, rvv_name, mask_type, ret_type, ...) \
+  OP_TEST(name, rvv_name, mask_type, ret_type, __VA_ARGS__)         \
+  OP_TEST_M(name, rvv_name, mask_type, ret_type, __VA_ARGS__)
+
 #define OP_TEST_NO_MASK_UNDISTURBED(name, rvv_name, mask_type, ret_type, ...) \
   OP_TEST(name, rvv_name, mask_type, ret_type, __VA_ARGS__)                   \
   OP_TEST_M(name, rvv_name, mask_type, ret_type, __VA_ARGS__)                 \

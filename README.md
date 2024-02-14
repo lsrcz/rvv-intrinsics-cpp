@@ -70,4 +70,3 @@ ninja && ninja install
 
 ## TODO list
 - [ ] Finish the section 9 in https://github.com/riscv-non-isa/rvv-intrinsic-doc.
-- [ ] Add the segment types and load/store intrinsics.

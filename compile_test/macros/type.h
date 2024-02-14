@@ -195,4 +195,7 @@
 #define CONST_PTR0(type) const type*
 #define CONST_PTR(...) CONST_PTR0(__VA_ARGS__)
 
+#define PTR0(type) type*
+#define PTR(...) PTR0(__VA_ARGS__)
+
 #endif  // MACROS_TYPE_H_
