@@ -202,57 +202,57 @@ vmask_t<64> vlm(const uint8_t * rs1, vl_t<64> vl) {
     )
 
 
-def test_vloxei_8() -> None:
-    res = gen_load_store_h.load_def("vloxei")("", 8)
+def test_vlox_8() -> None:
+    res = gen_load_store_h.load_def("vlox")("", 8)
     assert res is not None
     assert (
         res.cpp_repr
         == """template <typename E, size_t kRatio>
   requires CompatibleElemRatio<E, kRatio>
 RVV_ALWAYS_INLINE
-vreg_t<E, kRatio> vloxei(const E * rs1, vreg_t<uint8_t, kRatio> rs2, vl_t<kRatio> vl) {
+vreg_t<E, kRatio> vlox(const E * rs1, vreg_t<uint8_t, kRatio> rs2, vl_t<kRatio> vl) {
   return __riscv_vloxei8(rs1, rs2, vl);
 }"""
     )
 
 
-def test_vluxei_tum_64() -> None:
-    res = gen_load_store_h.load_def("vluxei")("tum", 8)
+def test_vlux_tum_64() -> None:
+    res = gen_load_store_h.load_def("vlux")("tum", 8)
     assert res is not None
     assert (
         res.cpp_repr
         == """template <typename E, size_t kRatio>
   requires CompatibleElemRatio<E, kRatio>
 RVV_ALWAYS_INLINE
-vreg_t<E, kRatio> vluxei(vmask_t<kRatio> vm, vreg_t<E, kRatio> vd, const E * rs1, vreg_t<uint8_t, kRatio> rs2, vl_t<kRatio> vl) {
+vreg_t<E, kRatio> vlux(vmask_t<kRatio> vm, vreg_t<E, kRatio> vd, const E * rs1, vreg_t<uint8_t, kRatio> rs2, vl_t<kRatio> vl) {
   return __riscv_vluxei8_tum(vm, vd, rs1, rs2, vl);
 }"""
     )
 
 
-def test_vsoxei_8() -> None:
-    res = gen_load_store_h.store_def("vsoxei")("", 8)
+def test_vsox_8() -> None:
+    res = gen_load_store_h.store_def("vsox")("", 8)
     assert res is not None
     assert (
         res.cpp_repr
         == """template <typename E, size_t kRatio>
   requires CompatibleElemRatio<E, kRatio>
 RVV_ALWAYS_INLINE
-void vsoxei(E * rs1, vreg_t<uint8_t, kRatio> rs2, vreg_t<E, kRatio> vs3, vl_t<kRatio> vl) {
+void vsox(E * rs1, vreg_t<uint8_t, kRatio> rs2, vreg_t<E, kRatio> vs3, vl_t<kRatio> vl) {
   __riscv_vsoxei8(rs1, rs2, vs3, vl);
 }"""
     )
 
 
-def test_vsuxei_m_64() -> None:
-    res = gen_load_store_h.store_def("vsuxei")("m", 8)
+def test_vsux_m_64() -> None:
+    res = gen_load_store_h.store_def("vsux")("m", 8)
     assert res is not None
     assert (
         res.cpp_repr
         == """template <typename E, size_t kRatio>
   requires CompatibleElemRatio<E, kRatio>
 RVV_ALWAYS_INLINE
-void vsuxei(vmask_t<kRatio> vm, E * rs1, vreg_t<uint8_t, kRatio> rs2, vreg_t<E, kRatio> vs3, vl_t<kRatio> vl) {
+void vsux(vmask_t<kRatio> vm, E * rs1, vreg_t<uint8_t, kRatio> rs2, vreg_t<E, kRatio> vs3, vl_t<kRatio> vl) {
   __riscv_vsuxei8(vm, rs1, rs2, vs3, vl);
 }"""
     )

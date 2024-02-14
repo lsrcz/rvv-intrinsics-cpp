@@ -17,9 +17,9 @@
 
 #define INDEXED_LOAD_TEST(ratio, short_name, lmul, tuple_size, idx_short_name, \
                           idx_lmul)                                            \
-  SINGLE_INDEXED_LOAD_TEST(vloxsege, ratio, short_name, lmul, tuple_size,      \
+  SINGLE_INDEXED_LOAD_TEST(vloxseg, ratio, short_name, lmul, tuple_size,       \
                            idx_short_name, idx_lmul);                          \
-  SINGLE_INDEXED_LOAD_TEST(vluxsege, ratio, short_name, lmul, tuple_size,      \
+  SINGLE_INDEXED_LOAD_TEST(vluxseg, ratio, short_name, lmul, tuple_size,       \
                            idx_short_name, idx_lmul);
 
 INDEXED_LOAD_TEST(8, i8, m1, 2, u8, m1);

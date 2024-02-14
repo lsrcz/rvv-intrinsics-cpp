@@ -15,9 +15,9 @@
   static_assert(true, "Require trailing semicolon")
 
 #define INDEXED_LOAD_TEST(ratio, short_name, lmul, idx_short_name, idx_lmul) \
-  SINGLE_INDEXED_LOAD_TEST(vloxei, ratio, short_name, lmul, idx_short_name,  \
+  SINGLE_INDEXED_LOAD_TEST(vlox, ratio, short_name, lmul, idx_short_name,    \
                            idx_lmul);                                        \
-  SINGLE_INDEXED_LOAD_TEST(vluxei, ratio, short_name, lmul, idx_short_name,  \
+  SINGLE_INDEXED_LOAD_TEST(vlux, ratio, short_name, lmul, idx_short_name,    \
                            idx_lmul);
 
 INDEXED_LOAD_TEST(8, i8, m1, u8, m1);

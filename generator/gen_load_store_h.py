@@ -14,10 +14,10 @@ def load_arguments(
         "vleff",
         "vlse",
         "vlsseg",
-        "vloxei",
-        "vluxei",
-        "vloxsege",
-        "vluxsege",
+        "vlox",
+        "vlux",
+        "vloxseg",
+        "vluxseg",
     ]
     param_list = function.param_list(
         [misc.ptr(elem_type, is_const=True)], ["rs1"]
@@ -26,10 +26,10 @@ def load_arguments(
     if inst == "vlse" or inst == "vlsseg":
         param_list = param_list + (misc.ptrdiff_t, "rs2")
     if (
-        inst == "vloxei"
-        or inst == "vluxei"
-        or inst == "vloxsege"
-        or inst == "vluxsege"
+        inst == "vlox"
+        or inst == "vlux"
+        or inst == "vloxseg"
+        or inst == "vluxseg"
     ):
         param_list = param_list + (
             vreg.concrete(elem.IntType(width=width, signed=False), ratio),
@@ -111,11 +111,15 @@ def load_function_body(
     param_list: function.FunctionTypedParamList,
 ) -> str:
     match inst:
-        case "vle" | "vlse" | "vloxei" | "vluxei":
+        case "vle" | "vlse" | "vlox" | "vlux":
+            if inst == "vlox" or inst == "vlux":
+                width_prefix = "ei"
+            else:
+                width_prefix = ""
             return (
                 "  return "
                 + func.apply_function(
-                    f"__riscv_{inst}{width}"
+                    f"__riscv_{inst}{width_prefix}{width}"
                     + func.rvv_postfix(variant, overloaded=True),
                     param_list,
                 )
@@ -142,7 +146,7 @@ def load_store_require_clauses(
     ratio: misc.ParamSizeTValue,
     width: int,
 ) -> list[str]:
-    if inst in ["vluxei", "vloxei", "vsuxei", "vsoxei"]:
+    if inst in ["vlux", "vlox", "vsux", "vsox"]:
         return [
             constraints.compatible_elem_ratio(elem_type, ratio),
         ]
@@ -175,13 +179,13 @@ def load_def(inst: str) -> Callable[[str, int], Optional[func.Function]]:
 def store_arguments(
     inst: str, elem_type: elem.ElemType, ratio: misc.SizeTValue, width: int
 ) -> function.FunctionTypedParamList:
-    assert inst in ["vse", "vsse", "vsoxei", "vsuxei"]
+    assert inst in ["vse", "vsse", "vsox", "vsux"]
     param_list = function.param_list(
         [misc.ptr(elem_type, is_const=False)], ["rs1"]
     )
     if inst == "vsse":
         param_list = param_list + (misc.ptrdiff_t, "rs2")
-    if inst == "vsoxei" or inst == "vsuxei":
+    if inst == "vsox" or inst == "vsux":
         param_list = param_list + (
             vreg.concrete(elem.IntType(width=width, signed=False), ratio),
             "rs2",
@@ -200,9 +204,13 @@ def store_function_body(
     width: int,
     param_list: function.FunctionTypedParamList,
 ) -> str:
+    if inst == "vsox" or inst == "vsux":
+        width_prefix = "ei"
+    else:
+        width_prefix = ""
     return (
         func.apply_function(
-            f"  __riscv_{inst}{width}"
+            f"  __riscv_{inst}{width_prefix}{width}"
             + func.rvv_postfix(variant, overloaded=True),
             param_list,
         )
@@ -307,7 +315,7 @@ vmask_t<kRatio> vsm(uint8_t *rs1, vmask_t<kRatio> vs3, vl_t<kRatio> vl) {
                         ),
                         "// 1.6 Vector Indexed Load Intrinsics",
                         header.CrossProduct.variant(
-                            load_def("vloxei"),
+                            load_def("vlox"),
                             elem.ALL_ELEM_SIZES,
                             allowed_variants={
                                 "",
@@ -319,7 +327,7 @@ vmask_t<kRatio> vsm(uint8_t *rs1, vmask_t<kRatio> vs3, vl_t<kRatio> vl) {
                             },
                         ),
                         header.CrossProduct.variant(
-                            load_def("vluxei"),
+                            load_def("vlux"),
                             elem.ALL_ELEM_SIZES,
                             allowed_variants={
                                 "",
@@ -332,12 +340,12 @@ vmask_t<kRatio> vsm(uint8_t *rs1, vmask_t<kRatio> vs3, vl_t<kRatio> vl) {
                         ),
                         "// 1.7 Vector Indexed Store Intrinsics",
                         header.CrossProduct.variant(
-                            store_def("vsoxei"),
+                            store_def("vsox"),
                             elem.ALL_ELEM_SIZES,
                             allowed_variants={"", "m"},
                         ),
                         header.CrossProduct.variant(
-                            store_def("vsuxei"),
+                            store_def("vsux"),
                             elem.ALL_ELEM_SIZES,
                             allowed_variants={"", "m"},
                         ),

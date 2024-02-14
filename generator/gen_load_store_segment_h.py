@@ -18,9 +18,9 @@ def load_function_body(
             f"__riscv_{inst}{tuple_size.cpp_repr}e{width}"
             + func.rvv_postfix(variant, overloaded=True)
         )
-    elif inst == "vloxsege" or inst == "vluxsege":
+    elif inst == "vloxseg" or inst == "vluxseg":
         func_name = (
-            f"__riscv_{inst[:-1]}{tuple_size.cpp_repr}ei{width}"
+            f"__riscv_{inst}{tuple_size.cpp_repr}ei{width}"
             + func.rvv_postfix(variant, overloaded=True)
         )
     else:
@@ -177,11 +177,11 @@ rvv_load_store_segment_header = header.Header(
                             allowed_variants={"", "tu", "mu", "tumu"},
                         ),
                         "// 2.5. Vector Indexed Segment Load Intrinsics",
-                        load_decl("vloxsege"),
-                        load_decl("vluxsege"),
+                        load_decl("vloxseg"),
+                        load_decl("vluxseg"),
                         header.CrossProduct.variant(
                             load_def,
-                            ["vloxsege", "vluxsege"],
+                            ["vloxseg", "vluxseg"],
                             misc.ALL_TUPLE_SIZE,
                             allowed_variants={"", "tu", "mu", "tumu"},
                         ),
