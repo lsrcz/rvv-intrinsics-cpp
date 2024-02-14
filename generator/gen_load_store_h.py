@@ -278,7 +278,7 @@ rvv_load_store_header = header.Header(
                         header.Verbatim(
                             """template <size_t kRatio>
 RVV_ALWAYS_INLINE
-vmask_t<kRatio> vsm(uint8_t *rs1, vmask_t<kRatio> vs3, vl_t<kRatio> vl) {
+void vsm(uint8_t *rs1, vmask_t<kRatio> vs3, vl_t<kRatio> vl) {
   __riscv_vsm(rs1, vs3, vl);
 }""",
                             allowed_variants={""},
