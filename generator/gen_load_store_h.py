@@ -104,20 +104,28 @@ def non_indexed_load_base_def_template(
     return inner
 
 
-def load_function_body(
+def load_store_function_body(
     variant: str,
     inst: str,
     width: int,
     param_list: function.FunctionTypedParamList,
 ) -> str:
     match inst:
-        case "vle" | "vlse" | "vlox" | "vlux":
-            if inst == "vlox" or inst == "vlux":
+        case (
+            "vle" | "vlse" | "vlox" | "vlux" | "vse" | "vsse" | "vsox" | "vsux"
+        ):
+            if (
+                inst == "vlox"
+                or inst == "vlux"
+                or inst == "vsox"
+                or inst == "vsux"
+            ):
                 width_prefix = "ei"
             else:
                 width_prefix = ""
+            should_return = inst in ["vle", "vlse", "vlox", "vlux"]
             return (
-                "  return "
+                ("  return " if should_return else "  ")
                 + func.apply_function(
                     f"__riscv_{inst}{width_prefix}{width}"
                     + func.rvv_postfix(variant, overloaded=True),
@@ -167,7 +175,7 @@ def load_def(inst: str) -> Callable[[str, int], Optional[func.Function]]:
             variant,
             load_arguments(inst, elem_type, ratio, width),
         ),
-        lambda variant, elem_type, ratio, width, param_list: load_function_body(
+        lambda variant, elem_type, ratio, width, param_list: load_store_function_body(
             variant, inst, width, param_list
         ),
         require_clauses=lambda elem_type, ratio, width: load_store_require_clauses(
@@ -198,26 +206,6 @@ def store_arguments(
     return param_list
 
 
-def store_function_body(
-    variant: str,
-    inst: str,
-    width: int,
-    param_list: function.FunctionTypedParamList,
-) -> str:
-    if inst == "vsox" or inst == "vsux":
-        width_prefix = "ei"
-    else:
-        width_prefix = ""
-    return (
-        func.apply_function(
-            f"  __riscv_{inst}{width_prefix}{width}"
-            + func.rvv_postfix(variant, overloaded=True),
-            param_list,
-        )
-        + ";"
-    )
-
-
 def store_def(
     inst: str,
 ) -> Callable[[str, int], Optional[func.Function]]:
@@ -231,7 +219,7 @@ def store_def(
             store_arguments(inst, elem_type, ratio, width),
             undisturbed_need_dest_arg=False,
         ),
-        lambda variant, _, __, width, param_list: store_function_body(
+        lambda variant, _, __, width, param_list: load_store_function_body(
             variant, inst, width, param_list
         ),
         require_clauses=lambda elem_type, ratio, width: load_store_require_clauses(
