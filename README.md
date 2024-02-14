@@ -1,7 +1,10 @@
 # RISC-V Vector Intrinsics in C++
 
 This small library provides a set of overloaded functions for the RISC-V Vector
-intrinsics. Due to the limitation of the C language, some of the RISC-V Vector intrinsics could not be overloaded and do not have a simplified, EEW/EMUL-omitted interface. This library uses C++ to provide a cleaner interface and tries to use concepts to simplify the error messages.
+intrinsics. Due to the limitation of the C language, some of the RISC-V Vector
+intrinsics could not be overloaded and do not have a simplified,
+EEW/EMUL-omitted interface. This library uses C++ to provide a cleaner interface
+and tries to use concepts to simplify the error messages.
 
 
 ## Basic types
@@ -55,8 +58,8 @@ auto reg_do_not_compile = rvv::vle(data32, vl);
 
 ## Building
 Required prerequites: Python 3 (Only tested with 3.11+). Clang 17+ or GCC thunk
-(The library is built with RVV v1.0.x, which is not supported by older
-compilers).
+(The library is built with RVV v0.12, which compatible with RVV v1.0.x, but is
+not supported by older compilers).
 
 Optional dependencies: pytest, gtest (required for the test suites),
 clang-format (format the generated headers).
@@ -69,4 +72,4 @@ ninja && ninja install
 ```
 
 ## TODO list
-- [ ] Finish the section 9 in https://github.com/riscv-non-isa/rvv-intrinsic-doc.
+- [ ] Add the `vundefined` and `vcreate` functions that does not exist in v0.12.
