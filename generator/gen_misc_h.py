@@ -328,6 +328,42 @@ def vlmul_ext() -> func_obj.CallableClass:
     )
 
 
+def vcreate_def(has_rvv_1: bool) -> func_obj.CallableClass:
+    v_small = vreg.param("VSmall")
+    v_large = vreg.param("VLarge")
+
+    def call_operator(n: int) -> func.Function:
+        assert n >= 2 and n <= 8
+
+        def insert(i: int) -> str:
+            return f"  r = rvv::vset<{i}>(r, v{i});"
+
+        return func.Function(
+            v_large,
+            "operator()",
+            function.param_list([v_small] * n, [f"v{i}" for i in range(n)]),
+            f"  auto r = rvv::vundefined<{v_large.cpp_repr}>();"
+            + "\n".join(map(insert, range(n)))
+            + "\n  return r;",
+            template_param_list=template.TemplateTypeParamList(v_small),
+            require_clauses=[
+                constraints.has_index_bound(
+                    v_large, v_small, misc.lit_size_t(n)
+                )
+            ],
+            modifier="const",
+        )
+
+    return func_obj.CallableClass(
+        template.TemplateTypeParamList(v_large),
+        "vcreate",
+        [call_operator(i) for i in range(2, 9)],
+        requires_clauses=(
+            [constraints.supported_vreg(v_large)] if has_rvv_1 else []
+        ),
+    )
+
+
 rvv_misc_header = header.Header(
     [
         header.Include("rvv/elem.h"),
@@ -399,6 +435,12 @@ RVV_ALWAYS_INLINE V vundefined();
                     misc.ALL_RATIO,
                     misc.ALL_INDEX,
                 ),
+                "// 9.9. Vector Creation Intrinsics",
+                "#if __riscv_v_intrinsic >= 1000000",
+                vcreate_def(True),
+                "#else",
+                vcreate_def(False),
+                "#endif",
                 "// 9.4. Vector LMUL Extension Intrinsics",
                 vlmul_ext(),
                 "// 9.5. Vector LMUL Truncation Intrinsics",

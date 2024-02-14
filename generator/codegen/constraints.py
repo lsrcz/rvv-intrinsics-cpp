@@ -133,3 +133,9 @@ def valid_index(
     return (
         f"ValidIndex<{v_large.cpp_repr}, {v_small.cpp_repr}, {index.cpp_repr}>"
     )
+
+
+def has_index_bound(
+    v_large: base.Type, v_small: base.Type, bound: misc.SizeTValue
+) -> str:
+    return f"(index_bound<{v_large.cpp_repr}, {v_small.cpp_repr}>() == {bound.cpp_repr})"
