@@ -91,12 +91,12 @@ VGET_TUPLE_TEST(f64, m1, 4, 3);
 VGET_TUPLE_TEST(f64, m4, 2, 0);
 #endif
 
-#define VLMUL_TRUNC_REG_TEST(short_name, lmul, lmul_large)                  \
-  VREG_NAME(short_name, lmul)                                               \
-  vlmul_trunc_v_##short_name##lmul##index(VREG_NAME(short_name, lmul_large) \
-                                              a) {                          \
-    return rvv::vlmul_trunc<VREG_NAME(short_name, lmul)>(a);                \
-  }                                                                         \
+#define VLMUL_TRUNC_REG_TEST(short_name, lmul, lmul_large)   \
+  VREG_NAME(short_name, lmul)                                \
+  vlmul_trunc_v_##short_name##lmul##lmul_large(              \
+      VREG_NAME(short_name, lmul_large) a) {                 \
+    return rvv::vlmul_trunc<VREG_NAME(short_name, lmul)>(a); \
+  }                                                          \
   static_assert(true, "Require trailing semicolon")
 
 #define VLMUL_TRUNC_TEST_ALL(short_name)    \

@@ -273,6 +273,61 @@ def vlmul_trunc() -> func_obj.CallableClass:
     )
 
 
+def vset_def() -> func_obj.CallableClass:
+    v_small = vreg.param("VSmall")
+    v_large = vreg.param("VLarge")
+    idx = misc.param_size_t("kIdx")
+    return func_obj.CallableClass(
+        template.TemplateTypeParamList(idx),
+        "vset",
+        [
+            func.Function(
+                v_large,
+                "operator()",
+                function.param_list([v_large, v_small], ["dest", "value"]),
+                f"  return __riscv_vset(dest, {idx}, value);",
+                template_param_list=template.TemplateTypeParamList(
+                    v_large, v_small
+                ),
+                require_clauses=[
+                    constraints.valid_index(
+                        v_large,
+                        v_small,
+                        idx,
+                    ),
+                ],
+                modifier="const",
+            )
+        ],
+    )
+
+
+def vlmul_ext() -> func_obj.CallableClass:
+    v_small = vreg.param("VSmall")
+    v_large = vreg.param("VLarge")
+    return func_obj.CallableClass(
+        template.TemplateTypeParamList(v_large),
+        "vlmul_ext",
+        [
+            func.Function(
+                v_large,
+                "operator()",
+                function.param_list([v_small], ["value"]),
+                f"""  auto r = rvv::vundefined<{v_large.cpp_repr}>();
+  return rvv::vset<0>(r, value);""",
+                template_param_list=template.TemplateTypeParamList(v_small),
+                require_clauses=[
+                    constraints.valid_index(
+                        v_large, v_small, misc.lit_size_t(0)
+                    ),
+                ],
+                modifier="const",
+            )
+        ],
+        requires_clauses=[constraints.supported_vreg(v_large)],
+    )
+
+
 rvv_misc_header = header.Header(
     [
         header.Include("rvv/elem.h"),
@@ -310,6 +365,8 @@ RVV_ALWAYS_INLINE vl_t<elem_lmul_to_ratio<E, kLMul>> vsetvlmax() {
                     vreinterpret_mask_op_def,
                     misc.ALL_RATIO,
                 ),
+                "// 9.4. Vector LMUL Extension Intrinsics",
+                "// Generated to the end of this file",
                 "// 9.5. Vector LMUL Truncation Intrinsics",
                 "// Generated to the end of this file",
                 "// 9.6. Vector Initialization Intrinsics",
@@ -332,6 +389,8 @@ RVV_ALWAYS_INLINE V vundefined();
                     misc.ALL_TUPLE_SIZE,
                 ),
                 "#endif",
+                "// 9.7. Vector Insertion Intrinsics",
+                vset_def(),
                 "// 9.8. Vector Extraction Intrinsics",
                 vget_decl(),
                 header.CrossProduct(
@@ -340,6 +399,8 @@ RVV_ALWAYS_INLINE V vundefined();
                     misc.ALL_RATIO,
                     misc.ALL_INDEX,
                 ),
+                "// 9.4. Vector LMUL Extension Intrinsics",
+                vlmul_ext(),
                 "// 9.5. Vector LMUL Truncation Intrinsics",
                 vlmul_trunc(),
             ],
