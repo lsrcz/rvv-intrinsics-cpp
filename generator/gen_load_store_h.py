@@ -5,16 +5,29 @@ from codegen.param_list import function
 from codegen.typing import elem, lmul, misc, vl, vmask, vreg
 
 
-def non_indexed_load_arguments(
-    inst: str, elem_type: elem.ElemType, ratio: misc.SizeTValue
+def load_arguments(
+    inst: str, elem_type: elem.ElemType, ratio: misc.SizeTValue, width: int
 ) -> function.FunctionTypedParamList:
-    assert inst in ["vle", "vlseg", "vleff", "vlse", "vlsseg"]
+    assert inst in [
+        "vle",
+        "vlseg",
+        "vleff",
+        "vlse",
+        "vlsseg",
+        "vloxei",
+        "vluxei",
+    ]
     param_list = function.param_list(
         [misc.ptr(elem_type, is_const=True)], ["rs1"]
     )
 
     if inst == "vlse" or inst == "vlsseg":
         param_list = param_list + (misc.ptrdiff_t, "rs2")
+    if inst == "vloxei" or inst == "vluxei":
+        param_list = param_list + (
+            vreg.concrete(elem.IntType(width=width, signed=False), ratio),
+            "rs2",
+        )
     vl_type = vl.vl(ratio)
     if inst == "vleff":
         param_list = param_list + (
@@ -73,8 +86,8 @@ def non_indexed_load_base_def_template(
         return func.for_all_elem_ratio(
             vreg.concrete,
             inst,
-            lambda _, elem_type, ratio: non_indexed_load_arguments(
-                inst, elem_type, ratio
+            lambda _, elem_type, ratio: load_arguments(
+                inst, elem_type, ratio, 0
             ),
             lambda _, elem_type, ratio, param_list: non_indexed_base_load_function_body(
                 inst, elem_type, ratio, param_list
@@ -84,14 +97,14 @@ def non_indexed_load_base_def_template(
     return inner
 
 
-def non_indexed_variant_load_function_body(
+def load_function_body(
     variant: str,
     inst: str,
     width: int,
     param_list: function.FunctionTypedParamList,
 ) -> str:
     match inst:
-        case "vle" | "vlse":
+        case "vle" | "vlse" | "vloxei" | "vluxei":
             return (
                 "  return "
                 + func.apply_function(
@@ -116,33 +129,56 @@ def non_indexed_variant_load_function_body(
             raise ValueError(f"Unknown instruction: {inst}")
 
 
-def non_indexed_load_variant_def_template(
+def load_store_require_clauses(
     inst: str,
-) -> Callable[[str, int], Optional[func.Function]]:
+    elem_type: elem.ParamElemType,
+    ratio: misc.ParamSizeTValue,
+    width: int,
+) -> list[str]:
+    if inst in ["vluxei", "vloxei", "vsuxei", "vsoxei"]:
+        return [
+            constraints.compatible_elem_ratio(elem_type, ratio),
+        ]
+    else:
+        return [
+            constraints.has_width(elem_type, width),
+            constraints.compatible_elem_ratio(elem_type, ratio),
+        ]
+
+
+def load_def(inst: str) -> Callable[[str, int], Optional[func.Function]]:
     return func.template_elem_ratio_for_all_size(
         vreg.concrete,
         inst,
-        lambda variant, elem_type, ratio, _: func.elem_ratio_extend_param_list(
+        lambda variant, elem_type, ratio, width: func.elem_ratio_extend_param_list(
             elem_type,
             ratio,
             variant,
-            non_indexed_load_arguments(inst, elem_type, ratio),
+            load_arguments(inst, elem_type, ratio, width),
         ),
-        lambda variant, _, __, width, param_list: non_indexed_variant_load_function_body(
+        lambda variant, elem_type, ratio, width, param_list: load_function_body(
             variant, inst, width, param_list
+        ),
+        require_clauses=lambda elem_type, ratio, width: load_store_require_clauses(
+            inst, elem_type, ratio, width
         ),
     )
 
 
-def non_indexed_store_arguments(
-    inst: str, elem_type: elem.ElemType, ratio: misc.SizeTValue
+def store_arguments(
+    inst: str, elem_type: elem.ElemType, ratio: misc.SizeTValue, width: int
 ) -> function.FunctionTypedParamList:
-    assert inst in ["vse", "vsse"]
+    assert inst in ["vse", "vsse", "vsoxei", "vsuxei"]
     param_list = function.param_list(
         [misc.ptr(elem_type, is_const=False)], ["rs1"]
     )
     if inst == "vsse":
         param_list = param_list + (misc.ptrdiff_t, "rs2")
+    if inst == "vsoxei" or inst == "vsuxei":
+        param_list = param_list + (
+            vreg.concrete(elem.IntType(width=width, signed=False), ratio),
+            "rs2",
+        )
     param_list = (
         param_list
         + (vreg.concrete(elem_type, ratio), "vs3")
@@ -151,7 +187,7 @@ def non_indexed_store_arguments(
     return param_list
 
 
-def non_indexed_store_function_body(
+def store_function_body(
     variant: str,
     inst: str,
     width: int,
@@ -167,21 +203,24 @@ def non_indexed_store_function_body(
     )
 
 
-def non_indexed_store_def_template(
+def store_def(
     inst: str,
 ) -> Callable[[str, int], Optional[func.Function]]:
     return func.template_elem_ratio_for_all_size(
         lambda _, __: misc.void,
         inst,
-        lambda variant, elem_type, ratio, _: func.elem_ratio_extend_param_list(
-            elem_type,
+        lambda variant, elem_type, ratio, width: func.vreg_ratio_extend_param_list(
+            misc.void,
             ratio,
             variant,
-            non_indexed_store_arguments(inst, elem_type, ratio),
+            store_arguments(inst, elem_type, ratio, width),
             undisturbed_need_dest_arg=False,
         ),
-        lambda variant, _, __, width, param_list: non_indexed_store_function_body(
+        lambda variant, _, __, width, param_list: store_function_body(
             variant, inst, width, param_list
+        ),
+        require_clauses=lambda elem_type, ratio, width: load_store_require_clauses(
+            inst, elem_type, ratio, width
         ),
     )
 
@@ -199,71 +238,6 @@ def vlm_defs(variant: str, ratio: misc.LitSizeTValue) -> func.Function:
         + func.apply_function(f"__riscv_vlm_v_b{ratio}", param_list)
         + ";",
     )(variant, ratio)
-
-
-def vlxei_defs(inst: str) -> Callable[[str, int], Optional[func.Function]]:
-    return func.template_elem_ratio_for_all_size(
-        vreg.concrete,
-        inst,
-        lambda variant, elem_type, ratio, width: func.elem_ratio_param_list(
-            elem_type,
-            ratio,
-            variant,
-            [
-                misc.ptr(elem_type, is_const=True),
-                vreg.concrete(
-                    elem.IntType(width=width, signed=False),
-                    ratio,
-                ),
-                vl.vl(ratio),
-            ],
-            ["rs1", "rs2", "vl"],
-        ),
-        lambda variant, elem_type, ratio, width, param_list: (
-            "  return "
-            + func.apply_function(
-                f"__riscv_{inst}{width}{func.rvv_postfix(variant, overloaded=True)}",
-                param_list,
-            )
-            + ";"
-        ),
-        require_clauses=lambda elem_type, ratio, width: [
-            constraints.compatible_elem_ratio(elem_type, ratio),
-        ],
-    )
-
-
-def vsxei_defs(inst: str) -> Callable[[str, int], Optional[func.Function]]:
-    return func.template_elem_ratio_for_all_size(
-        lambda _, __: misc.void,
-        inst,
-        lambda variant, elem_type, ratio, width: func.elem_ratio_param_list(
-            elem_type,
-            ratio,
-            variant,
-            [
-                misc.ptr(elem_type, is_const=False),
-                vreg.concrete(
-                    elem.IntType(width=width, signed=False),
-                    ratio,
-                ),
-                vreg.concrete(elem_type, ratio),
-                vl.vl(ratio),
-            ],
-            ["rs1", "rs2", "vs3", "vl"],
-            undisturbed_need_dest_arg=False,
-        ),
-        lambda variant, elem_type, ratio, width, param_list: (
-            func.apply_function(
-                f"  __riscv_{inst}{width}{func.rvv_postfix(variant, overloaded=True)}",
-                param_list,
-            )
-            + ";"
-        ),
-        require_clauses=lambda elem_type, ratio, width: [
-            constraints.compatible_elem_ratio(elem_type, ratio),
-        ],
-    )
 
 
 rvv_load_store_header = header.Header(
@@ -284,13 +258,13 @@ rvv_load_store_header = header.Header(
                             allowed_variants={""},
                         ),
                         header.CrossProduct.variant(
-                            non_indexed_load_variant_def_template("vle"),
+                            load_def("vle"),
                             elem.ALL_ELEM_SIZES,
                             allowed_variants={"m", "mu", "tu", "tum", "tumu"},
                         ),
                         "// 1.2. Vector Unit-Stride Store Intrinsics",
                         header.CrossProduct.variant(
-                            non_indexed_store_def_template("vse"),
+                            store_def("vse"),
                             elem.ALL_ELEM_SIZES,
                             allowed_variants={"", "m"},
                         ),
@@ -314,19 +288,19 @@ vmask_t<kRatio> vsm(uint8_t *rs1, vmask_t<kRatio> vs3, vl_t<kRatio> vl) {
                             allowed_variants={""},
                         ),
                         header.CrossProduct.variant(
-                            non_indexed_load_variant_def_template("vlse"),
+                            load_def("vlse"),
                             elem.ALL_ELEM_SIZES,
                             allowed_variants={"m", "mu", "tu", "tum", "tumu"},
                         ),
                         "// 1.5. Vector Strided Store Intrinsics",
                         header.CrossProduct.variant(
-                            non_indexed_store_def_template("vsse"),
+                            store_def("vsse"),
                             elem.ALL_ELEM_SIZES,
                             allowed_variants={"", "m"},
                         ),
                         "// 1.6 Vector Indexed Load Intrinsics",
                         header.CrossProduct.variant(
-                            vlxei_defs("vloxei"),
+                            load_def("vloxei"),
                             elem.ALL_ELEM_SIZES,
                             allowed_variants={
                                 "",
@@ -338,7 +312,7 @@ vmask_t<kRatio> vsm(uint8_t *rs1, vmask_t<kRatio> vs3, vl_t<kRatio> vl) {
                             },
                         ),
                         header.CrossProduct.variant(
-                            vlxei_defs("vluxei"),
+                            load_def("vluxei"),
                             elem.ALL_ELEM_SIZES,
                             allowed_variants={
                                 "",
@@ -351,12 +325,12 @@ vmask_t<kRatio> vsm(uint8_t *rs1, vmask_t<kRatio> vs3, vl_t<kRatio> vl) {
                         ),
                         "// 1.7 Vector Indexed Store Intrinsics",
                         header.CrossProduct.variant(
-                            vsxei_defs("vsoxei"),
+                            store_def("vsoxei"),
                             elem.ALL_ELEM_SIZES,
                             allowed_variants={"", "m"},
                         ),
                         header.CrossProduct.variant(
-                            vsxei_defs("vsuxei"),
+                            store_def("vsuxei"),
                             elem.ALL_ELEM_SIZES,
                             allowed_variants={"", "m"},
                         ),
@@ -368,7 +342,7 @@ vmask_t<kRatio> vsm(uint8_t *rs1, vmask_t<kRatio> vs3, vl_t<kRatio> vl) {
                             allowed_variants={""},
                         ),
                         header.CrossProduct.variant(
-                            non_indexed_load_variant_def_template("vleff"),
+                            load_def("vleff"),
                             elem.ALL_ELEM_SIZES,
                             allowed_variants={"m", "mu", "tu", "tum", "tumu"},
                         ),

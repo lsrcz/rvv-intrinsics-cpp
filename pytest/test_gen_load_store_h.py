@@ -97,7 +97,7 @@ vreg_t<int8_t, 8> vleff(const int8_t * rs1, vl_t<8> * vl) {
 
 
 def test_vle_m_def_8() -> None:
-    res = gen_load_store_h.non_indexed_load_variant_def_template(
+    res = gen_load_store_h.load_def(
         "vle",
     )("m", 8)
     assert res is not None
@@ -113,7 +113,7 @@ vreg_t<E, kRatio> vle(vmask_t<kRatio> vm, const E * rs1, vl_t<kRatio> vl) {
 
 
 def test_vle_tum_def_64() -> None:
-    res = gen_load_store_h.non_indexed_load_variant_def_template(
+    res = gen_load_store_h.load_def(
         "vle",
     )("tum", 64)
     assert res is not None
@@ -129,7 +129,7 @@ vreg_t<E, kRatio> vle(vmask_t<kRatio> vm, vreg_t<E, kRatio> vd, const E * rs1, v
 
 
 def test_vleff_tumu_def_8() -> None:
-    res = gen_load_store_h.non_indexed_load_variant_def_template(
+    res = gen_load_store_h.load_def(
         "vleff",
     )("tumu", 8)
     assert res is not None
@@ -145,7 +145,7 @@ vreg_t<E, kRatio> vleff(vmask_t<kRatio> vm, vreg_t<E, kRatio> vd, const E * rs1,
 
 
 def test_vse_base_def_8() -> None:
-    res = gen_load_store_h.non_indexed_store_def_template(
+    res = gen_load_store_h.store_def(
         "vse",
     )("", 8)
     assert res is not None
@@ -161,7 +161,7 @@ void vse(E * rs1, vreg_t<E, kRatio> vs3, vl_t<kRatio> vl) {
 
 
 def test_vsse_m_def_64() -> None:
-    res = gen_load_store_h.non_indexed_store_def_template(
+    res = gen_load_store_h.store_def(
         "vsse",
     )("m", 64)
     assert res is not None
@@ -203,7 +203,7 @@ vmask_t<64> vlm(const uint8_t * rs1, vl_t<64> vl) {
 
 
 def test_vloxei_8() -> None:
-    res = gen_load_store_h.vlxei_defs("vloxei")("", 8)
+    res = gen_load_store_h.load_def("vloxei")("", 8)
     assert res is not None
     assert (
         res.cpp_repr
@@ -217,7 +217,7 @@ vreg_t<E, kRatio> vloxei(const E * rs1, vreg_t<uint8_t, kRatio> rs2, vl_t<kRatio
 
 
 def test_vluxei_tum_64() -> None:
-    res = gen_load_store_h.vlxei_defs("vluxei")("tum", 8)
+    res = gen_load_store_h.load_def("vluxei")("tum", 8)
     assert res is not None
     assert (
         res.cpp_repr
@@ -231,7 +231,7 @@ vreg_t<E, kRatio> vluxei(vmask_t<kRatio> vm, vreg_t<E, kRatio> vd, const E * rs1
 
 
 def test_vsoxei_8() -> None:
-    res = gen_load_store_h.vsxei_defs("vsoxei")("", 8)
+    res = gen_load_store_h.store_def("vsoxei")("", 8)
     assert res is not None
     assert (
         res.cpp_repr
@@ -245,7 +245,7 @@ void vsoxei(E * rs1, vreg_t<uint8_t, kRatio> rs2, vreg_t<E, kRatio> vs3, vl_t<kR
 
 
 def test_vsuxei_m_64() -> None:
-    res = gen_load_store_h.vsxei_defs("vsuxei")("m", 8)
+    res = gen_load_store_h.store_def("vsuxei")("m", 8)
     assert res is not None
     assert (
         res.cpp_repr
