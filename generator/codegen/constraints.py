@@ -125,3 +125,11 @@ def same_lmul(lmul1: lmul.LMulValue, lmul2: lmul.LMulValue) -> str:
 
 def has_lmul(vreg_type: vreg.VRegType, l: lmul.LMulValue) -> str:
     return same_lmul(vreg.get_lmul(vreg_type), l)
+
+
+def valid_index(
+    v_large: base.Type, v_small: base.Type, index: misc.SizeTValue
+) -> str:
+    return (
+        f"ValidIndex<{v_large.cpp_repr}, {v_small.cpp_repr}, {index.cpp_repr}>"
+    )

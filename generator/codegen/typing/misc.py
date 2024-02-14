@@ -68,6 +68,17 @@ ALL_TUPLE_SIZE: list[LitSizeTValue] = [
     LitSizeTValue(value=8),
 ]
 
+ALL_INDEX: list[LitSizeTValue] = [
+    LitSizeTValue(value=0),
+    LitSizeTValue(value=1),
+    LitSizeTValue(value=2),
+    LitSizeTValue(value=3),
+    LitSizeTValue(value=4),
+    LitSizeTValue(value=5),
+    LitSizeTValue(value=6),
+    LitSizeTValue(value=7),
+]
+
 
 def lit_size_t(value: int) -> LitSizeTValue:
     return LitSizeTValue(value=value)

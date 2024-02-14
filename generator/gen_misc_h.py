@@ -203,6 +203,76 @@ def vundefined_vtuple_def(
     )
 
 
+def vget_decl() -> func_obj.CallableClass:
+    v_small = vreg.param("VSmall")
+    idx = misc.param_size_t("kIdx")
+    return func_obj.CallableClass(
+        template.TemplateTypeParamList(v_small, idx), "vget", None
+    )
+
+
+def vget_def(
+    elem_type: elem.RawElemType,
+    ratio: misc.LitSizeTValue,
+    idx: misc.LitSizeTValue,
+) -> Optional[func_obj.CallableClass]:
+    v_small = vreg.concrete(elem_type, ratio)
+    l = validate.elem_ratio_to_lmul(elem_type, ratio)
+    v_large = vreg.param("VLarge")
+    if l.lmul.lmul == 3 or (
+        not validate.is_compatible_elem_ratio_may_under_guards(elem_type, ratio)
+    ):
+        return None
+    if idx.value < 0:
+        return None
+    if l.lmul.lmul == 2 and idx.value >= 2:
+        return None
+    if l.lmul.lmul == 1 and idx.value >= 4:
+        return None
+    if idx.value >= 8:
+        return None
+    vget_vec = func.Function(
+        v_small,
+        "operator()",
+        function.param_list([v_large], ["src"]),
+        f"  return __riscv_vget_{elem_type.short_name}{l.lmul.short_name}(src, {idx.cpp_repr});",
+        template_param_list=template.TemplateTypeParamList(v_large),
+        require_clauses=[constraints.valid_index(v_large, v_small, idx)],
+        modifier="const",
+    )
+    return func_obj.CallableClass(
+        template.TemplateTypeArgumentList(v_small, idx),
+        "vget",
+        [vget_vec],
+        feature_guards=guarded.elem_ratio_guard(elem_type, ratio, True),
+    )
+
+
+def vlmul_trunc() -> func_obj.CallableClass:
+    v_small = vreg.param("VSmall")
+    v_large = vreg.param("VLarge")
+    return func_obj.CallableClass(
+        template.TemplateTypeParamList(v_small),
+        "vlmul_trunc",
+        [
+            func.Function(
+                v_small,
+                "operator()",
+                function.param_list([v_large], ["src"]),
+                f"  return rvv::vget<{v_small.cpp_repr}, 0>(src);",
+                template_param_list=template.TemplateTypeParamList(v_large),
+                require_clauses=[
+                    constraints.valid_index(
+                        v_large, v_small, misc.lit_size_t(0)
+                    ),
+                ],
+                modifier="const",
+            )
+        ],
+        requires_clauses=[constraints.supported_vreg(v_small)],
+    )
+
+
 rvv_misc_header = header.Header(
     [
         header.Include("rvv/elem.h"),
@@ -240,6 +310,8 @@ RVV_ALWAYS_INLINE vl_t<elem_lmul_to_ratio<E, kLMul>> vsetvlmax() {
                     vreinterpret_mask_op_def,
                     misc.ALL_RATIO,
                 ),
+                "// 9.5. Vector LMUL Truncation Intrinsics",
+                "// Generated to the end of this file",
                 "// 9.6. Vector Initialization Intrinsics",
                 """template <typename V>
 #if __riscv_v_intrinsic >= 1000000
@@ -260,6 +332,16 @@ RVV_ALWAYS_INLINE V vundefined();
                     misc.ALL_TUPLE_SIZE,
                 ),
                 "#endif",
+                "// 9.8. Vector Extraction Intrinsics",
+                vget_decl(),
+                header.CrossProduct(
+                    vget_def,
+                    elem.ALL_ELEM_TYPES,
+                    misc.ALL_RATIO,
+                    misc.ALL_INDEX,
+                ),
+                "// 9.5. Vector LMUL Truncation Intrinsics",
+                vlmul_trunc(),
             ],
             allowed_variants={""},
         ),
