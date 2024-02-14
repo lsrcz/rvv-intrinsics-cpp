@@ -54,6 +54,17 @@ concept CompatibleElemRatio =
     SupportedElement<E, false> && SupportedRatio<kRatio> &&
     SupportedLMul<elem_ratio_to_lmul<E, kRatio>>;
 
+template <LMul kLMul, size_t kN>
+concept CompatibleLMulTupleSize =
+    SupportedLMul<kLMul> && ((kLMul <= LMul::kM1 && (kN >= 2 || kN <= 8)) ||
+                             (kLMul == LMul::kM2 && (kN >= 2 || kN <= 4)) ||
+                             (kLMul == LMul::kM4 && (kN == 2)));
+
+template <typename E, size_t kRatio, size_t kTupleSize>
+concept CompatibleElemRatioTupleSize =
+    CompatibleElemRatio<E, kRatio> &&
+    CompatibleLMulTupleSize<elem_ratio_to_lmul<E, kRatio>, kTupleSize>;
+
 template <typename E, LMul kLMul>
   requires SupportedElement<E, false> && SupportedLMul<kLMul>
 constexpr size_t elem_lmul_to_ratio =
@@ -82,11 +93,18 @@ template <size_t kRatio>
   requires SupportedRatio<kRatio>
 struct VMask {};
 
+template <typename E, size_t kRatio, size_t kN>
+  requires CompatibleElemRatioTupleSize<E, kRatio, kN>
+struct VTuple {};
+
 template <typename V>
 struct VRegTraits;
 
 template <typename V>
 struct VMaskTraits;
+
+template <typename VT>
+struct VTupleTraits;
 
 template <typename V>
 struct VLTraits;
@@ -117,6 +135,20 @@ template <typename T>
 concept SupportedVL =
     IsVL<T> && SupportedRatio<internal::VMaskTraits<T>::kRatio>;
 
+template <typename T>
+concept IsVTuple = requires {
+  typename internal::VTupleTraits<T>::ElemType;
+  internal::VTupleTraits<T>::kRatio;
+  internal::VTupleTraits<T>::kTupleSize;
+};
+
+template <typename T>
+concept SupportedVTuple =
+    IsVTuple<T> &&
+    CompatibleElemRatioTupleSize<typename internal::VTupleTraits<T>::ElemType,
+                                 internal::VTupleTraits<T>::kRatio,
+                                 internal::VTupleTraits<T>::kTupleSize>;
+
 template <typename E, size_t kRatio>
   requires CompatibleElemRatio<E, kRatio>
 using vreg_t = internal::VReg<E, kRatio>::RegType;
@@ -125,9 +157,13 @@ template <size_t kRatio>
   requires SupportedRatio<kRatio>
 using vmask_t = internal::VMask<kRatio>::MaskType;
 
+template <typename E, size_t kRatio, size_t kTupleSize>
+  requires CompatibleElemRatioTupleSize<E, kRatio, kTupleSize>
+using vtuple_t = internal::VTuple<E, kRatio, kTupleSize>::TupleType;
+
 namespace internal {
 template <typename T>
-  requires IsVReg<T> || IsVMask<T> || IsVL<T>
+  requires IsVReg<T> || IsVMask<T> || IsVL<T> || IsVTuple<T>
 struct GetRatio;
 template <typename V>
   requires IsVReg<V>
@@ -144,16 +180,31 @@ template <typename V>
 struct GetRatio<V> {
   static constexpr size_t kRatio = VLTraits<V>::kRatio;
 };
+template <typename T>
+  requires IsVTuple<T>
+struct GetRatio<T> {
+  static constexpr size_t kRatio = VTupleTraits<T>::kRatio;
+};
+template <typename T>
+  requires IsVReg<T> || IsVTuple<T>
+struct GetElemType;
+template <typename V>
+  requires IsVReg<V>
+struct GetElemType<V> {
+  using ElemType = VRegTraits<V>::ElemType;
+};
+template <typename T>
+  requires IsVTuple<T>
+struct GetElemType<T> {
+  using ElemType = VTupleTraits<T>::ElemType;
+};
 }  // namespace internal
 
 template <typename T>
-using elem_t = internal::VRegTraits<T>::ElemType;
+using elem_t = internal::GetElemType<T>::ElemType;
 
 template <typename T>
 constexpr size_t ratio = internal::GetRatio<T>::kRatio;
-
-template <size_t kRatio>
-constexpr size_t ratio<vl_t<kRatio>> = kRatio;
 
 template <typename T>
 constexpr LMul lmul = elem_ratio_to_lmul<elem_t<T>, ratio<T>>;

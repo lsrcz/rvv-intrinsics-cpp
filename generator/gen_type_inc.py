@@ -46,6 +46,36 @@ struct VMaskTraits<{raw_type}> {{
     )
 
 
+def vreg_tuple_specialization_def(
+    elem_type: elem.RawElemType,
+    ratio: misc.LitSizeTValue,
+    tuple_size: misc.LitSizeTValue,
+) -> Optional[cpp_repr.HasCppRepr]:
+    if not validate.is_compatible_elem_ratio_tuple_size_may_under_guards(
+        elem_type, ratio, tuple_size
+    ):
+        return None
+    lmul_value: lmul.LitLMulValue = validate.elem_ratio_to_lmul(
+        elem_type, ratio
+    )
+    raw_type: str = (
+        f"v{elem_type.long_name}{lmul_value.lmul.short_name}x{tuple_size.value}_t"
+    )
+    return guarded.Guarded(
+        guarded.elem_ratio_guard(elem_type, ratio, need_zvfh=False),
+        f"""template <>
+struct VTuple<{elem_type.cpp_repr}, {ratio.cpp_repr}, {tuple_size.cpp_repr}> {{
+  using TupleType = {raw_type};
+}};
+template <>
+struct VTupleTraits<{raw_type}> {{
+    using ElemType = {elem_type.cpp_repr};
+    constexpr static size_t kRatio = {ratio.cpp_repr};
+    constexpr static size_t kTupleSize = {tuple_size.cpp_repr};
+}};""",
+    )
+
+
 rvv_type_header = header.Header(
     [
         header.Namespace(
@@ -55,6 +85,12 @@ rvv_type_header = header.Header(
                     vreg_specialization_def, elem.ALL_ELEM_TYPES, misc.ALL_RATIO
                 ),
                 header.CrossProduct(vmask_specialization_def, misc.ALL_RATIO),
+                header.CrossProduct(
+                    vreg_tuple_specialization_def,
+                    elem.ALL_ELEM_TYPES,
+                    misc.ALL_RATIO,
+                    misc.ALL_TUPLE_SIZE,
+                ),
             ],
             allowed_variants={""},
         )

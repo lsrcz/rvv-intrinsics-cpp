@@ -52,3 +52,29 @@ def is_compatible_elem_lmul_may_under_guards(
         and is_valid_lmul(lmul_value)
         and is_valid_elem_ratio(elem_lmul_to_ratio(elem_type, lmul_value))
     )
+
+
+def is_compatible_lmul_tuple_len_may_under_guards(
+    lmul_value: lmul.LitLMulValue, tuple_len: misc.LitSizeTValue
+) -> bool:
+    match lmul_value.lmul.lmul:
+        case -3 | -2 | -1 | 0:
+            return tuple_len.value >= 2 and tuple_len.value <= 8
+        case 1:
+            return tuple_len.value >= 2 and tuple_len.value <= 4
+        case 2:
+            return tuple_len.value == 2
+        case _:
+            return False
+
+
+def is_compatible_elem_ratio_tuple_size_may_under_guards(
+    elem_type: elem.RawElemType,
+    ratio: misc.LitSizeTValue,
+    tuple_size: misc.LitSizeTValue,
+) -> bool:
+    return is_compatible_elem_ratio_may_under_guards(
+        elem_type, ratio
+    ) and is_compatible_lmul_tuple_len_may_under_guards(
+        elem_ratio_to_lmul(elem_type, ratio), tuple_size
+    )

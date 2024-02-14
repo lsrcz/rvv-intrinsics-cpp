@@ -201,6 +201,56 @@ TYPED_TEST(VRegTypeTest, vreg) {
 }
 
 template <typename Config>
+class VTupleTypeTest : public ::testing::Test {};
+
+template <typename E, size_t kRatio_, size_t kTupleSize_, typename R>
+class VTupleTypeConfig {
+ public:
+  using ElemType = E;
+  static constexpr size_t kRatio = kRatio_;
+  static constexpr size_t kTupleSize = kTupleSize_;
+  using RegType = R;
+};
+
+using VTupleTypeTestConfigs = ::testing::Types<
+#if HAS_ELEN64
+    VTupleTypeConfig<uint8_t, 64, 2, vuint8mf8x2_t>,
+    VTupleTypeConfig<uint8_t, 64, 8, vuint8mf8x8_t>,
+    VTupleTypeConfig<int16_t, 64, 2, vint16mf4x2_t>,
+    VTupleTypeConfig<int16_t, 64, 8, vint16mf4x8_t>,
+    VTupleTypeConfig<int32_t, 64, 2, vint32mf2x2_t>,
+    VTupleTypeConfig<int32_t, 64, 8, vint32mf2x8_t>,
+#if HAS_ZVE64X
+    VTupleTypeConfig<uint64_t, 64, 2, vuint64m1x2_t>,
+    VTupleTypeConfig<uint64_t, 64, 8, vuint64m1x8_t>,
+#endif
+#endif
+#if HAS_ZVFHMIN
+    VTupleTypeConfig<_Float16, 4, 2, vfloat16m4x2_t>,
+#endif
+#if HAS_ZVE32F
+    VTupleTypeConfig<float, 16, 2, vfloat32m2x2_t>,
+    VTupleTypeConfig<float, 16, 4, vfloat32m2x4_t>,
+#endif
+#if HAS_ZVE64D
+    VTupleTypeConfig<double, 32, 2, vfloat64m2x2_t>,
+    VTupleTypeConfig<double, 32, 4, vfloat64m2x4_t>,
+#endif
+    VTupleTypeConfig<uint8_t, 2, 2, vuint8m4x2_t>,
+    VTupleTypeConfig<uint8_t, 4, 2, vuint8m2x2_t>,
+    VTupleTypeConfig<uint8_t, 4, 4, vuint8m2x4_t>,
+    VTupleTypeConfig<uint8_t, 8, 2, vuint8m1x2_t>,
+    VTupleTypeConfig<uint8_t, 8, 8, vuint8m1x8_t>>;
+
+TYPED_TEST_SUITE(VTupleTypeTest, VTupleTypeTestConfigs);
+
+TYPED_TEST(VTupleTypeTest, vreg) {
+  using Actual = rvv::vtuple_t<typename TypeParam::ElemType, TypeParam::kRatio,
+                               TypeParam::kTupleSize>;
+  EXPECT_TRUE((std::is_same_v<Actual, typename TypeParam::RegType>));
+}
+
+template <typename Config>
 class ElemTypeTest : public ::testing::Test {};
 
 template <typename T, typename E>
@@ -230,7 +280,8 @@ using ElemTTestConfigs = ::testing::Types<
 #endif
     ElemTypeConfig<vuint8m8_t, uint8_t>, ElemTypeConfig<vuint8mf4_t, uint8_t>,
     ElemTypeConfig<vint16m8_t, int16_t>, ElemTypeConfig<vint16mf2_t, int16_t>,
-    ElemTypeConfig<vint32m8_t, int32_t>, ElemTypeConfig<vint32m1_t, int32_t>>;
+    ElemTypeConfig<vint32m8_t, int32_t>, ElemTypeConfig<vint32m1_t, int32_t>,
+    ElemTypeConfig<vuint8m1x2_t, uint8_t>>;
 
 TYPED_TEST_SUITE(ElemTypeTest, ElemTTestConfigs);
 
@@ -269,7 +320,8 @@ using RatioTestConfigs = ::testing::Types<
     RatioConfig<vuint8m8_t, 1>, RatioConfig<vuint8mf4_t, 32>,
     RatioConfig<vint16m8_t, 2>, RatioConfig<vint16mf2_t, 32>,
     RatioConfig<vint32m8_t, 4>, RatioConfig<vint32m1_t, 32>,
-    RatioConfig<rvv::vl_t<8>, 8>, RatioConfig<rvv::vmask_t<8>, 8>>;
+    RatioConfig<rvv::vl_t<8>, 8>, RatioConfig<rvv::vmask_t<8>, 8>,
+    RatioConfig<vint32m1x2_t, 32>>;
 
 TYPED_TEST_SUITE(RatioTest, RatioTestConfigs);
 
