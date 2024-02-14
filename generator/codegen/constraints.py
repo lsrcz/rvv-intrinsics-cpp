@@ -11,6 +11,14 @@ def compatible_elem_ratio(
     return f"CompatibleElemRatio<{elem_type.cpp_repr}, {ratio.cpp_repr}>"
 
 
+def compatible_elem_ratio_tuple_size(
+    elem_type: elem.ElemType,
+    ratio: misc.SizeTValue,
+    tuple_size: misc.SizeTValue,
+) -> str:
+    return f"CompatibleElemRatioTupleSize<{elem_type.cpp_repr}, {ratio.cpp_repr}, {tuple_size.cpp_repr}>"
+
+
 def compatible_vreg_ratio(
     vreg_type: vreg.VRegType, ratio: misc.SizeTValue
 ) -> str:

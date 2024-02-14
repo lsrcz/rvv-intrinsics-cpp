@@ -280,6 +280,7 @@ def template_elem_ratio_for_all_size(
     feature_guards: Callable[
         [elem.ParamElemType, misc.ParamSizeTValue], Sequence[guarded.Guard]
     ] = lambda elem_type, ratio: tuple(),
+    modifier: str = "",
 ) -> Callable[[str, int], Optional[Function]]:
     elem_type = elem.param("E")
     ratio = misc.param_size_t("kRatio")
@@ -294,6 +295,7 @@ def template_elem_ratio_for_all_size(
             template_param_list=template_param_list(elem_type, ratio),
             require_clauses=require_clauses(elem_type, ratio, width),
             feature_guards=feature_guards(elem_type, ratio),
+            modifier=modifier,
         )
 
     return inner

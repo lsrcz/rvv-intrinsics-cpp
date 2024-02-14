@@ -36,6 +36,15 @@
 
 #define VREG_NAME(...) VREG_NAME0(__VA_ARGS__)
 
+#define VTUPLE_NAME_LONG0(long_name, lmul, tuple_size) \
+  v##long_name##lmul##x##tuple_size##_t
+#define VTUPLE_NAME_LONG(...) VTUPLE_NAME_LONG0(__VA_ARGS__)
+
+#define VTUPLE_NAME0(short_name, lmul, tuple_size) \
+  VTUPLE_NAME_LONG(LONG_TYPE_NAME(short_name), lmul, tuple_size)
+
+#define VTUPLE_NAME(...) VTUPLE_NAME0(__VA_ARGS__)
+
 #define WIDEN_SHORT_NAME_i8 i16
 #define WIDEN_SHORT_NAME_i16 i32
 #define WIDEN_SHORT_NAME_i32 i64
@@ -182,5 +191,8 @@
 
 #define CPP_LMUL_VALUE0(lmul) CPP_LMUL_VALUE_##lmul
 #define CPP_LMUL_VALUE(...) CPP_LMUL_VALUE0(__VA_ARGS__)
+
+#define CONST_PTR0(type) const type*
+#define CONST_PTR(...) CONST_PTR0(__VA_ARGS__)
 
 #endif  // MACROS_TYPE_H_

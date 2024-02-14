@@ -8,12 +8,12 @@ from codegen.typing import elem, lmul, misc, vl, vmask, vreg
 def non_indexed_load_arguments(
     inst: str, elem_type: elem.ElemType, ratio: misc.SizeTValue
 ) -> function.FunctionTypedParamList:
-    assert inst in ["vle", "vleff", "vlse"]
+    assert inst in ["vle", "vlseg", "vleff", "vlse", "vlsseg"]
     param_list = function.param_list(
         [misc.ptr(elem_type, is_const=True)], ["rs1"]
     )
 
-    if inst == "vlse":
+    if inst == "vlse" or inst == "vlsseg":
         param_list = param_list + (misc.ptrdiff_t, "rs2")
     vl_type = vl.vl(ratio)
     if inst == "vleff":

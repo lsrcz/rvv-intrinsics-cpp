@@ -103,6 +103,8 @@ generate_rvv("fp.h" "gen_fp_h.py" "tu" "mu" "tumu")
 generate_rvv("reduce.h" "gen_reduce_h.py" "tu" "mu" "tumu")
 generate_rvv("mask.h" "gen_mask_h.py" "tu" "mu" "tumu")
 generate_rvv("perm.h" "gen_perm_h.py" "tu" "mu" "tumu")
+generate_rvv("load_store_segment.h" "gen_load_store_segment_h.py" "tu" "mu"
+             "tumu")
 
 # ------------------------------------------------------------------------------
 # Header library

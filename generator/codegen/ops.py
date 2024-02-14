@@ -384,7 +384,9 @@ def callable_class_with_variant(
         | None
     ),
     name: str,
-    call_operators: Optional[Sequence[Callable[[str], func.Function]]],
+    call_operators: Optional[
+        Sequence[Callable[[str], func.Function | Sequence[func.Function]]]
+    ],
     *,
     requires_clauses: Sequence[str] = tuple(),
     feature_guards: Sequence[guarded.Guard] = tuple(),
@@ -392,13 +394,23 @@ def callable_class_with_variant(
     def inner(variant: str) -> func_obj.CallableClass:
         assert variant in ["", "tu", "mu", "tumu"]
         if call_operators is not None:
-            all_call_operators = list(
-                map(lambda op: op(variant), call_operators)
-            )
+
+            def apply_op(
+                op_fun: Callable[[str], func.Function | Sequence[func.Function]],
+                variant: str,
+            ) -> Sequence[func.Function]:
+                ret = op_fun(variant)
+                if isinstance(ret, func.Function):
+                    return [ret]
+                else:
+                    return ret
+            
+            all_call_operators: Optional[list[func.Function]] = []
+            for call_operator in call_operators:
+                all_call_operators += apply_op(call_operator, variant)
             if variant == "" or variant == "tu":
-                all_call_operators += list(
-                    map(lambda op: op(variant + "m"), call_operators)
-                )
+                for call_operator in call_operators:
+                    all_call_operators += apply_op(call_operator, variant + "m")
         else:
             all_call_operators = None
         return func_obj.CallableClass(
